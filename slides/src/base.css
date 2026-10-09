@@ -1,0 +1,1881 @@
+/* ===========================================================================
+   base.css — structure, layout and utility classes shared by every theme.
+
+   Nothing here should pick a colour or a typeface directly. Themes in
+   src/themes/*.css set the --r-* variables that reveal.js reads plus the
+   handful of extra tokens declared below, and this file arranges them.
+   =========================================================================== */
+
+:root {
+  /* Extra tokens themes are expected to define. These are inert fallbacks. */
+  --accent: #4c6ef5;
+  --accent-soft: color-mix(in oklab, var(--accent) 14%, transparent);
+  /* The green a mark takes when it points at generation rather than emphasis. */
+  --accent-green: #2f9e44;
+  --accent-green-soft: color-mix(in oklab, var(--accent-green) 14%, transparent);
+  --muted: color-mix(in oklab, var(--r-main-color) 55%, transparent);
+  --rule: color-mix(in oklab, var(--r-main-color) 16%, transparent);
+  --surface: color-mix(in oklab, var(--r-main-color) 5%, transparent);
+  /* The ground the 16:9 slide sits on when the window is another shape. */
+  --letterbox: #000;
+  --code-bg: var(--surface);
+
+  /* Syntax tokens, consumed by the .hljs rules at the bottom of this file.
+     What each one is *for* is written up there; these are inert fallbacks. */
+  --code-keyword: var(--accent);
+  --code-operator: var(--code-keyword);
+  --code-type: var(--r-main-color);
+  --code-string: var(--accent);
+  --code-comment: var(--muted);
+  --code-number: var(--accent);
+  --code-punctuation: var(--muted);
+  --code-meta: var(--muted);
+
+  /* Three weights, not one. See the Syntax section at the foot of this file:
+     --code-weight is the listing, --code-weight-quiet is what recedes from it
+     and --code-weight-loud is what a mark class pulls forward. Fira Mono ships
+     400/500/700 and src/main.js bundles all three. */
+  --code-weight: 500;
+  --code-weight-quiet: 400;
+  --code-weight-loud: 700;
+
+  /* What a dimmed-out line of code renders at — the final opacity on the
+     slide, wherever code recedes so one line can carry the step. Reveal dims
+     an un-highlighted row to 0.4 on its own, so the per-cell rule in the
+     line-highlight section divides this out; `.recedes`, which has no rows,
+     takes it directly. One number, so the two ways of receding match. */
+  --code-dim: 0.12;
+
+  /* Three pale stripes stepping into the right edge of a section header. */
+  --stripe-1: color-mix(in oklab, var(--rule) 45%, transparent);
+  --stripe-2: color-mix(in oklab, var(--rule) 70%, transparent);
+  --stripe-3: var(--rule);
+
+  /* 88px and 74px at 1280x720 — the deck's content margins. */
+  --slide-pad-x: 5.5rem;
+  --slide-pad-y: 4.6rem;
+
+  /* The deck's rule is that nothing moves *unprompted* — see the Motion
+     section at the foot of this file. Motion that answers a key press is
+     fine: --t-fade for a cross-fade or a fragment, --t-open for a listing
+     that opens under another one (`.opens`, in the Code section). The auto-animate pairs are timed by
+     `autoAnimateDuration` in src/main.js, not from here.
+
+     A slide that travels should add a token of its own here rather than
+     writing a duration inline, so `npm run snap` and `npm run pdf` can zero
+     it — both scripts list the tokens they blank, and a new one has to be
+     added to that list or its slide is photographed mid-move. */
+  --t-fade: 0.2s;
+  --t-open: 0.55s;
+  /* Only for the derivation widget's opt-in `.animated` mode (see
+     derivation.css), which is off by default. */
+  --t-move: 0.7s;
+}
+
+/* ---------------------------------------------------------------------------
+   The layout grammar, ported from a PowerPoint deck of 74 slides in which 67
+   use the *Blank* layout — no title placeholder at all. What a slide holds is
+   one centred block: some prose, or a code listing, or a diagram, optionally
+   under a short bold centred label ("Takeaway 1", "Does it work?"). Only six
+   slides carry a real heading: the title slide, and five Section Headers.
+
+   So: no h2 by default. If you find yourself writing a headline for a slide,
+   put that sentence in the body and let it be the slide, or make it a section.
+
+   Sizes are ported from a 13.33in-wide slide by the ratio 1280px / 960pt.
+   Body prose is 32pt -> 43px, which is `1em` here. Code is *larger* than prose
+   at 40pt -> 1.25em and sits in no box at all. Lists are 28pt -> 0.85em.
+   Footer and slide number are 18pt -> 0.56em.
+   --------------------------------------------------------------------------- */
+
+.reveal {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Centred, and vertically centred, because that is what a Blank slide holding
+   one idea looks like. `.left` opts a slide out when its content is a list or
+   a wide listing that reads better ranged left. */
+.reveal .slides section {
+  box-sizing: border-box;
+  text-align: center;
+  padding: var(--slide-pad-y) var(--slide-pad-x);
+}
+
+.reveal:not(.center) .slides>section,
+.reveal:not(.center) .slides>section>section {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.reveal .slides section.left {
+  text-align: left;
+}
+
+/* Children are flex items now, so they need to be told to fill the width
+   rather than shrink to their content. Not a slide inside a vertical stack,
+   though: it's a child of the stack's <section>, and clamped to 72rem it came
+   out 128px narrower than a slide outside one — which capped a pinned listing
+   at a different width on either side of the boundary, and the landed
+   auto-animate target's `overflow: hidden` clipped the end of the line. */
+.reveal .slides section>*:not(section):not(.wordmark):not(.venue):not(.paper-shot):not(pre):not(.stack):not(.derivation):not(.demo-shot):not(.pbt-diagram):not(.thanks-panel):not(.sections):not(.pair) {
+  width: 100%;
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* A listing may use the full content width — the clamp above is for prose
+   measure, and a listing is wider than it. Anything else that has to escape
+   the clamp goes on the `:not()` list above; note that stack of `:not()`s
+   outranks a `width` written anywhere later in this file. */
+.reveal .slides section>pre {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* The derivation widget takes the whole content width: two panes side by
+   side, each wide enough for a goal on one line. */
+.reveal .slides section>.derivation {
+  width: 100%;
+  max-width: 100%;
+}
+
+.reveal .slides section> :first-child {
+  margin-top: 0;
+}
+
+.reveal .slides section> :last-child {
+  margin-bottom: 0;
+}
+
+/* --- Prose ---------------------------------------------------------------- */
+
+.reveal p {
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.reveal p+p {
+  margin-top: 0.9em;
+}
+
+/* Emphasis is italic far more often than it is weight; bold marks the
+   operative clause of a sentence. Keep both, and keep bold in the body
+   colour — a coloured bold would be a third emphasis level the deck has no
+   use for. */
+.reveal em {
+  font-style: italic;
+}
+
+.reveal strong {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* The one recurring piece of slide furniture: a short bold centred line above
+   the content, naming the beat. "Takeaway 2", "Does it work?", the name of a
+   diagram. Same size as the prose under it — only the weight changes. */
+.reveal .label {
+  font-family: var(--r-heading-font);
+  font-weight: 600;
+  margin-bottom: 1.1rem;
+}
+
+/* A word group in a sentence that auto-animates into another slide's sentence
+   (the opening question becoming the navigation heading). Reveal moves a
+   matched element with a `transform`, and a plain inline span ignores those,
+   so each group is an inline-block; it still wraps as a unit in the line. */
+.reveal .w {
+  display: inline-block;
+}
+
+.reveal .muted {
+  color: var(--muted);
+}
+
+.reveal .small {
+  font-size: 0.72em;
+}
+
+.reveal .accent {
+  color: var(--accent);
+}
+
+/* --- Lists ---------------------------------------------------------------- */
+
+/* A centred column of left-ranged items, at a size below the prose. A list is
+   the exception in a deck of one-idea slides, not the default. */
+.reveal ul,
+.reveal ol {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-left: 1.1em;
+  font-size: 0.85em;
+  text-align: left;
+}
+
+.reveal li {
+  line-height: 1.35;
+}
+
+.reveal li+li {
+  margin-top: 0.7em;
+}
+
+.reveal li::marker {
+  color: var(--accent);
+}
+
+/* --- Code ----------------------------------------------------------------- */
+
+/* Mono on the bare slide. No card, no border, no tinted background: a listing
+   is just text.
+
+   Three sizes. An earlier cut of this ran a step larger, but a listing read
+   from the back of a room only has to be *legible*, and the review note was
+   "shrink the code, fit more per slide" — so each size came down a notch and
+   the line budgets went up with it:
+
+     default      28pt (0.85em)  up to ~13 lines, 50 characters per line
+     .code-lg     32pt (1em)     one to five lines, 42 characters per line
+     .code-sm     24pt (0.72em)  up to ~16 lines, 58 characters per line
+     .code-xs     19pt (0.6em)   two listings side by side, 70 characters
+                                 between them
+
+   Set them on the slide: `<!-- .slide: class="code-lg" -->`. Reformat the
+   listing before reaching for .code-sm, and don't go below it for a listing
+   that is there to be read. .code-xs is for a comparison (`.pair`), where
+   the two shapes side by side are the point and the lines are not. Nothing here
+   clips — a listing that doesn't fit overflows visibly so a snapshot review
+   catches it. */
+.reveal pre {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: none;
+  font-size: 0.85em;
+  /* As a variable because a listing carrying line-number markup is a <table>,
+     and a <td> doesn't inherit the line-height the way a text node does. */
+  --code-lh: 1.35;
+  line-height: var(--code-lh);
+  text-align: left;
+}
+
+.reveal section.code-lg pre {
+  font-size: 1em;
+}
+
+.reveal section.code-sm pre {
+  font-size: 0.72em;
+  --code-lh: 1.3;
+}
+
+.reveal section.code-xs pre {
+  font-size: 0.6em;
+  --code-lh: 1.3;
+}
+
+.reveal pre code {
+  display: block;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  max-height: none;
+  overflow: visible;
+  font-family: var(--r-code-font);
+  /* The listing's own weight. Not 700: see the Syntax section at the foot of
+     this file for why one flat weight flattened the colour scheme with it. */
+  font-weight: var(--code-weight);
+  font-variant-ligatures: none;
+  tab-size: 2;
+}
+
+/* A listing pinned to a box of --cols columns by --rows rows, so that a
+   listing on the next slide pinned to the same box lands in exactly the same
+   place. That's what lets two different listings auto-animate: reveal matches
+   the two <pre>s by data-id and moves one onto the other, so unless they
+   already share a position and size the whole block travels and nothing
+   inside it can hold still. The box is invisible — code sits in no box — so
+   the only effect is where the left edge and the top line land: those of the
+   widest and tallest listing of the run. Set it as
+
+     <!-- .element: class="pinned" data-id="…" style="--cols: 45; --rows: 10" -->
+
+   `ch` is measured in the element's own font, hence the code font on the
+   <pre> here; its only child is the <code>, which sets the same. The selector
+   has to beat `.reveal .slides section>pre` in the layout section above. A
+   listing beside a chart (`.side`) pins the same way, and has to: the row is
+   centred, so a listing that changed width would push the chart sideways. */
+.reveal .slides section>pre.pinned,
+.reveal .side>pre.pinned {
+  font-family: var(--r-code-font);
+  width: calc(var(--cols) * 1ch);
+  min-height: calc(var(--rows) * var(--code-lh) * 1em);
+}
+
+/* A listing with prose under it, or two listings in a row. */
+.reveal pre+p {
+  margin-top: 1.4rem;
+}
+
+.reveal pre+pre {
+  margin-top: 1.6rem;
+}
+
+/* A second listing that *arrives* under the first, pushing it up and over to
+   meet it:
+
+     <div class="stack">
+
+     ```ocaml
+     …
+     ```
+     <!-- .element: class="recedes" -->
+
+     ```ocaml[|2]
+     …
+     ```
+     <!-- .element: class="opens fragment" -->
+
+     </div>
+
+   A plain fragment keeps its box in the layout while it's hidden, so the gap
+   and the listing's height would both be there from the first frame and
+   nothing would move on the press. A one-row grid animated from `0fr` to
+   `1fr` gives the <pre> a height to transition instead — a block box has none
+   of its own — and since a slide is a centred flex column, the listing above
+   rises by half of what arrives while the new one opens downwards.
+   `overflow: hidden` is what makes `0fr` a clip rather than an overflow.
+
+   The gap travels as the <pre>'s own margin rather than as padding inside it:
+   a grid item's padding is part of what a `0fr` track sizes itself to, so a
+   padded listing stays 1.6rem tall while closed and the pair never quite
+   shuts.
+
+   `opens`, not `grow` — reveal has a built-in fragment class by that name
+   that scales its element to 1.3 and shows it from the first step, and a
+   listing set that way overflows the slide.
+
+   `.stack` is what lets the first listing float *left* as well as up, to the
+   left edge of the one that arrives, without a measured offset anywhere: the
+   wrapper is `fit-content`, so it is exactly as wide as the widest listing in
+   it — the arriving one, whose width is there from the start even while its
+   height is clipped to nothing. Left-aligned in that box is where `.recedes`
+   ends up; centred in it is, because the box is centred on the slide, exactly
+   where a lone listing sits today. So the whole move is the difference
+   between those two, written as `margin-left: 50%` with `translateX(-50%)`
+   taking it back — the two animatable halves of centring, where `margin: auto`
+   would be a jump. (A percentage margin counts as zero when the wrapper sizes
+   itself, so this can't feed back into the width it's a percentage of, and
+   `white-space: pre` makes the listing's min-content its full width, so the
+   half-width margin can't squeeze it either.)
+
+   `.recedes` is also the listing that steps back: on the step where the
+   arriving listing highlights a line, it drops to the same --code-dim as the
+   lines that step didn't highlight, so the slide comes down to that one line.
+   That step is reveal's own stacked clone (see the line-highlight section
+   below), which is why the test is for a visible `code.fragment` rather than
+   a class of ours. */
+.reveal .stack {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.reveal .stack>pre.recedes {
+  margin-left: 50%;
+  margin-right: 0;
+  transform: translateX(-50%);
+  transition: margin-left var(--t-open) ease, transform var(--t-open) ease;
+}
+
+.reveal .stack:has(pre.opens.visible)>pre.recedes {
+  margin-left: 0;
+  transform: none;
+}
+
+.reveal pre.opens.fragment {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  overflow: hidden;
+  /* Beats the blanket `.reveal .fragment` duration at the foot of this file,
+     which would otherwise take the growth down to a fragment's --t-fade. */
+  transition-property: grid-template-rows, margin-top, opacity;
+  transition-duration: var(--t-open);
+  transition-timing-function: ease;
+}
+
+.reveal pre.opens.fragment.visible {
+  grid-template-rows: 1fr;
+  margin-top: 1.6rem;
+}
+
+.reveal pre.opens>code {
+  min-height: 0;
+}
+
+.reveal pre.recedes code {
+  transition: opacity var(--t-fade);
+}
+
+/* A dimmed *line* is dimmed twice: reveal takes the whole row to 0.4 and the
+   deck's own rule takes the cell inside it the rest of the way to --code-dim.
+   The listing above has no rows of its own — one opacity carries the block —
+   so it takes --code-dim directly, or it would sit visibly darker than the
+   lines it is receding with. */
+.reveal .stack:has(pre.opens code.fragment.visible) pre.recedes code {
+  opacity: var(--code-dim);
+}
+
+.reveal :not(pre)>code {
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--r-code-font);
+  /* Inline code sits in Montserrat prose; the listing weight is what keeps a
+     `Base_quickcheck` in a sentence from reading as bold. */
+  font-weight: var(--code-weight);
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+
+/* --- Marks inside a listing ------------------------------------------------
+
+   `<!-- .element: class="mark-brackets" -->` (or `mark-zeros`) under a fenced
+   block recolours those characters after highlighting — see src/code-marks.js,
+   where a talk adds the marks it needs as one regex each. The listing sits at
+   --code-weight, so a mark has a heavier weight to move to as well as a colour
+   and a soft tint — enough to pick a single character out of a listing that is
+   mostly that character. */
+
+.reveal pre code .code-mark {
+  color: var(--accent);
+  font-weight: var(--code-weight-loud);
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 0.02em 0.1em;
+  margin: 0 -0.06em;
+}
+
+/* `class="mark-zeros dim-rest"` — the companion to a mark class, for when the
+   point of the slide is the marked characters and nothing else. Everything
+   highlight.js coloured drops back to the muted grey; the marks keep the
+   accent and the tint, so they are the only thing left with any weight. */
+.reveal pre.dim-rest code,
+.reveal pre.dim-rest code * {
+  color: var(--muted);
+}
+
+.reveal pre.dim-rest code .code-mark {
+  color: var(--accent);
+}
+
+/* `class="mark-… mark-green"` — a mark that means something other than
+   emphasis takes the Aurora green instead of the red accent. Same specificity
+   as the two rules above, so it has to sit after them. */
+.reveal pre.mark-green code .code-mark {
+  color: var(--accent-green);
+  background: var(--accent-green-soft);
+}
+
+/* `class="mark-dist strikes"` on a `.recedes` listing — the mark is a
+   crossing-out rather than a highlight, and it lands on the same press that
+   opens the listing replacing it. The rule is there from the start in a
+   transparent colour so that the press only has a colour to fade. */
+.reveal pre.strikes code .code-mark {
+  color: inherit;
+  font-weight: inherit;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: line-through 0.09em transparent;
+  transition: text-decoration-color var(--t-fade);
+}
+
+.reveal .stack:has(pre.opens.visible) pre.strikes code .code-mark {
+  text-decoration-color: var(--accent);
+}
+
+/* `class="annotate-…"` — a stretch of a listing underlined and named, one
+   press each (ANNOTATIONS in src/code-marks.js). `.code-annot` wraps the
+   stretch; `.code-annot-mark` inside it is an empty fragment the width of the
+   stretch that draws the underline, with the label as its content, centred
+   under it. Both are absolute, so arriving moves nothing — and so a label
+   under anything but the last line sits on the line below. Same weight of
+   line as the `strikes` crossing-out, same face and weight as `.label`. */
+.reveal pre code .code-annot {
+  position: relative;
+}
+
+/* The labels hang outside the listing's box, and reveal clips that box in two
+   places. An auto-animated <pre> keeps `data-auto-animate-target` after it
+   lands, and reveal.css gives that `overflow: hidden` — which also turns the
+   arrival, a height tween up from nothing, into an unrolling. And the print
+   view clips every `pre code` with `!important`, which would drop the labels
+   from the PDF. Both go, for annotated listings only. */
+.reveal pre[data-auto-animate-target]:has(.code-annot) {
+  overflow: visible;
+}
+
+html.reveal-print .reveal pre:has(.code-annot) code {
+  overflow: visible !important;
+}
+
+.reveal pre code .code-annot-mark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  border-top: 0.09em solid var(--accent);
+}
+
+.reveal pre code .code-annot-mark::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  top: 0.3em;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: var(--accent);
+  font-family: var(--r-heading-font);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+/* Two listings side by side, top-aligned: `<div class="pair">` around two
+   fences. A pair is wider than the prose clamp, so it's on the exemption
+   list at the top of this file and centres itself; put `wide` on the slide
+   to give it the side margins as well. */
+.reveal .pair {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2.2rem;
+  width: fit-content;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.reveal .pair>pre {
+  margin: 0;
+}
+
+.reveal .slides section.wide {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* A listing with the thing it produces beside it: `<div class="side">`. */
+.reveal .side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3.5rem;
+}
+
+.reveal .side>pre {
+  margin: 0;
+}
+
+/* A flex item shrinks by default, which lets a pinned listing lose its box
+   to a narrow row — and then the chart beside it moves. */
+.reveal .side>pre.pinned {
+  flex: none;
+}
+
+.reveal .side>.pmf {
+  width: auto;
+}
+
+/* The step between two listings on the same slide: "this, then that". */
+.reveal .step-arrow {
+  margin: 1.1rem auto;
+  font-size: 0.7em;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.reveal .step-arrow .glyph {
+  display: inline-block;
+  margin-right: 0.45em;
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* "There's more below": a thin arrow centred at the foot of a slide that has
+   vertical slides under it. Absolute, like `.venue`, so it stays at the foot
+   whatever the slide holds. Montserrat is variable, so 200 needs no import. */
+.reveal .down-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.5rem;
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--r-main-font);
+  font-weight: 200;
+  line-height: 1;
+}
+
+/* Reveal's line-highlight support, restyled: dimming carries the step, since
+   there's no box to tint.
+
+   `highlight-line` lands on the `<tr>`, but `hljs-ln-line` is on the two
+   `<td>`s inside it, so the row is what has to be tested — a `.hljs-ln-line:
+   not(.highlight-line)` reads plausibly and dims every line on every slide,
+   which is what it used to do. `.has-highlights` is reveal's own marker for
+   "this step highlights something", and gating on it is what lets a listing
+   ask for line markup without asking to be stepped through: a `[]` spec gives
+   the `<table>` that auto-animate needs to match lines across two slides, and
+   nothing dims. */
+.reveal pre code .highlight-line {
+  background: none;
+}
+
+/* Not the whole story: reveal has already taken the row itself to 0.4
+   (`.reveal .hljs.has-highlights tr:not(.highlight-line)`), so this divides
+   0.4 back out and a dimmed line renders at --code-dim exactly. Anything that
+   has to sit at the same weight without being a row — `.recedes` above —
+   takes --code-dim directly. */
+.reveal pre code.has-highlights:not(.no-dim) tr:not(.highlight-line) .hljs-ln-line {
+  opacity: calc(var(--code-dim) / 0.4);
+}
+
+/* A spec with more than one step (`[1-5|2]`) isn't one listing that restyles
+   itself: reveal clones the whole <code> once per step and stacks the copies
+   in the <pre>, each later one `position: absolute` over the first and
+   revealed as a fragment. The copies are transparent, though — code sits in
+   no box here, so `.hljs` has `background: transparent` — and dimming is
+   opacity, so the *first* copy, with its own step still highlighted, shows
+   straight through every copy laid over it. Every line reads as highlighted
+   on every step after the first. Stock reveal never hits this because its
+   themes give `.hljs` an opaque background.
+
+   So the stacked copies get one: the slide's own colour, which is invisible
+   as a box and opaque enough to hide the copy underneath. Same selector
+   reveal positions them with. */
+.reveal pre code:not(:first-child).fragment {
+  background: var(--r-background-color);
+}
+
+/* That markup is a `<table>`, one row per line, with a gutter cell reveal
+   fills from `data-line-number`. The deck has never shown line numbers, and
+   the gutter is only here so reveal has a per-line element to match — so it
+   goes, and the table gives the listing back the line spacing `pre` had. */
+.reveal pre code .hljs-ln-numbers {
+  display: none;
+}
+
+.reveal pre code table {
+  border-collapse: collapse;
+  /* Reveal shrinks a <table> to 0.7em for its prose tables; a listing is not
+     one, and this is what keeps the marked-up block the size of every other. */
+  font-size: inherit;
+}
+
+.reveal pre code td {
+  padding: 0;
+  border: none;
+  line-height: var(--code-lh);
+}
+
+/* --- Title slide ---------------------------------------------------------- */
+
+/* Ranged right in the right two-thirds, with the UB wordmark bottom-left —
+   the Title Slide layout, near enough. The wordmark and the
+   byline share one row (`.title-foot`) so they sit on a common baseline:
+   the bottom of the wordmark is the baseline of the email address. */
+
+.reveal section.title {
+  text-align: right;
+  align-items: flex-end;
+}
+
+/* The reference title block is 876px wide, ranged right, its right edge on the
+   same margin as everything else. */
+.reveal section.title h1 {
+  max-width: 55rem;
+  margin-right: 0;
+  margin-bottom: 0.5em;
+}
+
+.reveal section.title .title-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: last baseline;
+  max-width: none;
+  margin-top: 40px;
+}
+
+.reveal section.title .byline strong {
+  display: block;
+  color: var(--r-main-color);
+  font-weight: 600;
+  font-size: 1.5em;
+}
+
+.reveal section.title .byline {
+  font-size: 0.72em;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.reveal .wordmark {
+  width: 23rem;
+  height: auto;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  background: none;
+}
+
+/* The venue, centred at the foot of the title slide and nowhere else. It used
+   to be a row across every slide, injected outside `.slides` from
+   src/main.js — but it only ever belonged on the title, so it is part of that
+   slide now, which also means it prints. Absolute rather than in flow because
+   the rest of the title block is ranged right; inside the slide box a length
+   is in deck units, so unlike the slide number it needs no --slide-scale
+   correction. 1.5rem and 18pt are the row's own measurements. */
+.reveal section.title .venue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.5rem;
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--r-main-font);
+  font-size: calc(0.56 * var(--r-main-font-size));
+}
+
+/* --- Section headers ------------------------------------------------------ */
+
+/* The one slide kind that does carry a heading: ranged left, large, with a
+   subtitle under it and three pale stripes stepping darker into the right
+   edge. The stripes are the reference layout's, reproduced as one gradient so
+   the slide needs no extra markup. */
+
+.reveal section.section {
+  text-align: left;
+  align-items: flex-start;
+  justify-content: center;
+  background-image: linear-gradient(to right,
+      transparent 0 86.25%,
+      var(--stripe-1) 86.25% 89.6%,
+      var(--stripe-2) 89.6% 93.13%,
+      var(--stripe-3) 93.13% 100%);
+}
+
+/* A header that names its section (`data-section="N"`) takes the stripes in
+   that section's agenda colour — the same three steps, tinted towards the
+   page and ending on the tile colour itself at the edge. Without the
+   attribute the pale grey stripes above stand. */
+.reveal section.section[data-section] {
+  --stripe-1: color-mix(in oklab, var(--tile) 35%, var(--r-background-color));
+  --stripe-2: color-mix(in oklab, var(--tile) 60%, var(--r-background-color));
+  --stripe-3: var(--tile);
+}
+
+.reveal section.section>* {
+  max-width: 44rem;
+  margin-left: 0;
+}
+
+.reveal section.section h2 {
+  font-size: 1.55em;
+  margin: 0;
+}
+
+.reveal section.section p {
+  margin-top: 0.9rem;
+  font-size: 0.72em;
+  color: var(--muted);
+  text-align: left;
+}
+
+/* --- Full-bleed slides ---------------------------------------------------- */
+
+/* A `.diagram` slide gives up its padding so an SVG, a screenshot or a chart
+   can run to the slide edge. What goes in it is per-talk: draw the diagram as
+   inline SVG at 1280x720 and edit it as coordinates, not as a component. */
+
+.reveal .slides section.diagram {
+  padding: 0;
+  justify-content: center;
+}
+
+.reveal .pbt-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--r-heading-font), system-ui, sans-serif;
+}
+
+/* A click that picks out the generator: `g.pbt-focus` is an empty fragment
+   inside the SVG that exists only to be stepped through, and the rest of the
+   diagram greys out while it is visible. The fragment can't go on `.pbt-rest`
+   itself — reveal hides a fragment until it arrives, and reveal 6 has no
+   `custom` style that leaves it be. It lives inside the SVG because an empty
+   element beside it gets wrapped in a `<p>` whose margins push the diagram
+   off centre. */
+.reveal .pbt-diagram .pbt-rest {
+  transition: opacity var(--t-fade), filter var(--t-fade);
+}
+
+.reveal section:has(.pbt-focus.visible) .pbt-diagram .pbt-rest {
+  filter: grayscale(1);
+  opacity: 0.3;
+}
+
+/* A full-bleed screenshot on a `.diagram` slide. A shot that isn't exactly
+   16:9 is trimmed rather than letterboxed — check what `cover` cuts off the
+   top and bottom before reaching for this. */
+.reveal .demo-shot {
+  width: 100%;
+  margin: 0;
+}
+
+.reveal .demo-shot img {
+  display: block;
+  width: 100%;
+  /* Reveal's theme caps every image at `max-width: 95%; max-height: 95%`,
+     which shrank this one to 1216x684 and left a band of slide down the right
+     and along the bottom. Full bleed means both caps go. */
+  max-width: none;
+  max-height: none;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+/* A chart shown as a figure: sized by height so it fits between the slide
+   paddings, and centred. The image's own margins are the slide's. */
+.reveal .chart {
+  width: 100%;
+  margin: 0;
+}
+
+.reveal .chart img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(720px - 2 * var(--slide-pad-y));
+  margin: 0 auto;
+  border: 0;
+  box-shadow: none;
+}
+
+
+/* --- Distributions -------------------------------------------------------- */
+
+/* A distribution as one stacked bar with its key beside it:
+
+     <div class="pmf" style="--name-w: 3ch; --prob-w: 6ch">
+       <div class="pmf-bar">
+         <div class="pmf-layer" data-id="…" style="--p: 1; --c: var(--pmf-bottom)"></div>
+         <div class="pmf-layer" data-id="…" style="--p: 0.5; --c: var(--pmf-0)"></div>
+       </div>
+       <div class="pmf-key">
+         <span class="pmf-name" data-id="…" style="--c: var(--pmf-bottom)">⊥</span><span class="pmf-prob" data-id="…">1/2</span>
+         …
+       </div>
+     </div>
+
+   HTML rather than SVG because the point of a run of these is to
+   auto-animate from one to the next, and reveal measures what it moves with
+   `offsetTop`/`offsetWidth`, which an SVG shape doesn't have.
+
+   The layers are not stacked end to end. Each is anchored at the foot of the
+   bar and is as tall as the *running total* up to its outcome (`--p`), with
+   later layers painted over earlier ones: `⊥` is the whole bar at the back,
+   `0` sits on top at the bottom. So nothing ever has a seam between two
+   fractional heights, and a new approximation arrives the way the bar fills
+   — a new layer fading in behind the ones already there, the grey at the top
+   giving way to it. A layer whose total doesn't change between two slides
+   doesn't move at all.
+
+   The key is a two-column grid, name then probability, with both column
+   widths set on the chart: a run keeps one box on every slide, so reveal
+   has nothing to move but the rows that changed. A probability that changes
+   is a different `data-id` and fades in; a name that's new carries
+   `arrives`, like a word new to an auto-animated sentence. */
+
+.reveal .pmf {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2.2rem;
+  font-size: 0.5em;
+}
+
+.reveal .pmf-bar {
+  position: relative;
+  flex: none;
+  width: 11rem;
+  height: 28rem;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.reveal .pmf-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--p) * 100%);
+  background: var(--c);
+}
+
+/* A chart not drawn yet: the bar and the key keep their boxes, empty (the key
+   as a grid at the run's column widths), so the listing sits where it does on
+   the slides that have a chart; the question is centred over the pair. */
+.reveal .pmf.pmf-unknown {
+  position: relative;
+}
+
+.reveal .pmf-unknown>.pmf-question {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4em;
+  color: var(--muted);
+}
+
+.reveal .pmf-key {
+  display: grid;
+  grid-template-columns: var(--name-w, 6ch) var(--prob-w, 6ch);
+  column-gap: 1.4ch;
+  row-gap: 0.2em;
+  font-family: var(--r-code-font);
+  font-weight: var(--code-weight);
+  line-height: 1.35;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.reveal .pmf-name {
+  display: flex;
+  align-items: center;
+  gap: 0.7ch;
+}
+
+.reveal .pmf-name::before {
+  content: "";
+  flex: none;
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+.reveal .pmf-prob {
+  color: var(--muted);
+  font-weight: var(--code-weight-quiet);
+}
+
+/* A chart with the command that drew it over it, as its label. */
+.reveal pre+.pmf {
+  margin-top: 1.6rem;
+}
+
+/* --- Comparing distributions ---------------------------------------------- */
+
+/* Two distributions and the order between them, `p ⊑ q`: a captioned bar on
+   each side, and between them one row per outcome — p's mass, the relation,
+   q's mass:
+
+     <div class="order">
+       <div class="order-side">
+         <span class="order-cap" data-id="…">f^[1] ⊥</span>
+         <div class="pmf-bar" data-id="…">…layers…</div>
+       </div>
+       <div class="order-key">
+         <div class="order-row bottom">…the ⊥ row…</div>
+         <div class="order-outcomes">
+           <div class="order-row"><span class="pmf-name" …>1</span><span class="pmf-prob" …>0</span><span class="order-op" …>≤</span><span class="pmf-prob" …>1/4</span></div>
+           …
+         </div>
+       </div>
+       <div class="order-side">…</div>
+     </div>
+
+   The key is as tall as the bars, with ⊥ pinned to its top and the outcomes
+   to its foot, so each row sits level with its own end of the bar — and an
+   outcome added between them pushes nothing, so no row ever travels.
+
+   A run of these climbs a chain: the right-hand bar, caption and masses
+   share data-ids with the left of the next slide, so q slides across to
+   become p. The bar carries a data-id of its own because reveal measures
+   with `offsetLeft`, and a layer is measured against its bar — so a layer
+   never appears to move, and the bar has to be what does. */
+
+.reveal .order {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 3.5rem;
+}
+
+.reveal .order-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reveal .order-cap {
+  margin-bottom: 0.7em;
+  font-family: var(--r-code-font);
+  font-weight: var(--code-weight);
+  font-size: 0.6em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+/* 28rem is `.pmf-bar`'s height. */
+.reveal .order-key {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 28rem;
+  font-family: var(--r-code-font);
+  font-weight: var(--code-weight);
+  font-size: 0.6em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.reveal .order-outcomes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+/* p's mass ranged right and q's ranged left, so the two sides of each `≤`
+   hug it. */
+.reveal .order-row {
+  display: grid;
+  grid-template-columns: 3ch 4ch 1ch 4ch;
+  column-gap: 1.4ch;
+  align-items: center;
+}
+
+.reveal .order-row>.pmf-prob:nth-child(2) {
+  text-align: right;
+}
+
+.reveal .order-op {
+  color: var(--accent);
+  text-align: center;
+}
+
+/* ⊥ is not an outcome, just the mass still missing, so its row goes the
+   other way and stays quiet. */
+.reveal .order-row.bottom>* {
+  color: var(--muted);
+}
+
+/* --- Task buckets --------------------------------------------------------- */
+
+/* One horizontal bar of how many tasks fell in each bucket, widths by count
+   (`--n`), with the count inside any segment wide enough to hold it:
+
+     <div class="buckets">
+       <div class="buckets-head"><span>…</span><span>…</span></div>
+       <div class="buckets-bar"><div style="--n: 35; --c: …"><span>35</span></div>…</div>
+       <div class="buckets-key"><span style="--c: …">…</span>…</div>
+     </div> */
+
+.reveal .buckets {
+  font-size: 0.56em;
+}
+
+.reveal .buckets-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5em;
+  color: var(--muted);
+}
+
+.reveal .buckets-bar {
+  display: flex;
+  gap: 3px;
+  height: 5.5rem;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.reveal .buckets-bar>div {
+  flex: var(--n) 1 0;
+  display: flex;
+  align-items: center;
+  padding-left: 0.7em;
+  background: var(--c);
+  color: var(--ink, #fff);
+  font-family: var(--r-code-font);
+  font-weight: var(--code-weight);
+}
+
+.reveal .buckets-bar>div.open {
+  --c: repeating-linear-gradient(-45deg,
+      var(--bucket-hatch) 0 2px,
+      var(--bucket-open) 2px 8px);
+  --ink: var(--muted);
+}
+
+.reveal .buckets-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.4em 1.6em;
+  margin-top: 1.1em;
+  color: var(--muted);
+}
+
+.reveal .buckets-key>span {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.reveal .buckets-key>span::before {
+  content: "";
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+/* --- Agenda --------------------------------------------------------------- */
+
+/* The recurring "where are we" slide.
+
+   Like every other slide in the deck, this is *one centred block*: the list
+   shrinks to its longest row and that group is centred, so the numbered tiles
+   and the labels each keep a single edge. (It used to be a full-width row per
+   section, which pinned the tiles to the far left of the slide while the
+   labels floated in the middle — the review called that out.)
+
+   The centring is `width: fit-content` plus auto margins, and it needs the
+   list on the exemption list of the section-child rule above: that rule's
+   stack of `:not()`s outranks anything written here, and for a long time it
+   quietly forced `width: 100%`, which pinned the list left again.
+
+   Everything the list is made of is in em — the tile, the gutter, the row
+   spacing — so that the whole block is one shape at any size. That is what
+   lets the `thanks` slide set the recap smaller and auto-animate the list over
+   from the slide before as one piece, a transform from the old box onto the
+   new: it is only right if the new box is the old one scaled. (The tile was
+   2.6rem once, and held its size while the labels shrank.)
+
+   The tile's size is shared between the grid column on the row and the box
+   the ::before draws, whose type is set smaller — and a custom property is
+   substituted as tokens, so a bare `1.14em` would be read against the digit's
+   own font-size on the ::before and come out 0.72 of the column. Registering
+   it as a <length> makes it compute where it's declared, on the row. */
+
+@property --tile-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+.reveal .slides section>ol.sections {
+  list-style: none;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.6em auto 0;
+  padding: 0;
+  font-size: 0.85em;
+  text-align: left;
+  counter-reset: section;
+}
+
+/* Two columns: the numbered tile, then the row's single wrapper <div>. Every
+   row must wrap its content, or a stray <span> lands in a column of its own. */
+.reveal .sections li {
+  --tile-size: 1.14em;
+  counter-increment: section;
+  display: grid;
+  grid-template-columns: var(--tile-size) 1fr;
+  align-items: center;
+  gap: 0.52em;
+  margin: 0;
+  padding: 0.2em 0;
+}
+
+.reveal .sections li+li {
+  margin-top: 0.18em;
+}
+
+.reveal .sections li::before {
+  content: counter(section);
+  width: var(--tile-size);
+  height: var(--tile-size);
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--tile, var(--muted));
+  color: #fff;
+  font-family: var(--r-heading-font);
+  font-size: 0.72em;
+  font-weight: 600;
+}
+
+/* One colour per section, shared with the section header that opens it:
+   `<!-- .slide: class="section" data-section="2" -->` paints that header's
+   stripes in the same purple as row 2 here. A marker slide inside a section
+   (a demo, an interlude) carries that section's number. Six are defined; add
+   a `:nth-child(7)` pair for a seventh. */
+.reveal .sections li:nth-child(1),
+.reveal section.section[data-section="1"] {
+  --tile: var(--nord-green, #a3be8c);
+}
+
+.reveal .sections li:nth-child(2),
+.reveal section.section[data-section="2"] {
+  --tile: var(--nord-purple, #b48ead);
+}
+
+.reveal .sections li:nth-child(3),
+.reveal section.section[data-section="3"] {
+  --tile: var(--nord-teal, #8fbcbb);
+}
+
+.reveal .sections li:nth-child(4),
+.reveal section.section[data-section="4"] {
+  --tile: var(--nord-orange, #d08770);
+}
+
+.reveal .sections li:nth-child(5),
+.reveal section.section[data-section="5"] {
+  --tile: var(--nord-blue, #5e81ac);
+}
+
+.reveal .sections li:nth-child(6),
+.reveal section.section[data-section="6"] {
+  --tile: var(--nord-red, #bf616a);
+}
+
+/* --- The thank-you slide -------------------------------------------------- */
+
+/* The closing slide is the one before it moved aside: the same sentence and
+   the same three sections, auto-animated over to the left, and the room that
+   opens on the right holds the thanks and the three codes.
+
+   The left half is the ordinary flex column, ranged left and pulled in from
+   the right by the width of the panel; the panel itself is absolute furniture
+   in the margin that leaves, positioned the way the title slide's venue line
+   is. A grid was tried first and is wrong here: the panel is taller than the
+   sentence and the list together, so spanning it across their two rows blew
+   the two of them apart to fill its height. */
+.reveal .slides section.thanks {
+  --panel-w: 25rem;
+  --panel-gap: 3rem;
+  /* The recap is supporting material now, not the slide, and its sentence has
+     to hold the same number of lines in what's left of the width. Break it
+     with an explicit <br> here and on the slide it animates from, at the same
+     word: auto-animate carries the words over, and a word that changes line
+     travels a diagonal across the others. */
+  font-size: 0.82em;
+  text-align: left;
+  padding-right: calc(var(--slide-pad-x) + var(--panel-w) + var(--panel-gap));
+  align-items: flex-start;
+}
+
+/* The one slide where the list ranges left with the sentence over it, rather
+   than centring as a block; auto margins centre a flex item on their own, so
+   `align-items` above isn't enough. */
+.reveal section.thanks>ol.sections {
+  margin-left: 0;
+}
+
+.reveal section.thanks>.thanks-panel {
+  position: absolute;
+  right: var(--slide-pad-x);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--panel-w);
+  /* Sized in rem throughout, so the panel keeps the deck's own type sizes
+     while the recap beside it shrinks. */
+  font-size: 1rem;
+}
+
+.reveal .thanks-panel ul.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.3rem;
+}
+
+/* The code, then the two lines that name it and spell it out. */
+.reveal .thanks-panel ul.links li {
+  display: grid;
+  grid-template-columns: 4.8rem 1fr;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* The SVGs are generated by `npm run qr` with their modules painted in
+   `currentColor` against a transparent ground, so a code is ink like anything
+   else on the slide. The padding is the quiet zone the spec asks for, which
+   the generator leaves off (`margin: 0`) so it can be spaced from here. */
+.reveal .thanks-panel .qr {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0.2rem;
+  color: var(--r-main-color);
+}
+
+.reveal .thanks-panel .what {
+  display: block;
+  font-family: var(--r-heading-font);
+  font-weight: var(--r-heading-font-weight);
+  font-size: 1.4rem;
+  line-height: 1.25;
+}
+
+.reveal .thanks-panel .link {
+  display: block;
+  font-family: var(--r-code-font);
+  font-weight: var(--code-weight-quiet);
+  font-size: .8rem;
+  line-height: 1.4;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.reveal .thanks-panel .link:hover {
+  color: var(--accent);
+}
+
+/* --- A plug ---------------------------------------------------------------- */
+
+/* One thing to send people to: a QR code with its name beside it, as a row
+   centred on an otherwise empty slide. The code is the same `currentColor`
+   SVG the thank-you slide uses (`npm run qr`), set large enough to scan from
+   the back of a room.
+
+     <div class="plug">
+       <img class="qr" src="/qr/x.svg" alt="…">
+       <div><span class="what">…</span><span class="line">…</span>
+            <a class="link" href="…">…</a></div>
+     </div> */
+.reveal .plug {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2.6rem;
+  text-align: left;
+}
+
+.reveal .plug .qr {
+  display: block;
+  width: 13rem;
+  height: auto;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+  color: var(--r-main-color);
+}
+
+.reveal .plug .what {
+  display: block;
+  font-family: var(--r-heading-font);
+  font-weight: var(--r-heading-font-weight);
+  font-size: 1.5em;
+  line-height: 1.2;
+  margin-bottom: 0.35em;
+}
+
+.reveal .plug .line {
+  display: block;
+  font-size: 0.75em;
+  line-height: 1.45;
+}
+
+.reveal .plug .link {
+  display: block;
+  margin-top: 0.7em;
+  font-family: var(--r-code-font);
+  font-weight: var(--code-weight-quiet);
+  font-size: 0.5em;
+  color: var(--muted);
+}
+
+/* --- Citations ------------------------------------------------------------ */
+
+/* A citation is one small italic line under the claim: the quote, then the
+   source in italics. */
+
+.reveal .cite {
+  margin-top: 0.9rem;
+  font-size: 0.55em;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* --- A paper, cited by showing it ----------------------------------------
+
+   A first page shrunk to a thumbnail says "there is a paper" and nothing
+   else — you can't read the title, so the citation line underneath has to do
+   all the work twice. Instead: the page is cropped to its masthead (title and
+   authors, nothing else), shown as a card wide enough that the title reads
+   from the back of the room, with the citation under it.
+
+   Markup is a wrapper, an image and a `.cite`, on a slide marked `.paper`:
+
+     <!-- .slide: class="paper" -->
+     <div class="paper-shot"><img src="/papers/x.png" alt="…"></div>
+     <div class="cite">Authors. <em>Title.</em> Venue Year.</div>
+
+   The card scales the image to fit --shot-h tall and the content width wide,
+   whichever binds first. */
+
+.reveal .slides section.paper {
+  --shot-h: 22rem;
+}
+
+.reveal .paper-shot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.reveal .paper-shot img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--shot-h);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: none;
+  background: #fff;
+}
+
+.reveal .paper-shot+.cite {
+  margin-top: 1rem;
+  /* A two-line citation splits evenly instead of leaving the year alone. */
+  text-wrap: balance;
+}
+
+/* --- Blockquote ----------------------------------------------------------- */
+
+/* No rule, no left bar: a quotation is just the sentence in quotation marks,
+   with the source in italics below. */
+.reveal blockquote {
+  width: auto;
+  max-width: 46rem;
+  margin: 0 auto;
+  box-shadow: none;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-style: normal;
+}
+
+.reveal blockquote p:first-child {
+  margin-top: 0;
+}
+
+.reveal blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.reveal hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 1.4rem 0;
+}
+
+/* --- Tables --------------------------------------------------------------- */
+
+.reveal table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.7em;
+}
+
+.reveal table th,
+.reveal table td {
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5em 0.7em;
+  text-align: left;
+}
+
+.reveal table th {
+  font-family: var(--r-heading-font);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* --- Chrome --------------------------------------------------------------- */
+
+/* The slide number, bottom-right at 18pt. The layout this came from carries a
+   whole footer row here — venue centred, number to its right — but the venue
+   line sits on the title slide instead (`.venue` above), so the number is all
+   that is left of the row.
+
+   It lives outside `.slides`, so reveal's scale transform never reaches it and
+   a length here is measured against the browser rather than the deck — which
+   is how 18pt ended up as a 9px `rem`. Reveal publishes its scale factor as
+   --slide-scale, so multiplying by it puts the deck's own geometry back and
+   18pt stays 18pt against the body text at any window size.
+
+   Being outside `.slides` also means it is measured from the *window's* edge,
+   not the slide's. Reveal keeps the slide box 16:9 whatever shape the window
+   is and letterboxes the rest, so in a tall window the number would sit in
+   the letterbox, a long way below the slide it belongs to — and since the
+   letterbox used to be the same white as the slide, the whole window read as
+   one stretched slide. Reveal publishes the viewport and slide sizes alongside
+   the scale, so the letterbox depth is computable and the number is pinned to
+   the slide box instead. At a 16:9 window both offsets are 0.
+
+   These have to be declared here rather than in `:root`, because --slide-scale
+   is set on <body>: at `:root` it isn't in scope yet and the fallback wins. */
+
+.reveal {
+  --chrome-scale: var(--slide-scale, 1);
+  --chrome-size: calc(0.56 * var(--r-main-font-size) * var(--chrome-scale));
+  --letterbox-y: calc((var(--viewport-height, 100%) - var(--slide-height, 100%) * var(--chrome-scale)) / 2);
+  --letterbox-x: calc((var(--viewport-width, 100%) - var(--slide-width, 100%) * var(--chrome-scale)) / 2);
+  --chrome-inset-y: calc(var(--letterbox-y) + 1.5rem * var(--chrome-scale));
+  --chrome-inset-x: calc(var(--letterbox-x) + var(--slide-pad-x) * var(--chrome-scale));
+}
+
+.reveal .slide-number {
+  background: none;
+  color: var(--muted);
+  font-family: var(--r-main-font);
+  font-size: var(--chrome-size);
+  letter-spacing: 0;
+  right: var(--chrome-inset-x);
+  bottom: var(--chrome-inset-y);
+}
+
+/* Divider slides carry no number: the title slide and every section header
+   (including the demo markers, which are section headers too). The numbering
+   itself is untouched — the slide after a section header still shows its own
+   number, so the count runs 1..N over the whole deck.
+
+   `:has()` is what reaches the number, because nothing on the slide can: it is
+   a sibling of `.slides`, not a descendant of the section.
+
+   Screen only, and the guard is load-bearing. In the print view every section
+   keeps `present`, so the `:has()` is true for the whole document at once and
+   this hid the number on every page of the PDF. The number reveal injects
+   per page is a `.slide-number` too, so it matches everything here; it gets
+   the same two exemptions expressed per page in the Print section below. */
+html:not(.reveal-print) .reveal:has(section.title.present, section.section.present) .slide-number {
+  visibility: hidden;
+}
+
+/* A slide can switch the number off with `data-state="chromeless"` — reveal
+   puts the state on <html> while that slide is current. A full-bleed picture
+   wants it: the number would otherwise sit on top of the image.
+   `visibility` rather than `display`: reveal writes `display: block` inline on
+   the slide number, which would win. */
+.chromeless .reveal .slide-number {
+  visibility: hidden;
+}
+
+/* --- Motion --------------------------------------------------------------- */
+
+/* The rule is that motion answers a key press: nothing animates unprompted
+   once a slide has settled. Most of the deck rides on the cross-fade below;
+   what travels is the auto-animated pairs and a listing opening under another
+   one, and both of those answer a press. (An earlier version of this deck slid
+   a section header out of the agenda *by itself*; the review asked for that to
+   stop, along with everything else that drew the eye away from the words while
+   they were being read.)
+
+   Reveal's own durations are set in CSS rather than through `transitionSpeed`
+   (which only offers fast/slow, and which its `fade` rule outranks anyway),
+   so they're overridden here.
+
+   The `.reveal-viewport` on the front of these selectors is not decoration.
+   Reveal's own fade rule is
+
+     .reveal.fade .slides section:not([data-transition]) { transition: opacity .5s; transform: none }
+
+   whose `:not()` puts it at one class more than the obvious override, so for
+   a long time this block quietly lost and every slide cross-faded at reveal's
+   0.5s instead of the 0.2s declared above — while fragments and backgrounds
+   did use 0.2s. Matching reveal's specificity (`.reveal-viewport` is the
+   class reveal puts on the deck's parent element) is what makes --t-fade real
+   and makes one cross-fade look like the next.
+
+   `transform: none` comes along for the same reason the selectors deliberately
+   do *not* exclude `[data-transition]`: a stray attribute on a slide should
+   not be able to restore reveal's slower default, nor make the slide travel.
+   Auto-animate is not caught by this — reveal drives that with `!important`
+   rules of its own. */
+
+.reveal-viewport .reveal.fade .slides section,
+.reveal-viewport .reveal.fade .slides>section>section {
+  transition-property: opacity;
+  transition-duration: var(--t-fade);
+  transform: none;
+}
+
+/* Both selectors, so re-adding `transitionSpeed` to main.js can't quietly
+   outrank this one. */
+.reveal[data-transition-speed]>.backgrounds .slide-background,
+.reveal>.backgrounds .slide-background {
+  transition-duration: var(--t-fade);
+}
+
+/* Fragments fade, and only fade. */
+.reveal .fragment {
+  transition-duration: var(--t-fade);
+}
+
+/* --- Chrome (progress, controls) ------------------------------------------ */
+
+/* Pinned to the slide box the same way as the slide number above. */
+.reveal .progress {
+  height: 3px;
+  color: var(--accent);
+  left: var(--letterbox-x);
+  width: calc(100% - 2 * var(--letterbox-x));
+  bottom: var(--letterbox-y);
+}
+
+.reveal .controls {
+  color: var(--muted);
+  right: calc(var(--letterbox-x) + var(--r-controls-spacing));
+  bottom: calc(var(--letterbox-y) + var(--r-controls-spacing));
+}
+
+/* --- Letterbox ------------------------------------------------------------ */
+
+/* The slide carries its own ground and the viewport gets a slightly darker
+   one, so in a window that isn't 16:9 the slide is a visible rectangle rather
+   than content floating in a field of white. `.slides` is the box reveal
+   scales, so the colour tracks the slide exactly. The print view lays the
+   slides out as pages with nothing around them, so it gets the plain ground
+   back. */
+.reveal-viewport {
+  background-color: var(--letterbox);
+}
+
+.reveal .slides {
+  background-color: var(--r-background-color);
+}
+
+html.reveal-print .reveal-viewport {
+  background-color: var(--r-background-color);
+}
+
+/* Reveal doesn't run layout() in the print view, so the viewport variables
+   the letterbox is computed from are never set there. No letterbox in print
+   anyway: the pages are the slides. */
+html.reveal-print .reveal {
+  --letterbox-x: 0px;
+  --letterbox-y: 0px;
+}
+
+/* --- Print (`?print-pdf`, `npm run pdf`) ---------------------------------- */
+
+/* The print view is a different DOM. Reveal moves each section into a
+   `div.pdf-page` wrapper sized to the page, and `css/print/pdf.scss` then
+   forces `display: block` and `padding: 0` on the section with `!important`.
+   Between them the deck loses the two things every measurement in this file
+   assumes: the flex column that centres a slide's one block, and the
+   --slide-pad-* margins. The selector at the top of this file is
+   `.slides>section`, which the wrapper breaks, so nothing put them back and
+   the whole deck printed flush to the top-left corner with the type running
+   off the paper edge.
+
+   Restoring both is all it takes. `min-height: 100%` resolves against
+   `.pdf-page`, which reveal sizes to the page, so a slide is a full 720 tall
+   again — that is also what puts the absolutely-positioned furniture (the
+   title slide's venue line) back at the foot of the page instead of leaving
+   it under the content.
+
+   The `!important`s are reveal's, not a preference: nothing outranks an
+   `!important` but another one. It is also why the slides that set their own
+   padding have to be restated here — a plain `padding` declaration on
+   `.diagram` no longer reaches. Keep this list in step with the `padding`
+   declarations on the section classes above. */
+html.reveal-print .reveal .slides .pdf-page>section {
+  min-height: 100%;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--slide-pad-y) var(--slide-pad-x) !important;
+}
+
+html.reveal-print .reveal .slides .pdf-page>section.diagram {
+  padding: 0 !important;
+}
+
+html.reveal-print .reveal .slides .pdf-page>section.wide {
+  padding: var(--slide-pad-y) 2rem !important;
+}
+
+
+html.reveal-print .reveal .slides .pdf-page>section.thanks {
+  align-items: flex-start;
+  padding: var(--slide-pad-y) calc(var(--slide-pad-x) + var(--panel-w) + var(--panel-gap)) var(--slide-pad-y) var(--slide-pad-x) !important;
+}
+
+/* The per-page number. Reveal's own `.slide-number-pdf` rule sets a flat 14px,
+   which outranks the --chrome-size above by a class; the size is the deck's
+   everywhere else, so take it back. */
+html.reveal-print .reveal .slide-number-pdf {
+  font-size: var(--chrome-size);
+}
+
+/* The two exemptions the screen rules make, per page: a divider slide carries
+   no number, and neither does a `chromeless` one. Both are keyed off the
+   *current* slide on screen — `.present`, and the state reveal writes on
+   <html> — and in a printed deck every page is current at once, so they have
+   to be asked of the page instead. */
+html.reveal-print .pdf-page:has(section.title, section.section) .slide-number,
+html.reveal-print .pdf-page:has(section[data-state~="chromeless"]) .slide-number {
+  visibility: hidden;
+}
+
+/* --- Syntax highlighting ---------------------------------------------------
+
+   Two channels, and both of them mean something.
+
+   **Weight.** A listing is set at --code-weight (500), not at the 700 the
+   whole block used to carry. At 700 everything in a listing is the darkest
+   thing on the slide at once: the coloured tokens all sit around 5:1 against
+   white and the uncoloured ones at 12:1, so `let` and `->` read as *fainter*
+   than the variable next to them and the colour scheme reads as a smudge.
+   Punctuation and comments drop a step below the listing, to
+   --code-weight-quiet; the mark classes above take --code-weight-loud, which
+   is the weight this section gives back by not spending it everywhere.
+
+   **Colour.** The deck's two grammars (src/ocaml-hljs.js, src/lean-hljs.js)
+   are cut to hand these rules the same seven categories, so an OCaml and a
+   Lean listing are painted alike:
+
+     keyword      `let` `fun` `type` `def` `by`     the shape of the language
+     operator     `->` `*` `∃` `→` `≤`             what the expression *does*
+     type         `tree generator`, `Leaf`, `Nat`   every name of a thing
+     literal      `()` `[]` `true`, and numbers     constants
+     string       string bodies
+     meta         `[@@deriving …]` `%bind`          the metaprogramming
+                  `derive_generator`
+     punctuation  `( ) , ; = | . ~`                 scaffolding, recedes
+     comment      prose
+
+   Ordinary identifiers are left alone: in ML application is juxtaposition,
+   there is nothing to distinguish a call from a variable, and they are the
+   content — the body colour at the listing's weight is the darkest thing on
+   the slide, which is right.
+
+   `.hljs-title` and friends are here for a fence in some other language; no
+   deck listing produces one. */
+
+.reveal .hljs {
+  background: transparent;
+  color: inherit;
+}
+
+.reveal .hljs-keyword,
+.reveal .hljs-selector-tag {
+  color: var(--code-keyword);
+}
+
+/* Arrows, binders and relations. Painted like a keyword by default — they are
+   grammar too — but split out so a theme can separate them. */
+.reveal .hljs-operator {
+  color: var(--code-operator);
+}
+
+/* Type names, constructors, module names and type variables, in both
+   languages. One colour: in ML the constructors and the types are one
+   vocabulary, and giving them a hue each turns a listing into a rainbow
+   without telling anyone anything. */
+.reveal .hljs-type,
+.reveal .hljs-class .hljs-title,
+.reveal .hljs-built_in,
+.reveal .hljs-symbol {
+  color: var(--code-type);
+}
+
+.reveal .hljs-string,
+.reveal .hljs-attr,
+.reveal .hljs-attribute,
+.reveal .hljs-regexp {
+  color: var(--code-string);
+}
+
+/* `()`, `[]`, `true` and the numbers are one thing — constants — and not, as
+   they were, part of the keyword blue. The `[]` in `(x, [], s)` is the whole
+   point of the slide it appears on. */
+.reveal .hljs-number,
+.reveal .hljs-literal {
+  color: var(--code-number);
+}
+
+.reveal .hljs-title,
+.reveal .hljs-name,
+.reveal .hljs-section,
+.reveal .hljs-function .hljs-title {
+  color: var(--r-main-color);
+}
+
+.reveal .hljs-comment,
+.reveal .hljs-quote {
+  color: var(--code-comment);
+  font-weight: var(--code-weight-quiet);
+  font-style: italic;
+}
+
+/* The ppx attribute, the `%bind` extension point, and Lean's two generator
+   derivers. Same colour across both languages on purpose: the deck's middle
+   section is about that one idea, and this is where it shows up in the code. */
+.reveal .hljs-meta,
+.reveal .hljs-doctag {
+  color: var(--code-meta);
+}
+
+/* The one category that is lighter *and* thinner than the code around it.
+   Nothing here is a name; it is all delimiter, and at 700 near-black it was
+   the loudest thing in a listing like `Node (Node (Leaf, 7, Leaf), -3, …)`,
+   where the shape of the tree is what the audience is meant to see. */
+.reveal .hljs-punctuation,
+.reveal .hljs-params {
+  color: var(--code-punctuation);
+  font-weight: var(--code-weight-quiet);
+}
+
+.reveal .hljs-emphasis {
+  font-style: italic;
+}
+
+.reveal .hljs-strong {
+  font-weight: var(--code-weight-loud);
+}

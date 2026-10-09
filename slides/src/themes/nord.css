@@ -1,0 +1,146 @@
+/* nord — white ground, Nord palette, Fira Sans headings over Montserrat body.
+   Ported from a Keynote/PowerPoint deck whose colour scheme is literally
+   called "Nord": titles are Fira Sans SemiBold, body is Montserrat and every
+   code listing is Fira Mono. Slides are light; colour arrives in small doses
+   (one accent rule, one tinted tile) rather than as a background wash.
+
+   This file sets *variables only*. Anything structural — spacing, a layout
+   class — belongs in src/base.css.
+
+   The Aurora accents carry meaning across the deck and are referenced by name
+   in base.css — see the agenda-tile rules there:
+
+     green  #A3BE8C   generation / inputs
+     purple #B48EAD   the program under test
+     teal   #8FBCBB   properties / specifications
+     red    #BF616A   the primary accent: rules, arrows, emphasis
+     orange #D08770   asides and secondary emphasis
+*/
+
+:root {
+  --r-background-color: #ffffff;
+  --r-main-color: #2e3440; /* Nord polar night 0 */
+  --r-heading-color: #2e3440;
+
+  --r-main-font: 'Montserrat Variable', system-ui, sans-serif;
+  /* 32pt on a 13.33in slide, at 1280px wide. Almost everything is set at this
+     one size; base.css scales off it. */
+  --r-main-font-size: 43px;
+  --r-heading-font: 'Fira Sans', system-ui, sans-serif;
+  --r-code-font: 'Fira Mono', ui-monospace, monospace;
+
+  /* Fira Sans SemiBold is the title face; 600 is that weight. */
+  --r-heading-font-weight: 600;
+  --r-heading-line-height: 1.08;
+  --r-heading-letter-spacing: -0.01em;
+  --r-heading-text-transform: none;
+  --r-heading-text-shadow: none;
+  --r-heading1-text-shadow: none;
+  --r-heading-margin: 0 0 0.55em 0;
+
+  /* 60pt title slide, 50pt section header — both over the 32pt body. */
+  --r-heading1-size: 1.86em;
+  --r-heading2-size: 1.55em;
+  --r-heading3-size: 1.1em;
+  --r-heading4-size: 0.95em;
+
+  --r-block-margin: 0.8em;
+
+  --r-link-color: #5e81ac;
+  --r-link-color-hover: #81a1c1;
+  --r-link-color-dark: #4c6690;
+
+  --r-selection-background-color: #ebcb8b;
+  --r-selection-color: #2e3440;
+
+  --r-overlay-element-bg-color: 46, 52, 64;
+  --r-overlay-element-fg-color: 255, 255, 255;
+
+  /* --- base.css tokens ---------------------------------------------------- */
+
+  --accent: #bf616a; /* Aurora red — the deck's accent */
+  --accent-soft: #f7e6e7;
+  /* The green a mark takes when it points at generation rather than at
+     emphasis — the same Aurora green walked down for white that the string
+     colour uses, so a green mark and a string sit at the same weight. */
+  --accent-green: #67813f;
+  --accent-green-soft: #ecf2e0;
+  --muted: #6a7385; /* between Nord 3 and the deck's own dark grey */
+  --rule: #e5e9f0; /* Nord snow storm 5 */
+  --surface: #f6f8fa;
+  --code-bg: #f7f9fb;
+
+  /* --- Named Aurora accents, consumed by the agenda-tile rules ------------ */
+
+  --nord-green: #a3be8c;
+  --nord-purple: #b48ead;
+  --nord-teal: #8fbcbb;
+  --nord-orange: #d08770;
+  --nord-red: #bf616a;
+  --nord-yellow: #ebcb8b;
+  --nord-blue: #5e81ac;
+
+  /* --- Charts -------------------------------------------------------------- */
+  /* One colour per outcome, the same on every chart: `0` is always frost blue,
+     `⊥` (no answer yet) is always the pale Nord 4 left over at the top. Each
+     outcome after 0 is that blue at less opacity, the way the tail of a
+     geometric distribution thins out: 35% + 65% × 0.7ⁿ, so it pales fast and
+     then settles. 35% is the floor; below it the blue starts to pass for ⊥.
+
+     Not real alpha: the layers overlap (see Distributions in base.css), so a
+     translucent one would show every layer behind it. Mixing with white in
+     sRGB is what that alpha would composite to on the slide, kept opaque. */
+
+  --pmf-bottom: #d8dee9;
+  --pmf-0: #5e81ac;
+  --pmf-1: color-mix(in srgb, #5e81ac 80%, #fff);
+  --pmf-2: color-mix(in srgb, #5e81ac 67%, #fff);
+  --pmf-3: color-mix(in srgb, #5e81ac 57%, #fff);
+  --pmf-4: color-mix(in srgb, #5e81ac 51%, #fff);
+  --pmf-5: color-mix(in srgb, #5e81ac 46%, #fff);
+  --pmf-6: color-mix(in srgb, #5e81ac 43%, #fff);
+  --pmf-7: color-mix(in srgb, #5e81ac 40%, #fff);
+  --pmf-8: color-mix(in srgb, #5e81ac 39%, #fff);
+  --pmf-9: color-mix(in srgb, #5e81ac 38%, #fff);
+  --pmf-10: color-mix(in srgb, #5e81ac 37%, #fff);
+  --pmf-11: color-mix(in srgb, #5e81ac 36%, #fff);
+
+  /* The task-bucket bar: frost blue from dark (found in under 10 draws) to
+     pale, then the hatched ground of the tasks nothing found. */
+  --bucket-1: #3e5a82;
+  --bucket-2: #5e81ac;
+  --bucket-3: #88a4c8;
+  --bucket-4: #b7c8de;
+  --bucket-open: #eceff4;
+  --bucket-hatch: #d8dee9;
+
+  /* Section-header stripes. */
+  --stripe-1: #edf0f5;
+  --stripe-2: #e6eaf0;
+  --stripe-3: #d8dfe9;
+
+  /* --- Syntax ------------------------------------------------------------- */
+  /* Nord's own syntax colours are tuned for a dark ground; these are the same
+     hues walked down in lightness until they hold up against white.
+
+     They sit in one band — 5:1 against white, give or take — because the
+     categories they name are peers, and the eye should read them as different
+     *hues*, not as one of them being closer to the body colour than another.
+     Body text is at 12:1, which is where the listing's uncoloured identifiers
+     sit; the two greys at the bottom are the only things allowed to be pale.
+     See the Syntax section at the foot of src/base.css for what each names. */
+
+  --code-keyword: #4c6f9e; /* Nord frost 3 */
+  --code-operator: var(--code-keyword);
+  --code-type: #33706e; /* Nord frost 0/1 */
+  --code-number: #8a5482; /* Aurora purple */
+  --code-meta: #a05f4b; /* Aurora orange */
+  /* Deliberately the lighter Aurora green: it is the value --accent-green is
+     walked from, so a green mark and a string sit at the same weight. */
+  --code-string: #67813f;
+
+  --code-comment: #7f8998;
+  /* The only token pale enough to disappear, which is the point — it is all
+     delimiter. base.css thins it as well. */
+  --code-punctuation: #939cac;
+}

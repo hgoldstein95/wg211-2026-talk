@@ -1,0 +1,10 @@
+name = "talk"
+version = "0.1.0"
+defaultTargets = ["Talk"]
+
+[[lean_lib]]
+name = "Talk"
+
+[[require]]
+name = "basalt"
+path = "../../basalt"

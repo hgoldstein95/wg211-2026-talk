@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.pdf
+.DS_Store
+.vite/
+snapshots/
+!public/**/*.pdf
+talk-offline/
+*.log
+.env
+.env.*

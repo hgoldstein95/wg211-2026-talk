@@ -1,0 +1,26 @@
+- Start with a tight 5 on PBT and why it’s important
+    - Connects SE to FM
+    - Enables VGD
+- Focus in on generators and talk about why they’re hard to get right
+    - Introduce running example — genHeap
+    - Talk about them being annoying to write — cite PBT in Practice
+    - Talk about them being error-prone and needing validation — show that genHeap is actually non-terminating or critical
+- Part 1: Palamedes
+    - Show ML-Family workshop style derivation that breaks down parts of the predicate to build the generator (only on the “inside” of the generator)
+    - Tie the knot by associating folds and unfolds
+    - Expand on this a fair bit, folks there will enjoy the recursion schemes
+- Part 2: Basalt
+    - Talk about where previous formalisms failed
+        - Expressiveness
+        - Depth of specification
+        - TODO: Workshop this until it feels justified
+    - Basalt is the solution
+        - Fixes expressivity
+        - Distributional proofs
+        - Program logics and walk
+- The future of PBT -> future of SE
+    - Everything will be VGD
+    - PBT will be the glue
+    - Basalt will be the core representation
+    - User interfaces on top will let us decide what the generators should be
+    - Plug FPBT
