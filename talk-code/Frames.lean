@@ -163,7 +163,8 @@ def genFrames : G (List Nat) :=
     fun _ => do
       let n ← genElapsed
       let ns ← genFrames
-      return n :: ns]
+      return n :: ns
+  ]
 partial_fixpoint
 
 theorem genFrames.sound_complete : IsSoundAndComplete genFrames FramesOK := by

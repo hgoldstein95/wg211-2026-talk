@@ -660,66 +660,141 @@ html.reveal-print .reveal pre:has(.code-annot) code {
   font-weight: 400;
 }
 
-/* --- The derivation widget ------------------------------------------------ */
+/* --- A listing taken apart ------------------------------------------------ */
 
-/* The talk's widget (src/derivation.js, src/derivation.css), fed this deck's
-   colours through the tokens it reads and squared off to match the rest. */
-.reveal {
-  --r-code-font: var(--mono);
-  --r-heading-font: var(--mono);
-  --code-weight: 500;
-  --code-bg: #24272e;
-  --rule: var(--line);
-  --muted: var(--dim);
-  --accent: var(--tested);
-  --accent-soft: rgb(246 146 58 / 0.2);
-  --t-move: var(--t-open);
+/* One listing comes apart into tiles, each tile turns over, and the tiles
+   close up into another listing (src/exploded.js has the markup). This is the
+   most motion in the deck, and every part of it answers a press.
+
+   A piece is placed on the grid a listing's characters sit on: one column is
+   1ch and one row is a line. Whole or built, the pieces are set exactly as a
+   listing would set them, so the slide starts and ends looking like one.
+
+   Yellow tiles are still predicate. Orange tiles are generator, as orange is
+   everywhere else. */
+.reveal .exploded {
+  --lh: 1.4;
+  --move: calc(var(--t-open) * 1.1);
+  --turn: calc(var(--t-open) * 0.7);
+
+  position: relative;
+  flex: none;
+  width: calc(var(--cols) * 1ch);
+  height: calc(var(--rows) * var(--lh) * 1em);
+  font: 500 30px / var(--lh) var(--mono);
+  font-variant-ligatures: none;
+  text-align: left;
+  white-space: pre;
 }
 
-/* A fixed height, the tallest step's: the widget is centred on its slide, so
-   one that grew with its script would shift on every press.
+.reveal .exploded .piece,
+.reveal .exploded .glue {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(calc(var(--x) * 1ch), calc(var(--y) * var(--lh) * 1em));
+}
 
-   It runs in its `animated` mode here, and slower than the widget's own
-   defaults: 1.2s for anything that travels and 0.75s for a fade, on an even
-   ease, so nothing arrives in a hurry. Both are multiples of the deck's
-   `--t-*` tokens, so a snapshot still lands on the finished state. */
-.reveal .derivation {
-  --deriv-move: calc(var(--t-open) * 2.4);
-  --deriv-fade: calc(var(--t-fade) * 3);
-  --deriv-ease: ease;
+/* The pieces leave just after one another, quickly, and settle where they
+   land with the least overshoot that still reads as one. */
+.reveal .exploded .piece {
+  --x: var(--whole-x);
+  --y: var(--whole-y);
+  transition:
+    transform var(--move) cubic-bezier(0.2, 1.06, 0.3, 1) calc(var(--i) * var(--t-fade) * 0.12),
+    opacity var(--t-fade);
+}
 
-  width: 1200px;
-  min-height: 500px;
+.reveal .exploded.is-apart .piece {
+  --x: var(--apart-x);
+  --y: var(--apart-y);
+}
+
+.reveal .exploded.is-built .piece {
+  --x: var(--built-x);
+  --y: var(--built-y);
+}
+
+/* A piece the built listing has no place for goes as the others close up. */
+.reveal .exploded.is-built .piece.drops {
+  opacity: 0;
+}
+
+/* The two faces of a piece share its top left corner. The one showing arrives
+   over the second half of a turn; the rule below takes the other away over
+   the first half. */
+.reveal .exploded .piece > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  isolation: isolate;
+  transition:
+    transform calc(var(--turn) / 2) ease-out calc(var(--turn) / 2),
+    opacity 0s linear calc(var(--turn) / 2);
+}
+
+.reveal .exploded .piece:not(.is-swapped) > .to,
+.reveal .exploded .piece.is-swapped > .from {
+  transform: scaleY(0);
+  opacity: 0;
+  transition:
+    transform calc(var(--turn) / 2) ease-in,
+    opacity 0s linear calc(var(--turn) / 2);
+}
+
+/* The tile behind a face. It is there only while the listing is apart. */
+.reveal .exploded .piece > span::before {
+  content: '';
+  position: absolute;
+  inset: 0 -0.4em;
+  z-index: -1;
+  background: rgb(255 215 94 / 0.14);
+  box-shadow: 0 0 0 2px rgb(255 215 94 / 0.55);
+  opacity: 0;
+  transition: opacity var(--t-fade);
+}
+
+.reveal .exploded .piece > .to::before {
+  background: rgb(246 146 58 / 0.16);
+  box-shadow: 0 0 0 2px rgb(246 146 58 / 0.75);
+}
+
+.reveal .exploded.is-apart .piece > span::before {
+  opacity: 1;
+}
+
+/* Glue goes as soon as its listing starts to come apart, and comes in once
+   the pieces have landed. */
+.reveal .exploded .glue {
+  opacity: 0;
+  transition: opacity var(--t-fade);
+}
+
+.reveal .exploded:not(.is-apart, .is-built) .glue[data-in='whole'],
+.reveal .exploded.is-built .glue[data-in='built'] {
+  opacity: 1;
+  transition: opacity var(--t-fade) var(--move);
+}
+
+/* The name of the rule a step applies, small and out of the way: what the
+   step means is said aloud. The names are stacked in one place under the
+   pieces, hung from their box so they take no room of their own, and reveal
+   shows the current one. */
+.reveal .exploded .steps {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 44px);
+  height: 40px;
+}
+
+.reveal .exploded .steps p {
+  position: absolute;
+  inset: 0;
   margin: 0;
-  font-size: 24px;
-}
-
-/* The widget is wider than a listing may be, so its slide gives up some of
-   its side padding. */
-.reveal .slides > section.code:has(.derivation) {
-  padding: 0 40px;
-}
-
-.reveal .derivation-pane {
-  border: 3px solid var(--line);
-  border-radius: 0;
-}
-
-.reveal .derivation-goal {
-  border-left-width: 4px;
-}
-
-.reveal .derivation-goal[data-state='closed'] {
-  border-left-color: var(--proved);
-}
-
-.reveal .derivation-goal[data-state='closed'] .derivation-goal-label::after {
-  color: var(--proved);
-}
-
-.reveal .hole,
-.reveal .deriv-mark {
-  border-radius: 0;
+  color: var(--dim);
+  font: 500 28px / 40px var(--mono);
+  text-align: center;
 }
 
 /* --- A distribution, drawn ------------------------------------------------- */

@@ -481,19 +481,120 @@ fun (l : ListF Frame Unit) =>
           </aside>
         </section>
 
+        <!-- The layer predicate, taken apart, changed a piece at a time, and
+             put back together as the layer generator (src/exploded.js). The
+             first press spreads the pieces out, the or lifted over its two
+             sides; the next five turn one rule's pieces each; the last closes
+             them up into the step function the unfold is given four slides on.
+
+             Only the or moves, from between its sides to in front of them.
+             Everything else keeps the order it is written in, because `do`
+             notation has the order of the formula: `∃ n,` is `let n ←`, and
+             the `∧` between the draw and the rest is the `;` between them.
+             Closed up, the block is set on lines of its own, where a line
+             break is the `;`, so that tile fades out as it lands (`drops`).
+
+             The rules are the real ones (`s_pick`, `s_bind`, `s_pure` in
+             Palamedes/CorrectGen.lean, `s_between` in Palamedes/Data/Nat.lean).
+             The liberties, all for a picture that fits a slide:
+
+               - The search works on goals from the top down. It never holds
+                 loose pieces, so the order of the presses is its order.
+               - `s_bind` takes `∃ a, P a ∧ Q a b` as one piece and gives
+                 `x >>= f`. Here it is two tiles that turn together, and the
+                 bind is written in `do` notation.
+               - `s_pick` gives `pick x y`. It is spelled `oneOf [x, y]` here,
+                 as on the unfold slide; the search prints a `frequency`.
+               - `s_between` wants both bounds, `0 ≤ n ∧ n ≤ 200000`.
+               - The real layer goal wraps the check in `guard`, and the search
+                 applies every rule under `convert`.
+
+             Each piece is `column row` in each of three layouts, counted as
+             in the listings they spell:
+
+               whole    fun (l : ListF Frame Unit) =>
+                          l = .nilF ∨
+                          ∃ n, n ≤ 200000 ∧ l = .consF n ()
+
+               apart    ∨
+                            l = .nilF
+                            ∃ n,   n ≤ 200000   ∧   l = .consF n ()
+
+               built    oneOf [
+                          pure .nilF,
+                          do
+                            let n ← chooseNat 0 200000
+                            pure (.consF n ())
+                        ]
+
+             Apart, the rows are 1.8 lines from one another, and a piece
+             starts far enough along its row for the wider faces before it. -->
         <section class="code">
-          <div class="derivation animated" data-derivation="layer"></div>
+          <div class="exploded" role="img"
+               aria-label="The layer predicate comes apart into six pieces. Each piece
+                           turns into a piece of a program: or into oneOf, an equation
+                           into pure, exists into a draw, a bound into chooseNat, and
+                           into a semicolon. The pieces close up into the layer
+                           generator, a do block on lines of its own.">
+            <span class="glue" data-in="whole" data-at="0 0">fun (l : ListF Frame Unit) =&gt;</span>
+            <span class="piece" data-swap="pick"
+                  data-whole="12 1" data-apart="0 0" data-built="0 0">
+              <span class="from">∨</span><span class="to">oneOf</span>
+            </span>
+            <span class="piece" data-swap="nil"
+                  data-whole="2 1" data-apart="4 1.8" data-built="2 1">
+              <span class="from">l = .nilF</span><span class="to">pure .nilF</span>
+            </span>
+            <span class="piece" data-swap="bind"
+                  data-whole="2 2" data-apart="4 3.6" data-built="4 3">
+              <span class="from">∃ n,</span><span class="to">let n ←</span>
+            </span>
+            <span class="piece" data-swap="between"
+                  data-whole="7 2" data-apart="13.6 3.6" data-built="12 3">
+              <span class="from">n ≤ 200000</span><span class="to">chooseNat 0 200000</span>
+            </span>
+            <span class="piece drops" data-swap="bind"
+                  data-whole="18 2" data-apart="34.2 3.6" data-built="30 3">
+              <span class="from">∧</span><span class="to">;</span>
+            </span>
+            <span class="piece" data-swap="cons"
+                  data-whole="20 2" data-apart="37.8 3.6" data-built="4 4">
+              <span class="from">l = .consF n ()</span><span class="to">pure (.consF n ())</span>
+            </span>
+            <span class="glue" data-in="built" data-at="6 0">[</span>
+            <span class="glue" data-in="built" data-at="12 1">,</span>
+            <span class="glue" data-in="built" data-at="2 2">do</span>
+            <span class="glue" data-in="built" data-at="0 5">]</span>
+            <!-- One step a press, each naming the rule it applies. The first
+                 takes the listing apart and the last puts it back, and
+                 neither is a rule. -->
+            <div class="steps">
+              <p class="fragment current-visible"></p>
+              <p class="fragment current-visible" data-swap="pick">s_pick</p>
+              <p class="fragment current-visible" data-swap="nil">s_pure</p>
+              <p class="fragment current-visible" data-swap="bind">s_bind</p>
+              <p class="fragment current-visible" data-swap="between">s_between</p>
+              <p class="fragment current-visible" data-swap="cons">s_pure</p>
+              <p class="fragment current-visible"></p>
+            </div>
+          </div>
           <aside class="notes">
-            The core automation, on that disjunction. The rules read the logic off as a program.
+            Here is that predicate for one layer. The search reads its logic off as a program,
+            one connective at a time. [click] So take it apart: an or, over its two sides.
             [click] <code>s_pick</code>: a disjunction is a choice. [click]
             <code>s_pure</code>: an equation is a constant. [click] <code>s_bind</code>: an
-            existential is a draw and a continuation. [click] <code>s_between</code>: a bound
-            is a range. [click] <code>s_pure</code> again; no goals left, and the existential
-            has its witness: the term is a generator for one layer. The rules are real. The
-            liberties: each goal is stated as an existential where Palamedes has
-            <code>CorrectGen</code>; <code>s_between</code> wants both bounds; the real layer
-            goal wraps the check in <code>guard</code>; and the search applies every rule under
-            <code>convert</code>.
+            existential is a draw, and the and is the semicolon: draw <code>n</code>, and then
+            go on with it. [click] <code>s_between</code>: a bound is a range. [click]
+            <code>s_pure</code> again, and every piece is program. [click] Put it back
+            together, the semicolon as a line break: a generator for one layer. Nothing
+            changed places but the or.
+            Every rule comes with its proof, so the generator samples exactly the predicate.
+            The rules are real. The liberties: the search works on goals from the top down,
+            not on loose pieces; <code>s_bind</code> takes the existential and its conjunction
+            as one, and gives a bind, written here as a <code>do</code> block;
+            <code>s_pick</code> gives <code>pick</code>, spelled <code>oneOf</code> here;
+            <code>s_between</code> wants both bounds; the real layer goal wraps the check in
+            <code>guard</code>; and the search applies every rule under <code>convert</code>.
           </aside>
         </section>
 
@@ -566,9 +667,52 @@ def framesOK (fs : List Frame) : Bool :=
             <code>true</code> comes out. [click] So run it backwards. An unfold turns the
             boolean back into a value: start from <code>true</code>, and out comes a list the
             fold accepts. Which one is not determined, and that is exactly a generator. The
-            derivation built one layer of this: if one step of the unfold undoes one layer of
+            search built one layer of this: if one step of the unfold undoes one layer of
             the fold, the unfold undoes the whole fold. A fudge on the slide: the real unfold
             starts from a seed, here a unit, not from <code>true</code>.
+          </aside>
+        </section>
+
+        <!-- The picture, as a statement: the depth of the section. `alg` is
+             the fold's function out of a layer, and `step` is the unfold's
+             function into one. A step that samples exactly the layers `alg`
+             sends to `b` unfolds to a generator for exactly the lists that
+             fold to `b`.
+
+             This is the paper's S-List-Unfold' (Lemma "Fold-Unfold-Inverse
+             for Lists") in the deck's spelling, where a layer is a `ListF` and
+             the paper has an `Option (α × β)`, and the fold takes one
+             function. It is not checked in Lean in this form. The rule the
+             search applies, `List.s_unfold`, is generated by
+             `derive_palamedes` and is more general ("Handling More Complex
+             Folds" in the paper).
+
+             Read literally for `framesOK`, the seed is the fold's answer,
+             `true`, at every step, as in the picture before this. The
+             generator on the next slide has a unit there. -->
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="|4-5|6-7">
+theorem fold_unfold_inverse
+    (alg  : ListF α β → β)
+    (step : β → G (ListF α β)) :
+    (∀ b, (step b).support =
+      fun l => alg l = b) →
+    (∀ b, (List.unfold step b).support =
+      fun xs => List.fold alg xs = b)
+          </code></pre>
+          <aside class="notes">
+            That last sentence, as a theorem. <code>alg</code> is what the fold does with one
+            layer; <code>step</code> is what the unfold does with one seed. [click] Suppose
+            that, for every <code>b</code>, the step samples exactly the layers that
+            <code>alg</code> sends to <code>b</code>: one layer, undone. [click] Then the
+            unfold from <code>b</code> samples exactly the lists that fold to <code>b</code>:
+            the whole fold, undone. The premise is what the search just discharged, piece by
+            piece. This rule is what turns it into a generator for lists, and the recursion is
+            proved once, here, for every predicate that is a fold. This is the paper’s
+            S-List-Unfold′ in the deck’s spelling, not checked in Lean in this form; the rule
+            the search applies, <code>List.s_unfold</code>, is more general. Read literally
+            for <code>framesOK</code>, the seed is <code>true</code> at every step, as in the
+            picture; the generator on the next slide has a unit there.
           </aside>
         </section>
 
@@ -589,14 +733,15 @@ def genFrames :=
       pure .nilF,
       do
         let n ← chooseNat 0 200000
-        pure (.consF n ())])
+        pure (.consF n ())
+    ])
     ()
             </code></pre>
           </div>
           <aside class="notes">
             <p>
               The predicate as a fold. [click] And the generator as the matching unfold: its
-              step is the layer generator from the derivation, and <code>List.unfold</code> does
+              step is the layer generator we assembled, and <code>List.unfold</code> does
               the recursion, once, for every generator (it is a
               <code>partial_fixpoint</code>, generated by
               <code>derive_palamedes List</code>). Cleaned up from what
@@ -752,14 +897,15 @@ def SPMF (α : Type) : Type :=
         </section>
 
         <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|1|8">
+          <pre><code class="language-lean" data-trim data-line-numbers="|1|9">
 def genFrames [Gen G] : G (List Nat) :=
   oneOf! [
     fun _ => pure [],
     fun _ => do
       let n ← genElapsed
       let ns ← genFrames
-      return n :: ns]
+      return n :: ns
+  ]
 partial_fixpoint
           </code></pre>
           <aside class="notes">
@@ -878,7 +1024,8 @@ def genFrames [Gen G] : G (List Nat) :=
     fun _ => do
       let n ← genElapsed
       let ns ← genFrames
-      return n :: ns]
+      return n :: ns
+  ]
 partial_fixpoint
             </code></pre>
             <pre class="mark-fuel fragment"><code class="language-lean" data-trim>
@@ -1041,7 +1188,8 @@ def genElapsed : G Nat :=
     (3, chooseNat 900 1100),
     (1, pure 1000),
     (2, chooseNat 1001 16999),
-    (1, chooseNat 14000 200000)]
+    (1, chooseNat 14000 200000)
+  ]
           </code></pre>
           <aside class="notes">
             Now the generator we skipped: where <code>genFrames</code> gets a frame time. This
@@ -1105,7 +1253,8 @@ def genElapsed : G Nat :=
     (3, chooseNat 900 1100),
     (1, pure 1000),
     (2, chooseNat 1001 16999),
-    (1, chooseNat 14000 200000)]
+    (1, chooseNat 14000 200000)
+  ]
           </code></pre>
           <aside class="notes">
             The fix is one number, and now the same proof goes through.

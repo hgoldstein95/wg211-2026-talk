@@ -12,7 +12,7 @@ it before adding a slide, and copy the nearest existing slide.
 | `src/main.js` | Entry point and reveal config. |
 | `src/voxel.js` | Draws the blocks (`#blk-…`). |
 | `src/code-marks.js` | `mark-*` and `annotate-*` classes on a listing. |
-| `src/derivation.js`, `derivations.js`, `derivation.css` | The stepped proof widget and its steps. |
+| `src/exploded.js` | The listing that comes apart, turns a piece at a time, and closes up as another. |
 | `src/lean-hljs.js` | The Lean grammar; highlight.js ships none. |
 
 `../materials/` is the previous version of the talk, kept for reference. It is
@@ -44,6 +44,3 @@ new token has to be added in both.
 - highlight.js rewrites a listing from its text, so a `<span>` written inside
   one is lost. To point at part of a listing, step its lines with
   `data-line-numbers`, or add a mark or annotation in `src/code-marks.js`.
-- The derivation widget colors its own tokens with the same `hljs-*` classes.
-  A change to the categories in `src/lean-hljs.js` needs the same change in
-  `src/derivation.js`.

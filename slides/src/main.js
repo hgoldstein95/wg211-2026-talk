@@ -2,7 +2,7 @@
 //
 // The slides are written straight into `index.html`, and the whole look is
 // `deck.css`. The rest is machinery: the Lean grammar, the marks and
-// annotations inside a listing, the derivation widget, and the blocks.
+// annotations inside a listing, the listing that comes apart, and the blocks.
 
 import Reveal from 'reveal.js'
 import Highlight from 'reveal.js/plugin/highlight'
@@ -17,11 +17,10 @@ import '@fontsource/fira-mono/400.css'
 import '@fontsource/fira-mono/500.css'
 
 import 'reveal.js/reveal.css'
-import './derivation.css'
 import './deck.css'
 
 import { applyCodeMarks } from './code-marks.js'
-import { initDerivations } from './derivation.js'
+import { initExploded } from './exploded.js'
 import lean from './lean-hljs.js'
 import { installBlocks } from './voxel.js'
 
@@ -57,10 +56,10 @@ await Reveal.initialize({
   pdfSeparateFragments: true,
 })
 
-// After highlighting, so the spans these add survive it; and after the slides
-// exist, so the widget can find its mount point and claim its fragments.
+// After highlighting, so the spans the marks add survive it; and after the
+// slides exist, so the listing that comes apart can find its pieces.
 applyCodeMarks()
-initDerivations(Reveal)
+initExploded(Reveal, highlight.hljs)
 
 // The footage plays once, from the top, when its slide arrives, and holds its
 // last frame. That keeps the deck's rule — motion answers a key press — where
