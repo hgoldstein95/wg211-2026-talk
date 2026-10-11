@@ -3,7 +3,7 @@
 # One-time setup: Settings → Pages → "Build and deployment" → Source:
 # "GitHub Actions". The deck then lives at
 # https://hgoldstein95.github.io/wg211-talk/ — a subpath, which is
-# why src/main.js re-bases the deck's asset paths.
+# why vite.config.js sets a relative `base`.
 
 name: Deploy to GitHub Pages
 

@@ -1,4 +1,4 @@
-// voxel.js — the game's own blocks, drawn as isometric cubes for the intro deck.
+// voxel.js — the game's own blocks, drawn as isometric cubes for the deck.
 //
 // lean-mc generates its texture atlas rather than loading one: every texel is
 // a pure function of the tile and the pixel (`LeanMc/Shell/Atlas.lean`). That
@@ -81,7 +81,7 @@ const PIPS = {
 /** A face of the die: bone white, with the stage showing through the pips. */
 function diePixel(tile, x, y) {
   const pip = PIPS[tile].some(([px, py]) => x >= px && x < px + 4 && y >= py && y < py + 4)
-  // --bg in intro.css
+  // --bg in deck.css
   return pip ? [28, 30, 36] : rgb(238, 233, 220, jitter(x, y, 12, 5))
 }
 

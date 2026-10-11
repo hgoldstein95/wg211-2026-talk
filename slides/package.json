@@ -8,12 +8,10 @@
     "preview": "vite preview",
     "pack": "vite build --mode offline --outDir talk-offline",
     "snap": "node scripts/snap.js",
-    "pdf": "node scripts/pdf.js",
-    "qr": "node scripts/qr.js"
+    "pdf": "node scripts/pdf.js"
   },
   "type": "module",
   "dependencies": {
-    "@fontsource-variable/montserrat": "^5.3.0",
     "@fontsource/fira-mono": "^5.3.0",
     "@fontsource/fira-sans": "^5.3.0",
     "@fontsource/jersey-15": "^5.3.0",
@@ -21,7 +19,6 @@
   },
   "devDependencies": {
     "playwright": "^1.62.1",
-    "qrcode": "^1.5.4",
     "vite": "^8.2.0",
     "vite-plugin-singlefile": "^2.3.3"
   },

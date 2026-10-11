@@ -20,16 +20,15 @@
    moves unless you press a key" rule holds: this is motion answering a key
    press, and it only exists because the hard swap it replaced read as a cut.
 
-   Travel has been tried here and rejected. Add `animated` to the widget's
+   Travel is opt-in. Add `animated` to the widget's
    class list
 
      <div class="derivation animated" data-derivation="pick"></div>
 
    and lines slide in from the left, arriving goals rise half a line one after
    another, a goal that persists slides to its new place, and the changed span
-   flashes to full accent before settling. The talk found that fussy and does
-   not use it. The stylized deck (`intro.html`) does, slowed down (its
-   `intro.css` sets --deriv-move and --deriv-fade).
+   flashes to full accent before settling. The deck uses it, slowed down
+   (`deck.css` sets --deriv-move and --deriv-fade).
 
    An arriving goal used to fly out of the box of the goal it was split from.
    That started the two goals a `pick` opens on top of each other, unreadable
@@ -37,7 +36,7 @@
 
    TYPE: the three panes are set like every other Lean listing in the deck —
    Fira Mono at --code-weight, and the highlight.js colours from the foot of
-   base.css. src/derivation.js emits `hljs-*` class names for exactly that
+   deck.css. src/derivation.js emits `hljs-*` class names for exactly that
    reason, punctuation and operators included. What is *not* code — the pane
    labels, the "no more goals" message, the caption — stays at 400 so it reads
    as editor furniture rather than as source.
@@ -45,7 +44,7 @@
 
 .reveal .derivation {
   --deriv-gap: 0.75rem;
-  /* The deck's two speeds, from base.css: a fade takes --t-fade, anything that
+  /* The deck's two speeds, from deck.css: a fade takes --t-fade, anything that
      changes position takes --t-move. Nothing here should invent a third. */
   --deriv-fade: var(--t-fade);
   --deriv-move: var(--t-move);
@@ -61,7 +60,7 @@
   gap: var(--deriv-gap);
   align-items: stretch;
   font-family: var(--r-code-font);
-  /* The weight `.reveal pre code` in base.css sets, so a pane and a ```lean
+  /* The weight `.reveal pre code` in deck.css sets, so a pane and a ```lean
      fence are the same listing. The face is monospaced, so a change of weight
      costs no width and none of the column budgets below move. */
   font-weight: var(--code-weight);
@@ -73,7 +72,7 @@
      The header itself is written as two lines in src/derivations.js, the way
      you'd break a long Lean signature, rather than shrunk until it fits. */
   font-size: 0.52em;
-  /* --code-lh in base.css: the line spacing every other listing is set on. */
+  /* --code-lh in deck.css: the line spacing every other listing is set on. */
   line-height: 1.35;
   margin: 0.6rem 0 0;
 }
@@ -282,7 +281,7 @@
 
 /* There aren't any here. src/derivation.js tags its tokens with highlight.js's
    own class names, so the `.hljs-keyword` / `.hljs-type` / `.hljs-number`
-   rules at the foot of base.css paint a derivation and a ```lean fence with
+   rules at the foot of deck.css paint a derivation and a ```lean fence with
    one set of colours — change them there and both follow. Anything the
    tokeniser doesn't tag (operators, punctuation, lower-case identifiers) is
    body colour, which is what the deck's Lean listings do too.

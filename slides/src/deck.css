@@ -1,4 +1,4 @@
-/* intro.css — the whole look of the intro spike (`intro.html`).
+/* deck.css — the whole look of the deck (`index.html`).
 
    A dark stage, a pixel face for display type, and the game's own blocks as
    the diagram vocabulary. Three colours carry meaning and nothing else uses
@@ -10,9 +10,9 @@
 
    Edges are hard everywhere: no radius, no blur, no soft shadow.
 
-   Motion follows the talk's rule: it answers a key press. The durations are
-   the talk's own `--t-*` tokens, which scripts/snap.js blanks before a
-   capture. */
+   Motion answers a key press and nothing moves on its own. The durations are
+   the `--t-*` tokens below, which scripts/snap.js and scripts/pdf.js blank
+   before a capture. */
 
 :root {
   /* A very dark grey, on purpose not black. src/voxel.js repeats it for the
@@ -85,8 +85,8 @@ body,
 /* --- Slide number --------------------------------------------------------- */
 
 /* Pinned to the slide box rather than the window, and sized against the deck
-   rather than the browser, the way the talk's is: see the Chrome section of
-   base.css for why each of these is computed. It sits on a chip of the stage's
+   rather than the browser: the Chrome section of materials/src/base.css
+   says why each of these is computed. It sits on a chip of the stage's
    own colour, which is invisible on the stage and legible over a picture. */
 .reveal {
   --chrome-scale: var(--slide-scale, 1);
@@ -115,8 +115,8 @@ html.reveal-print .reveal .slide-number-pdf {
   text-decoration: none;
 }
 
-/* The title carries no number. Screen and print are asked separately, as in
-   base.css: in print every page is `present` at once. */
+/* The title carries no number. Screen and print are asked separately:
+   in print every page is `present` at once. */
 html:not(.reveal-print) .reveal:has(section.title.present) .slide-number,
 html.reveal-print .pdf-page:has(section.title) .slide-number {
   visibility: hidden;
@@ -124,8 +124,9 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 
 /* --- Motion --------------------------------------------------------------- */
 
-/* The same three rules as the talk's base.css, `.reveal-viewport` and all:
-   see the Motion section there for why the selectors are this long. */
+/* `.reveal-viewport` leads so these match the specificity of reveal's own
+   transition rules; the Motion section of materials/src/base.css has
+   the long version. */
 .reveal-viewport .reveal.fade .slides section {
   transition-property: opacity;
   transition-duration: var(--t-fade);
@@ -591,8 +592,8 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 }
 
 /* Stepping through lines (`data-line-numbers="|3"`): the lines a step leaves
-   out drop back. The rules are the talk's, from the Code section of base.css,
-   which says why each is needed; the ground colour is this deck's. */
+   out drop back. The Code section of materials/src/base.css says why
+   each rule is needed. */
 .reveal pre code .highlight-line {
   background: none;
 }

@@ -11,7 +11,7 @@
 
    `note` is **not rendered**. The widget draws three panes and nothing else;
    what the speaker actually says out loud lives in the slide's speaker notes
-   in talk.md, which are the source of truth. The notes here only
+   in index.html, which are the source of truth. The notes here only
    document what each step means.
 
    `[[…]]` anywhere in a string marks the part that changed on this step; it
@@ -145,7 +145,7 @@ const frames = {
   ],
 }
 
-// The same derivation as the stylized deck (`intro.html`) tells it. Two
+// The same derivation as the deck tells it, and the one it uses. Two
 // further liberties, both the deck's own: a goal is an existential, `∃ g,
 // g.support = P`, where Palamedes has the subtype `CorrectGen P`, so that the
 // term pane reads as the witness being filled in; and the layer's

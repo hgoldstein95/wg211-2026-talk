@@ -6,18 +6,14 @@
 // brackets are the allocation", "these zeros are what shrinking did" — the
 // mark has to be applied *after* highlighting. That's this.
 //
-// Usage, in talk.md, on the line after a fenced block:
+// Usage, in index.html, on the listing's `<pre>`:
 //
-//     <!-- .element: class="mark-brackets" -->
+//     <pre class="mark-sorry"><code class="language-lean">…</code></pre>
 //
-// Styling is `.code-mark` in the Marks section of base.css. Pair a mark with
-// `dim-rest` — `class="mark-zeros dim-rest"` — to mute everything it didn't
-// catch, so the marked characters carry the slide on their own. Add
-// `mark-green` alongside for a mark that means something other than emphasis.
+// Styling is `.code-mark` in deck.css.
 //
 // A mark is one entry here: the class the slide asks for, and the regex that
-// picks the characters out. Two generic ones ship; add the talk's own beside
-// them and delete these if nothing uses them.
+// picks the characters out.
 //
 // Match whole tokens, not substrings. An identifier regex wants a guard on
 // both edges — ML identifiers carry digits, `_` and `'`, so a bare /s/ lights

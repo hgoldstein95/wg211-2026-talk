@@ -16,7 +16,7 @@
 
    Three panes and that's all: the `note` on each step is *not* drawn. What
    Harrison says out loud lives in the slide's speaker notes in
-   talk.md; the notes in src/derivations.js only document the steps.
+   index.html; the notes in src/derivations.js only document the steps.
 
    Both panes reconcile rather than rebuild. The goal list is keyed by id, and
    the tactic script by line position, so anything that survives a step keeps
@@ -92,7 +92,7 @@ const wrap = (cls, text) => `<span class="${cls}">${escapeHtml(text)}</span>`
  *
  * The classes are highlight.js's own — `hljs-keyword`, `hljs-type`,
  * `hljs-operator` — so a derivation is painted by the same rules at the foot
- * of base.css that paint every ```lean fence in the deck, and picks up any
+ * of deck.css that paint every ```lean fence in the deck, and picks up any
  * later change to them for free. What that means in practice: keywords blue,
  * an identifier starting with a capital (`CorrectGen.pick`, `Eq.comm`) is a
  * type or constructor and goes teal, the connectives that carry a proposition
