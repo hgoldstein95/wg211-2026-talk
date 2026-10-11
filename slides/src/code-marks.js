@@ -41,9 +41,18 @@ const MARKS = {
   // What fuel adds to a generator that had none: the counter, and the failure
   // it can now end in.
   'mark-fuel': /\b(?:fuel|failure)\b/g,
+  // A definition that is still a hole.
+  'mark-sorry': /\bsorry\b/g,
+  // What lets a generator call itself with nothing decreasing.
+  'mark-fixpoint': /\bpartial_fixpoint\b/g,
 }
 
 const ANNOTATIONS = {
+  // The two halves of Palamedes's goal: a generator, and what it must make.
+  'annotate-exists': [
+    ['∃ g : G α', 'A Generator'],
+    ['g.support = P', 'That Samples Exactly P'],
+  ],
   // The two halves of the SPMF subtype, named in turn.
   'annotate-spmf': [
     ['μ : α → ℝ≥0∞', 'Mass Function'],

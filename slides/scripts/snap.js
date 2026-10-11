@@ -4,6 +4,7 @@
  *   npm run snap                  # all slides
  *   npm run snap -- --slides 1,4  # just those slides (1-based)
  *   npm run snap -- --build       # snapshot a production build
+ *   npm run snap -- --deck intro  # another deck: intro.html -> snapshots/intro/
  *
  * Output: snapshots/NN.png. Uses the dev server if one is running.
  */
@@ -24,6 +25,7 @@ const value = (name) => {
 const WIDTH = Number(value('width') ?? 1280)
 const HEIGHT = Number(value('height') ?? 720)
 const SCALE = Number(value('scale') ?? 2)
+const deck = value('deck')
 const only = value('slides')
   ?.split(',')
   .map((n) => Number(n.trim()))
@@ -42,11 +44,11 @@ const page = await browser.newPage({
 // A full run starts from an empty directory so renumbered or removed slides
 // don't leave stale files behind; a `--slides` subset only overwrites the
 // files it captures and leaves the rest of the set alone.
-const outDir = join(root, 'snapshots')
+const outDir = deck ? join(root, 'snapshots', deck) : join(root, 'snapshots')
 if (!only) await rm(outDir, { recursive: true, force: true })
 await mkdir(outDir, { recursive: true })
 
-await page.goto(`${origin}/#/0`, { waitUntil: 'networkidle' })
+await page.goto(`${origin}/${deck ? `${deck}.html` : ''}#/0`, { waitUntil: 'networkidle' })
 await page.waitForFunction(() => window.Reveal?.isReady?.())
 await page.evaluate(() => document.fonts.ready)
 
@@ -100,7 +102,7 @@ for (const [i, { h, v }] of indices.entries()) {
 
   const name = `${String(n).padStart(2, '0')}${v ? `-${v}` : ''}.png`
   await page.screenshot({ path: join(outDir, name) })
-  process.stdout.write(`snapshots/${name}\n`)
+  process.stdout.write(`snapshots/${deck ? `${deck}/` : ''}${name}\n`)
 }
 
 await browser.close()

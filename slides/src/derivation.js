@@ -24,10 +24,13 @@
    settle back into `is-past` instead of being redrawn already dim. Only what
    actually arrived on this step is new, and only that fades in.
 
-   A goal that declares a `from` parent knows which box it was split out of.
-   That drives a FLIP animation of the branch, and it doesn't play by default:
-   the deck's motion here is a cross-fade and nothing more. Add `animated` to
-   the widget's class list to put the travel back — see derivation.css.
+   By default the widget's motion is a cross-fade and nothing more. Add
+   `animated` to its class list and things travel as well: a new tactic line
+   slides in, an arriving goal rises into place, and a goal that persists
+   slides to wherever the step moved it — see derivation.css. (A goal's `from`
+   names the goal it was split out of. It once drove a flight out of the
+   parent's box; that put two goals on top of each other at the start of every
+   branch, and it is gone. The field is kept as documentation of the tree.)
    =========================================================================== */
 
 import { derivations } from './derivations.js'
@@ -221,9 +224,8 @@ class Derivation {
   }
 
   // Keyed reconciliation + FLIP. Goals that persist across a step keep their
-  // DOM node (so they slide rather than blink), and goals that declare a
-  // `from` parent start life at that parent's old position — which is what
-  // makes `apply CorrectGen.pick` *look* like a branch.
+  // DOM node, so in `.animated` mode they slide to their new place rather than
+  // blink; goals that are new arrive where they belong.
   renderGoals(step) {
     const rects = new Map()
     for (const [id, el] of this.goalEls) rects.set(id, el.getBoundingClientRect())
@@ -243,10 +245,14 @@ class Derivation {
 
     for (const goal of goals) {
       let el = this.goalEls.get(goal.id)
-      if (!el) {
+      if (el) {
+        // Putting a node back in the document restarts its CSS animation, and
+        // a goal that is staying should not arrive twice.
+        el.classList.remove('is-entering')
+      } else {
         el = document.createElement('div')
         el.className = 'derivation-goal'
-        entering.push([el, goal])
+        entering.push(el)
       }
       el.dataset.state = goal.state ?? 'active'
       // Re-render only when the source changed, like the script lines: an
@@ -271,43 +277,35 @@ class Derivation {
       const to = el.getBoundingClientRect()
       this.slide(el, from.left - to.left, from.top - to.top)
     }
-    for (const [el, goal] of entering) {
-      const from = goal.from && rects.get(goal.from)
-      const to = el.getBoundingClientRect()
-      // Only `.animated` flies a new goal out of its parent's box. Otherwise
-      // every arriving goal — split off a parent or not — just fades up.
-      if (this.animated && from && from.width && to.width) {
-        el.style.opacity = '0'
-        this.slide(el, from.left - to.left, from.top - to.top, true)
-      } else {
-        el.classList.add('is-entering')
-      }
-    }
+
+    // An arriving goal fades up in place — rising half a line as it does in
+    // `.animated` mode, each a beat behind the one above it (`--enter`).
+    entering.forEach((el, k) => {
+      el.style.setProperty('--enter', k)
+      el.classList.add('is-entering')
+    })
   }
 
   get animated() {
     return this.root.classList.contains('animated')
   }
 
-  slide(el, dx, dy, fade = false) {
-    // Still (the default): the goal is simply in its new place. `.animated`
-    // plays it travelling there from the old one.
-    if (!this.animated) {
-      if (fade) el.style.opacity = ''
-      return
-    }
-    if (!dx && !dy && !fade) return
-    el.animate(
-      [
-        { transform: `translate(${dx}px, ${dy}px)`, ...(fade ? { opacity: 0 } : {}) },
-        { transform: 'none', ...(fade ? { opacity: 1 } : {}) },
-      ],
-      // 700ms and the same curve as --deriv-move / --deriv-ease in
-      // derivation.css: a goal sliding to its new box is motion, and the deck
-      // gives motion 0.7s. Keep the pair in step.
-      { duration: 700, easing: 'cubic-bezier(.22,.9,.3,1)', fill: 'backwards' },
-    )
-    if (fade) el.style.opacity = ''
+  // Still (the default): the goal is simply in its new place. `.animated`
+  // plays it travelling there from the old one, over --deriv-move.
+  slide(el, dx, dy) {
+    if (!this.animated || (!dx && !dy)) return
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
+      duration: this.moveMs,
+      easing: 'cubic-bezier(.22,.9,.3,1)',
+      fill: 'backwards',
+    })
+  }
+
+  // --deriv-move, in milliseconds. A custom property is handed back as
+  // written, `calc()` and all, so derivation.css also sets it as the widget's
+  // transition-duration, which the browser does resolve.
+  get moveMs() {
+    return parseFloat(getComputedStyle(this.root).transitionDuration) * 1000
   }
 
   renderTerm(step, prev) {

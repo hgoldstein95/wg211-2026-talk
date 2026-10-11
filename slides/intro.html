@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+/>
+    <title>Intro spike — New Foundations for PBT</title>
+  </head>
+  <body>
+    <!-- intro.html — the talk in a second, stylized form, as a deck of its
+         own: a cold open, an overview, then Palamedes and Basalt. `src/intro.css`
+         is the look, `src/voxel.js` draws the blocks.
+
+         Every slide is a 1280x720 box. A `.card` is a few words set large; a
+         `.stage` is one picture composed in slide coordinates; a `.code` slide
+         is one listing, or two in a `.pair` or a `.stack`.
+
+         Three slides are where the talk stops for the room: the fold beside
+         the unfold, the generator read at several types, and the last slide.
+         Nothing on a slide says so. Their speaker notes do ("ENGAGEMENT
+         POINT"), and the slides before each one build to it.
+
+         A block is `<use href="#blk-NAME" transform="translate(x y) scale(s)">`:
+         (x, y) is its top vertex and s is half its width. The blocks are the
+         game's own, textured by the same function that textures them there.
+
+         Green is proved and a solid line; orange is tested and a dashed one.
+
+         The count on the slides is lean-mc's at commit 0bc1ac2, 2h20m after
+         its first commit: 214 theorems, no `sorry`. Two of the three theorems
+         named are in that commit; `State.step_entities_sound` came with the
+         foxes, the next day. -->
+
+    <svg id="blocks" aria-hidden="true"></svg>
+
+    <div class="reveal">
+      <div class="slides">
+        <section class="card title">
+          <h1 class="big">New<br/>Foundations<br/>for PBT</h1>
+          <p class="byline">
+            Harry Goldstein
+            <span>University at Buffalo · IFIP WG 2.11</span>
+          </p>
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-basalt" transform="translate(1030 160) scale(176)"/>
+          </svg>
+          <aside class="notes">
+            Hi everyone. Today I’m going to talk about some published and some ongoing work on
+            what I’m calling new foundations for property-based testing.
+          </aside>
+        </section>
+
+        <section class="card">
+          <p class="big">What’s the point<br/>of <span class="tested">testing</span><br/>anymore?</p>
+          <aside class="notes">
+            And I want to start with the existential question I’ve been asking myself lately:
+            what the heck is the point of testing anymore?
+          </aside>
+        </section>
+
+        <!-- The clip plays once when the slide arrives (nine seconds) and holds its last
+             frame. -->
+        <section class="stage">
+          <div class="clip">
+            <video
+              class="plays-once"
+              src="/intro/demo.mp4"
+              poster="/intro/demo-poster.png"
+              muted
+              playsinline
+              preload="auto"
+            ></video>
+          </div>
+          <p class="caption">Lean Port of Minecraft</p>
+          <aside class="notes">
+            The other day, I went to my friendly neighborhood robot and asked for an
+            implementation of Minecraft, written in Lean,
+          </aside>
+        </section>
+
+        <section class="stage">
+          <img class="bleed crop-hud" src="/intro/fox.png" alt="The game: a fox on a grassy hillside."/>
+          <div class="proofs">
+            <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+              <path class="pin" d="M531,462 V494"/>
+              <rect class="pin-end" x="523" y="454" width="16" height="16"/>
+              <path class="pin" d="M870,396 V494"/>
+              <rect class="pin-end" x="862" y="388" width="16" height="16"/>
+              <path class="pin" d="M643,236 V170"/>
+              <rect class="pin-end" x="635" y="228" width="16" height="16"/>
+            </svg>
+            <p class="tag" style="left: 48px; top: 490px">
+              <code>State.step_entities_sound</code>
+              Entities collide properly with blocks
+            </p>
+            <p class="tag" style="left: 580px; top: 70px">
+              <code>Session.play_dig_iff</code>
+              Clicks don't get lost
+            </p>
+            <p class="tag" style="right: 56px; top: 490px">
+              <code>mem_chunkFaces</code>
+              Faces are only drawn if visible
+            </p>
+            <p class="tally">214 <span class="proved">theorems</span></p>
+          </div>
+          <aside class="notes">
+            with a bunch of proofs. [click] For example: clicks don’t get lost, entities can’t
+            end up inside blocks, and block faces get drawn if and only if they’re supposed to
+            be visible. These are the kinds of things I would previously have tested about an
+            implementation of Minecraft.
+          </aside>
+        </section>
+
+        <section class="card took">
+          <p class="big quiet">
+            This took <span class="was">me</span>
+            <span class="fragment tested">Claude</span>
+          </p>
+          <p class="big huge" style="margin-top: 0.12em">2.5 hours</p>
+          <aside class="notes">
+            And this took me about two and a half hours. [click] I mean, it took Claude two and
+            a half hours. This was not some huge effort, and it did not take a tremendous amount
+            of expertise from me. It took some, but this was basically all done for me. So the
+            question for me was: then why do we need testing? Can’t we just prove all of these
+            things correct?
+          </aside>
+        </section>
+
+        <!-- One picture, four states. The blocks stay where they are: game at
+             x = 220, model at 640, raylib at 1060, links at y = 326. The model
+             is smooth stone to raylib's cobblestone: the same rock, tidied. In
+             lean-mc the model is `LeanMc.Gpu` and the test is `lake exe native`. -->
+        <section class="stage">
+          <svg viewBox="0 0 1280 720" role="img"
+               aria-label="The core logic, in Lean, is proved. raylib, in C, is not. A model of
+                           raylib, written in Lean, sits between them: the core logic is proved
+                           against the model, and the model is tested against raylib.">
+            <use href="#blk-grass" transform="translate(220 220) scale(100)"/>
+            <text class="t-name" x="220" y="516">Game Logic</text>
+            <text class="t-sub proved" x="220" y="556">Lean, proved</text>
+
+            <use href="#blk-cobble" transform="translate(1060 220) scale(100)"/>
+            <text class="t-name" x="1060" y="516">raylib</text>
+            <text class="t-sub" x="1060" y="556">C</text>
+
+            <g class="fragment fade-out" data-fragment-index="0">
+              <path class="link" d="M344,326 H908"/>
+              <path class="arrowhead" d="M904,304 L940,326 L904,348 Z"/>
+              <text class="t-ask tested" x="640" y="296">?</text>
+            </g>
+
+            <g class="fragment" data-fragment-index="0">
+              <use href="#blk-stone" transform="translate(640 220) scale(100)"/>
+              <text class="t-name" x="640" y="516">Graphics Model</text>
+              <text class="t-sub" x="640" y="556">Lean</text>
+              <path class="link is-tested" d="M764,326 H936"/>
+              <text class="t-link tested" x="850" y="296">tested</text>
+            </g>
+
+            <g class="fragment" data-fragment-index="1">
+              <path class="link is-proved" d="M344,326 H516"/>
+              <text class="t-link proved" x="430" y="296">proved</text>
+            </g>
+          </svg>
+          <aside class="notes">
+            But pulling back the curtain a little on what Claude built, I realized it hadn’t
+            done exactly what I asked. Rather than implement the core rendering logic in Lean,
+            which would have been hard to do efficiently because the game needs to talk to the
+            GPU, it used a library, raylib, in C. In principle I’m not against this: it would
+            not have been useful to go off and emit GPU code directly from Lean. So I was
+            perfectly fine with it. But it left me wondering: how do I know that the
+            proofs are correct relative to the semantics of raylib? [click] And this is where
+            testing came in. I had Claude go back and build a model, in Lean, of what it thought
+            raylib was going to do, and test that model against the real thing. [click] And
+            then prove that the theorems it had shown were correct relative to that modeled
+            semantics.
+          </aside>
+        </section>
+
+        <!-- TODO (dry run): Harry does not like "Proofs inside. / Tests between." and
+             wants to come back to it. -->
+        <section class="stage">
+          <svg viewBox="0 0 1280 720" role="img"
+               aria-label="Four programs, each proved in a different proof language, with
+                           tests between each neighboring pair.">
+            <use href="#blk-grass" transform="translate(250 84) scale(70)"/>
+            <use href="#blk-planks" transform="translate(510 84) scale(70)"/>
+            <use href="#blk-sand" transform="translate(770 84) scale(70)"/>
+            <use href="#blk-log" transform="translate(1030 84) scale(70)"/>
+            <use class="hull-proved" href="#blk-hull" transform="translate(250 84) scale(70)"/>
+            <use class="hull-proved" href="#blk-hull" transform="translate(510 84) scale(70)"/>
+            <use class="hull-proved" href="#blk-hull" transform="translate(770 84) scale(70)"/>
+            <use class="hull-proved" href="#blk-hull" transform="translate(1030 84) scale(70)"/>
+            <text class="t-name" x="250" y="296">Lean</text>
+            <text class="t-name" x="510" y="296">Rocq</text>
+            <text class="t-name" x="770" y="296">F*</text>
+            <text class="t-name" x="1030" y="296">Verus</text>
+            <text class="t-line" x="640" y="466">
+              <tspan class="proved">Proofs</tspan> within components.</text>
+
+            <g class="fragment">
+              <path class="link is-tested" d="M342,158 H420 M602,158 H680 M862,158 H940"/>
+              <text class="t-line" x="640" y="576">
+                <tspan class="tested">Tests</tspan> between languages.</text>
+            </g>
+          </svg>
+          <aside class="notes">
+            And I think this is where testing needs to stay. Even if we end up writing all of
+            our code in proof systems like Lean, Rocq, F*, Verus, and so on, [click] we will
+            ultimately need to test the relationships between the semantics of the component
+            pieces of real software systems. The idea that all software will be written in one
+            homogeneous language just doesn’t fit the way software engineering has developed
+            over decades, and I don’t believe that’s going to change any time soon, for social
+            reasons if not technical ones.
+          </aside>
+        </section>
+
+        <!-- The dashed line of two slides back, opened up. A generator (the
+             title's basalt block) deals out test cases; each is a list of commands, sent to the
+             model and to raylib alike; the test asks whether they end up
+             holding the same thing. The commands are the shim's real ones: the
+             four of `GpuCmd`, its whole mesh interface. -->
+        <section class="stage">
+          <svg viewBox="0 0 1280 720" role="img"
+               aria-label="A generator makes random lists of commands. Each list is sent to
+                           both the model and raylib, and their results are compared.">
+            <g transform="translate(0 30)">
+              <use href="#blk-stone" transform="translate(1000 70) scale(78)"/>
+              <text class="t-name at-start" x="1100" y="172">Model</text>
+              <use href="#blk-cobble" transform="translate(1000 400) scale(78)"/>
+              <text class="t-name at-start" x="1100" y="502">raylib</text>
+              <path class="link is-tested" d="M1000,256 V388"/>
+
+              <g class="fragment" data-fragment-index="0">
+                <g class="case">
+                  <rect x="520" y="176" width="190" height="236" opacity="0.3"/>
+                  <rect x="510" y="188" width="210" height="236" opacity="0.55"/>
+                  <rect x="500" y="200" width="230" height="236"/>
+                  <text x="615" y="251">upload 3</text>
+                  <text x="615" y="303">beginScene</text>
+                  <text x="615" y="355">draw 3</text>
+                  <text x="615" y="407">unload 3</text>
+                </g>
+                <path class="flow" d="M732,318 H810 V153 H886 M810,318 V483 H886"/>
+                <path class="flowhead" d="M882,133 L914,153 L882,173 Z M882,463 L914,483 L882,503 Z"/>
+                <text class="t-link tested at-start" x="1028" y="336">≈</text>
+              </g>
+
+              <g class="fragment" data-fragment-index="1">
+                <use href="#blk-basalt" transform="translate(220 236) scale(78)"/>
+                <path class="flow" d="M314,318 H462"/>
+                <path class="flowhead" d="M458,298 L490,318 L458,338 Z"/>
+                <text class="t-answer tested" x="220" y="496">Generators</text>
+              </g>
+            </g>
+          </svg>
+          <aside class="notes">
+            So let’s dig a little deeper into what these tests look like. We have our model,
+            and we have raylib. [click] We’re going to generate a bunch of commands for both of
+            them, sequences of commands, and ask: do they produce the same result? [click] And
+            to produce all those sequences of commands, we need a program called a generator.
+            That’s the PBT term for the random program that produces inputs to a system under
+            test.
+          </aside>
+        </section>
+
+        <section class="card">
+          <p class="big">How do we make<br/>generators <span class="tested">good</span>?</p>
+          <p class="big quiet fragment">And what should "good" even mean?</p>
+          <aside class="notes">
+            The question I’m going to answer with the rest of this talk is: how can we make
+            sure those generators are as good as possible, so that we can believe the
+            relationship we’re claiming between our model and our implementation? [click] And a
+            side question is: what does “good” even mean? That’s something I’m going to ask all
+            of you about, because I really do need feedback here. I’m writing a paper, and there
+            are things in the evaluation, and in the demonstration of what we can do, that could
+            use some punching up.
+          </aside>
+        </section>
+
+        <!-- ================= Overview ================= -->
+
+        <!-- The two systems, each with its block: a die for Palamedes, who is
+             credited with inventing dice, and basalt for Basalt.
+
+             TODO (dry run): Harry does not like the two taglines, "generators
+             from predicates" and "generators with proofs", here or on the two
+             section openers, and wants to change them. -->
+        <section class="stage">
+          <svg viewBox="0 0 1280 720" role="img"
+               aria-label="Two parts. Palamedes: generators from predicates. Basalt:
+                           generators with proofs.">
+            <use href="#blk-die" transform="translate(360 150) scale(110)"/>
+            <text class="t-title" x="360" y="492">Palamedes</text>
+            <text class="t-sub" x="360" y="540">Synthesizing Generators</text>
+            <text class="t-sub" x="360" y="588">PLDI 2026</text>
+            <g class="fragment">
+              <use href="#blk-basalt" transform="translate(920 150) scale(110)"/>
+              <text class="t-title" x="920" y="492">Basalt</text>
+              <text class="t-sub" x="920" y="540">Foundations for Generators</text>
+              <text class="t-sub" x="920" y="588">???</text>
+            </g>
+          </svg>
+          <aside class="notes">
+            I’m going to talk about two systems. The first is Palamedes, which was presented at
+            PLDI this year. [click] The other is Basalt, a new foundational abstraction for PBT
+            generators. It isn’t published yet, but we’re working on a paper for it as well.
+          </aside>
+        </section>
+
+        <!-- ================= Palamedes ================= -->
+
+        <!-- Goldstein, Peleg, Torczon, Sainati, Lampropoulos, Pierce. The Search for
+             Constrained Random Generators. PLDI 2026. -->
+        <section class="card opener">
+          <h2 class="big">Palamedes</h2>
+          <p class="big quiet">Synthesizing Generators</p>
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-die" transform="translate(1050 190) scale(150)"/>
+          </svg>
+          <aside class="notes">
+            So first, let’s talk about Palamedes.
+          </aside>
+        </section>
+
+        <!-- The theorem first, on its own. Pressing picks out its precondition
+             and pulls the definitions it needs down from above; a second press
+             leaves a generator-shaped hole. `Frame`, `play` and `Correct` are
+             written for the slide: lean-mc's own theorem is
+             `Session.play_sound`, over structured frames.
+
+             A pretence that runs through the deck: `List.fold` takes one
+             function out of `ListF`, a layer of a list (defined four slides
+             on), where Palamedes's takes an answer for nil and a function for
+             cons. That way the fold's two cases, the disjunction the search
+             is given, and the unfold's two branches all have one shape. -->
+        <section class="code">
+          <div class="stack">
+            <pre class="fragment pulls-in" data-fragment-index="0"><code class="language-lean" data-trim>
+/-- Duration of one frame. -/
+def Frame := Nat
+
+def framesOK (fs : List Frame) : Bool :=
+  List.fold
+    (fun
+      | .nilF => true
+      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
+    fs
+            </code></pre>
+            <pre><code class="language-lean" data-trim data-line-numbers="|2" data-fragment-index="0">
+theorem play_correct (fs : List Frame) :
+    framesOK fs →
+    (play fs).Correct
+            </code></pre>
+            <pre class="mark-sorry fragment" data-fragment-index="1"><code class="language-lean" data-trim>
+def genFrames : G (List Frame) := sorry
+            </code></pre>
+          </div>
+          <aside class="notes">
+            Suppose we want to test this theorem, which says that our play function, on a bunch
+            of frames, is correct. We’re going to get lists of frames of different durations,
+            and as long as a list is a valid list of frames, playing those frames should be
+            correct. [click] I want to focus in on this precondition. <code>framesOK</code> says
+            what it means for a list of frames to be a valid list of frame durations. [click] So
+            what we need is a generator: a program that’s going to produce valid lists of frames
+            for us, so that we can check this theorem.
+          </aside>
+        </section>
+
+        <!-- 43 is the count of generators in lean-mc's
+             `proptest/PropTest/Gen.lean` today (347 lines).
+
+             TODO (dry run): the "Developers see writing generators as a
+             distraction" quotation (Property-Based Testing in Practice, ICSE
+             2024, Observation 5) was dropped from here, since Claude wrote
+             these. Harry wants to bring it back somewhere later. -->
+        <section class="card">
+          <p class="big huge">43</p>
+          <p class="big quiet" style="margin-top: 0.35em; font-size: 60px">
+            generators across the project.
+          </p>
+          <p class="big fragment" style="font-size: 60px">
+            Chances for mistakes, wasted tokens...
+          </p>
+          <aside class="notes">
+            Now, in the game that Claude wrote, there were 43 generators. That’s 43 chances for
+            things to go wrong. [click] And we don’t want to write them by hand.
+          </aside>
+        </section>
+
+        <!-- This synthesizes today from the fold in Palamedes's own spelling,
+             `List.fold true (fun n ok => n < 200001 && ok) fs`: its fold does
+             not take a function out of `ListF`, and it has no rule for a bare
+             ≤ yet (notes/frames-palamedes.lean, which has `Nat` for `Frame`). -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+def framesOK (fs : List Frame) : Bool :=
+  List.fold
+    (fun
+      | .nilF => true
+      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
+    fs
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+def genFrames [Gen G] : G (List Frame) := by
+  generator_search (fun fs => framesOK fs)
+            </code></pre>
+          </div>
+          <aside class="notes">
+            So how are we going to get a generator for these frames? In our system, Palamedes,
+            which we presented at PLDI, we showed a scheme for deductive synthesis that produces
+            generators from a predicate. [click] So what we’re ultimately going to do is
+            implement <code>genFrames</code> with this tactic, <code>generator_search</code>,
+            which ensures that we produce a generator that is both sound and complete with
+            respect to the predicate.
+          </aside>
+        </section>
+
+        <!-- What the search proves, told as an existential. A fudge: Palamedes
+             states it as a subtype, `CorrectGen P`, a generator packaged with
+             the proof, since a witness cannot be taken out of a `Prop`-valued
+             ∃. The deck says ∃ throughout, and talks about synthesis as
+             instantiating it. -->
+        <section class="code code-lg">
+          <pre class="annotate-exists"><code class="language-lean" data-trim>
+∃ g : G α, g.support = P
+          </code></pre>
+          <aside class="notes">
+            So what is the tactic proving? An existential. [click] There exists a generator,
+            [click] and its support is exactly the predicate: it samples exactly the values that
+            satisfy P, which is sound and complete. And the way to prove an existential is to
+            instantiate it. The witness the search builds is the generator.
+          </aside>
+        </section>
+
+        <!-- The predicate has been a fold since it first appeared, so the
+             recursion is already the fold's business. The search works on the
+             fold's inner part alone, and the unfold ties it back together.
+             Everything from here to the pair of `framesOK` and `genFrames`
+             builds to that pair.
+
+             `ListF` is one layer of a list, and has been in `framesOK` since
+             slide 12; this is where it is defined, above the fold that uses
+             it. Palamedes derives it with
+             constructors `ListF.nil` and `ListF.cons`; the deck spells them
+             `nilF` and `consF` so they cannot be read as the list's own. -->
+        <section class="code code-xs">
+          <div class="pair">
+            <div class="stack">
+              <pre><code class="language-lean" data-trim>
+inductive ListF (α β : Type)
+  | nilF
+  | consF (head : α) (rest : β)
+              </code></pre>
+              <pre><code class="language-lean" data-trim data-line-numbers="|4-5">
+def framesOK (fs : List Frame) : Bool :=
+  List.fold
+    (fun
+      | .nilF => true
+      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
+    fs
+              </code></pre>
+            </div>
+            <!-- Pushed down past `ListF` (three rows and the stack's gap) and
+                 two rows of the fold, so each clause sits beside the case of
+                 the fold it restates. -->
+            <pre class="fragment" style="margin-top: calc(5 * 1.4em + 34px)"><code class="language-lean" data-trim>
+fun (l : ListF Frame Unit) =>
+  l = .nilF ∨
+  ∃ n, n ≤ 200000 ∧ l = .consF n ()
+            </code></pre>
+          </div>
+          <aside class="notes">
+            We’ve written <code>framesOK</code> in terms of a fold. [click] For now, I want to
+            focus in on the core logic of the fold. [click] And really, what that says is that
+            we want either a nil or a cons: one layer of a list, with a unit standing where the
+            rest of the list goes.
+          </aside>
+        </section>
+
+        <section class="code">
+          <div class="derivation animated" data-derivation="layer"></div>
+          <aside class="notes">
+            The core automation, on that disjunction. The rules read the logic off as a program.
+            [click] <code>s_pick</code>: a disjunction is a choice. [click]
+            <code>s_pure</code>: an equation is a constant. [click] <code>s_bind</code>: an
+            existential is a draw and a continuation. [click] <code>s_between</code>: a bound
+            is a range. [click] <code>s_pure</code> again; no goals left, and the existential
+            has its witness: the term is a generator for one layer. The rules are real. The
+            liberties: each goal is stated as an existential where Palamedes has
+            <code>CorrectGen</code>; <code>s_between</code> wants both bounds; the real layer
+            goal wraps the check in <code>guard</code>; and the search applies every rule under
+            <code>convert</code>.
+          </aside>
+        </section>
+
+        <!-- Back out from the layer to the predicate it came from. The inner
+             part is done, so what is lit now is the fold around it. -->
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="2">
+def framesOK (fs : List Frame) : Bool :=
+  List.fold
+    (fun
+      | .nilF => true
+      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
+    fs
+          </code></pre>
+          <aside class="notes">
+            So that is a generator for one layer. Back in <code>framesOK</code>, what is left
+            is the fold itself, which is where the recursion lives.
+          </aside>
+        </section>
+
+        <!-- One boolean, two ways round. The fold takes a value to it; the
+             unfold starts from it and gives back a value, and not always the
+             same one. A fudge: the real unfold starts from a seed, which for
+             this predicate is a unit, not `true`. -->
+        <section class="stage">
+          <svg viewBox="0 0 1280 720" role="img"
+               aria-label="A fold turns a list into a boolean. An unfold turns the boolean
+                           true back into a list: any one of the lists the fold accepts.">
+            <use href="#blk-sand" transform="translate(300 196) scale(44)"/>
+            <use class="seam" href="#blk-hull" transform="translate(300 196) scale(44)"/>
+            <use href="#blk-sand" transform="translate(300 147) scale(44)"/>
+            <use class="seam" href="#blk-hull" transform="translate(300 147) scale(44)"/>
+            <use href="#blk-sand" transform="translate(300 98) scale(44)"/>
+            <use class="seam" href="#blk-hull" transform="translate(300 98) scale(44)"/>
+
+            <path class="flow ink" d="M366,193 H962 V300"/>
+            <path class="flowhead ink" d="M940,296 L962,330 L984,296 Z"/>
+            <text class="t-fn" x="664" y="160">fold</text>
+            <text class="t-sub" x="664" y="240">List Frame → Bool</text>
+
+            <g class="value">
+              <rect x="900" y="334" width="124" height="64" stroke="#8fd15f"/>
+              <text x="962" y="377">true</text>
+            </g>
+
+            <g class="fragment">
+              <path class="flow" d="M962,402 V533 H556"/>
+              <path class="flowhead" d="M560,511 L526,533 L560,555 Z"/>
+              <text class="t-fn tested" x="748" y="500">unfold</text>
+              <text class="t-sub" x="748" y="580">Bool → G (List Frame)</text>
+
+              <use href="#blk-sand" transform="translate(170 536) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(170 536) scale(44)"/>
+
+              <use href="#blk-sand" transform="translate(300 536) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(300 536) scale(44)"/>
+              <use href="#blk-sand" transform="translate(300 487) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(300 487) scale(44)"/>
+              <use href="#blk-sand" transform="translate(300 438) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(300 438) scale(44)"/>
+
+              <use href="#blk-sand" transform="translate(430 536) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(430 536) scale(44)"/>
+              <use href="#blk-sand" transform="translate(430 487) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(430 487) scale(44)"/>
+            </g>
+          </svg>
+          <aside class="notes">
+            Tie it together. A fold turns a value into a boolean: a list goes in,
+            <code>true</code> comes out. [click] So run it backwards. An unfold turns the
+            boolean back into a value: start from <code>true</code>, and out comes a list the
+            fold accepts. Which one is not determined, and that is exactly a generator. The
+            derivation built one layer of this: if one step of the unfold undoes one layer of
+            the fold, the unfold undoes the whole fold. A fudge on the slide: the real unfold
+            starts from a seed, here a unit, not from <code>true</code>.
+          </aside>
+        </section>
+
+        <section class="code code-xs">
+          <div class="pair">
+            <pre><code class="language-lean" data-trim>
+def framesOK (fs : List Frame) : Bool :=
+  List.fold
+    (fun
+      | .nilF => true
+      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
+    fs
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+def genFrames :=
+  List.unfold
+    (fun () => oneOf [
+      pure .nilF,
+      do
+        let n ← chooseNat 0 200000
+        pure (.consF n ())])
+    ()
+            </code></pre>
+          </div>
+          <aside class="notes">
+            <p>
+              The predicate as a fold. [click] And the generator as the matching unfold: its
+              step is the layer generator from the derivation, and <code>List.unfold</code> does
+              the recursion, once, for every generator (it is a
+              <code>partial_fixpoint</code>, generated by
+              <code>derive_palamedes List</code>). Cleaned up from what
+              <code>generator_search</code> prints: there the step is a
+              <code>frequency</code> with weights 1 and 1, and the seed is a pair of units.
+            </p>
+            <p>
+              <strong>ENGAGEMENT POINT.</strong> Stop here and open the floor; this room knows
+              recursion schemes better than I do. Possible prompts: Which predicates you write
+              are not plain folds, and what should their generators be? Accumulating
+              parameters, paramorphisms, mutual recursion? Is “a fold has an unfold” the right
+              place to cut, or is there a better pair?
+            </p>
+          </aside>
+        </section>
+
+        <!-- A takeaway: the section's block, and one sentence broken by hand
+             into lines of about one length. Orange is the generator's side,
+             as on the fold slide; green is what is proved. -->
+        <section class="card recap">
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-die" transform="translate(230 222) scale(130)"/>
+          </svg>
+          <p class="big" style="line-height: 1.3">
+            Palamedes lets us synthesize<br>
+            <span class="tested">generators</span> from predicates,<br>
+            ensuring that they are<br>
+            <span class="proved">correct by construction</span>.
+          </p>
+          <aside class="notes">
+            What to take from Palamedes. It turns the predicate you already have into a
+            generator. The generator is sound and complete by construction: it is found
+            together with its proof. And recursion comes for free: a predicate that is a fold
+            has a generator that is an unfold.
+          </aside>
+        </section>
+
+        <section class="card">
+          <p class="big huge">49.2%</p>
+          <p class="big quiet" style="margin-top: 0.3em">of the lists it generates are empty</p>
+          <aside class="notes">
+            Sound and complete is not the same as good. Half the runs are empty, and a frame of
+            exactly zero or exactly one tick almost never comes up. Which is the second half of
+            the question from the start: what does “good” mean? One
+            <code>#genstats</code> run of the synthesized generator (2000 draws, seed 0, fuel
+            10000), not pinned in the Palamedes tests.
+          </aside>
+        </section>
+
+        <!-- ================= Basalt ================= -->
+
+        <section class="card opener">
+          <h2 class="big">Basalt</h2>
+          <p class="big quiet">Generators with proofs</p>
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-basalt" transform="translate(1050 190) scale(150)"/>
+          </svg>
+        </section>
+
+        <!-- Basalt runs in three parts, each opened by a question set like the
+             ones in the cold open: what a generator means, how to run that,
+             and what proofs buy. The takeaway before the last slide answers
+             the three in order. -->
+        <section class="card">
+          <p class="big">What does a<br/>generator <span class="pointed">mean</span>?</p>
+          <aside class="notes">
+            Signpost, part one of three. Palamedes left us with a number we could measure and
+            not state. So start with what a generator means.
+          </aside>
+        </section>
+
+        <!-- Basalt picks up where Palamedes stopped: half the lists are empty,
+             and the usual meaning of a generator has no way to say so. -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+def QC.Gen α := Seed → α
+
+def QC.support (g : QC.Gen α) : Set α :=
+  {x | ∃ s, g s = x}
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+QC.support genFrames = {ns | framesOK ns}
+            </code></pre>
+          </div>
+          <aside class="notes">
+            We measured that 49.2%. Can we state it? The existing foundation is QuickChick
+            (Paraskevopoulou et al., Foundational Property-Based Testing, ITP 2015): a generator
+            is a function from seeds, and its meaning is the set of values it can produce.
+            Palamedes started from this semantics too. [click] So this is everything it can say
+            about <code>genFrames</code>: every valid list can come out. That is what Palamedes
+            proved, and it is silent on half of them being empty. The last line is how that
+            semantics would put it; it is not from QuickChick.
+          </aside>
+        </section>
+
+        <!-- So a generator should mean a distribution, and here is one, drawn.
+             `CorrectGen` earlier is also a subtype set large, and the two do
+             different jobs, so this is a picture: genFrames by the length of
+             the list. Length k has mass 1/2^(k+1), because the generator
+             chooses evenly between stopping and going on. -->
+        <section class="code">
+          <pre><code class="language-lean" data-trim>
+def SPMF (α : Type) : Type :=
+  {μ : α → ℝ≥0∞ // (∑' a, μ a) ≤ 1}
+          </code></pre>
+          <svg class="masses" viewBox="0 0 1000 330" width="1000" height="330" role="img"
+               aria-label="The distribution of genFrames by list length: one half for the
+                           empty list, one quarter for one frame, one eighth for two, one
+                           sixteenth for three, and so on. No mass is lost to divergence.">
+            <g class="fragment" data-fragment-index="0">
+              <text class="m-title" x="60" y="30">genFrames</text>
+              <path class="m-axis" d="M60,262 H940" />
+              <rect class="m-bar" x="92" y="100" width="120" height="160" />
+              <rect class="m-bar" x="256" y="180" width="120" height="80" />
+              <rect class="m-bar" x="420" y="220" width="120" height="40" />
+              <rect class="m-bar" x="584" y="240" width="120" height="20" />
+              <text class="m-value" x="152" y="88">1/2</text>
+              <text class="m-value" x="316" y="168">1/4</text>
+              <text class="m-value" x="480" y="208">1/8</text>
+              <text class="m-value" x="644" y="228">1/16</text>
+              <text class="m-label" x="152" y="300">[]</text>
+              <text class="m-label" x="316" y="300">[n]</text>
+              <text class="m-label" x="480" y="300">[n, n]</text>
+              <text class="m-label" x="644" y="300">[n, n, n]</text>
+              <text class="m-label" x="752" y="300">…</text>
+            </g>
+            <g class="fragment" data-fragment-index="1">
+              <rect class="m-lost" x="802" y="100" width="120" height="160" />
+              <text class="m-value" x="862" y="88">0</text>
+              <text class="m-label" x="862" y="300">no answer</text>
+            </g>
+          </svg>
+          <aside class="notes">
+            So a generator should mean a distribution, not a set. This is Basalt’s. [click] A
+            mass for every value: for <code>genFrames</code>, by length, a half for the empty
+            list, a quarter for one frame, and so on. That half is the 49.2%, and now it is
+            something we can write down. [click] And the masses may sum to less than one: what
+            is missing is the chance of no answer at all. For <code>genFrames</code> that is
+            zero, which is a theorem coming up. The bars follow from the generator choosing
+            evenly between two branches; they are not themselves a theorem in
+            talk-code/Frames.lean.
+          </aside>
+        </section>
+
+        <section class="card">
+          <p class="big">How do you <span class="tested">run</span><br />a distribution?</p>
+          <aside class="notes">
+            Signpost, part two. A distribution is the right meaning, but it is a mathematical
+            object, and a test has to run something. This part builds to the engagement point
+            on the readings slide, and then to what the embedding costs to write and to run.
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="|1|8">
+def genFrames [Gen G] : G (List Nat) :=
+  oneOf! [
+    fun _ => pure [],
+    fun _ => do
+      let n ← genElapsed
+      let ns ← genFrames
+      return n :: ns]
+partial_fixpoint
+          </code></pre>
+          <aside class="notes">
+            A distribution is a mathematical object, and a test has to run something. Which one
+            is the generator? Both. This is <code>genFrames</code> as you would write it in
+            QuickCheck. [click] It is polymorphic in its interpretation: <code>G</code> is any
+            monad with random choice. [click] And its recursion is a least fixed point.
+            <code>genElapsed</code> makes one frame time; hold that thought, we open it up in a
+            few slides. Checked, as written (talk-code/Frames.lean).
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="|3|4-5">
+class Gen (G : Type → Type) where
+  instMonad        : Monad G
+  instRandomChoice : RandomChoice G
+  instCCPO         : ∀ α, CCPO (G α)
+  instMonoBind     : MonoBind G
+          </code></pre>
+          <aside class="notes">
+            The tagless-final embedding: this is everything an interpretation has to provide.
+            [click] One operation, <code>choose</code>, is the only source of randomness; every
+            combinator is built on it. [click] And a chain-complete partial order with a
+            monotone bind, which is what <code>partial_fixpoint</code> needs. As in
+            <code>Basalt/Gen.lean</code>, less an <code>Inhabited</code> field.
+          </aside>
+        </section>
+
+        <!-- One term, read at several types. Orange readings run the generator;
+             green ones are what proofs are about; the last is not written. -->
+        <section class="stage">
+          <svg viewBox="0 0 1280 720" role="img"
+               aria-label="One generator term, interpreted at several types: IO runs it,
+                           SPMF is its distribution, SPMF.Cost adds costs, FuzzGen lets a
+                           fuzzer drive it, and one more is left open.">
+            <use href="#blk-basalt" transform="translate(230 216) scale(110)" />
+            <text class="t-name" x="230" y="512">genFrames</text>
+            <text class="t-sub" x="230" y="552">[Gen G] : G (List Nat)</text>
+
+            <g class="fragment" data-fragment-index="0">
+              <path class="flow plain" d="M356,332 H470 V132 H556" />
+              <path class="flowhead plain" d="M552,112 L584,132 L552,152 Z" />
+              <g class="reading runs">
+                <rect x="596" y="100" width="210" height="64" />
+                <text x="701" y="142">IO</text>
+              </g>
+              <text class="t-says at-start" x="834" y="143">run it</text>
+            </g>
+
+            <g class="fragment" data-fragment-index="1">
+              <path class="flow plain" d="M470,332 V232 H556" />
+              <path class="flowhead plain" d="M552,212 L584,232 L552,252 Z" />
+              <g class="reading proves">
+                <rect x="596" y="200" width="210" height="64" />
+                <text x="701" y="242">SPMF</text>
+              </g>
+              <text class="t-says at-start" x="834" y="243">its distribution</text>
+            </g>
+
+            <g class="fragment" data-fragment-index="2">
+              <path class="flow plain" d="M470,332 H556" />
+              <path class="flowhead plain" d="M552,312 L584,332 L552,352 Z" />
+              <g class="reading proves">
+                <rect x="596" y="300" width="210" height="64" />
+                <text x="701" y="342">SPMF.Cost</text>
+              </g>
+              <text class="t-says at-start" x="834" y="343">what each value costs</text>
+              <path class="flow plain" d="M470,332 V432 H556" />
+              <path class="flowhead plain" d="M552,412 L584,432 L552,452 Z" />
+              <g class="reading runs">
+                <rect x="596" y="400" width="210" height="64" />
+                <text x="701" y="442">FuzzGen</text>
+              </g>
+              <text class="t-says at-start" x="834" y="443">driven by a fuzzer</text>
+            </g>
+
+            <g class="fragment" data-fragment-index="3">
+              <path class="flow plain" d="M470,432 V532 H556" />
+              <path class="flowhead plain" d="M552,512 L584,532 L552,552 Z" />
+              <g class="reading open">
+                <rect x="596" y="500" width="210" height="64" />
+                <text x="701" y="542">?</text>
+              </g>
+            </g>
+          </svg>
+          <aside class="notes">
+            <p>
+              The payoff of the embedding: the same term at different types. [click] At
+              <code>IO</code> it runs. [click] At <code>SPMF</code> it is the distribution from the
+              picture, which is what the proofs are about: the code you prove things about is
+              the code you run.
+              [click] <code>SPMF.Cost</code> also counts random choices, and
+              <code>FuzzGen</code> reads its choices from a byte buffer, so a coverage-guided
+              fuzzer drives generation. Also: <code>Plausible.Gen</code>, and a statistics
+              interpretation behind <code>#genstats</code>.
+            </p>
+            <p>
+              [click] <strong>ENGAGEMENT POINT.</strong> Stop on the open slot. Possible
+              prompts: What other interpretations would you want? Enumeration, shrinking,
+              symbolic execution? Is <code>Gen</code> the right interface: one operation plus a
+              CCPO? What would you add, and what would it cost the proofs?
+            </p>
+          </aside>
+        </section>
+
+        <!-- Ergonomics, as a consequence of the embedding rather than a problem
+             set up in advance: the definition just shown, beside what a total
+             language would have asked for. -->
+        <section class="code code-sm">
+          <div class="pair">
+            <pre class="mark-fixpoint"><code class="language-lean" data-trim>
+def genFrames [Gen G] : G (List Nat) :=
+  oneOf! [
+    fun _ => pure [],
+    fun _ => do
+      let n ← genElapsed
+      let ns ← genFrames
+      return n :: ns]
+partial_fixpoint
+            </code></pre>
+            <pre class="mark-fuel fragment"><code class="language-lean" data-trim>
+def genFrames fuel :=
+  match fuel with
+  | 0 => return []
+  | fuel + 1 =>
+    oneOf [
+      return [],
+      do
+        let n ← genElapsed
+        let ns ← genFrames fuel
+        return n :: ns
+    ]
+            </code></pre>
+          </div>
+          <aside class="notes">
+            One thing the embedding buys before any proof: you write the generator the way you
+            would anyway. Its recursion is a least fixed point, so nothing has to decrease.
+            [click] Where generators are ordinary total functions, this is what you write
+            instead. And the fuel ends up in every specification: the support becomes the lists
+            of length at most <code>fuel</code>. That is what happened in the game’s own tests:
+            the run generators are <code>listOfMaxLength n</code>, and their proved spec says
+            <code>length ≤ n</code>. The fuel listing is written for the slide; not from
+            QuickChick.
+          </aside>
+        </section>
+
+        <!-- The bang. `frequency!` elaborates to the combinator proofs know,
+             the code that runs, and a proof that the two are equal. The
+             weights are summed while the macro runs, so the running totals in
+             the chain are literals. As Lean prints it, less the thunks, and
+             with `_` for the proof term. -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+frequency! [(2, a), (5, b), (3, c)]
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+frequencyWith
+  [(2, a), (5, b), (3, c)]    -- what proofs see
+  (do let n ← chooseNat 0 9   -- what runs
+      if n &lt; 2 then a
+      else if n &lt; 7 then b
+      else if n &lt; 10 then c
+      else default)
+  _                           -- a proof they are equal
+            </code></pre>
+          </div>
+          <aside class="notes">
+            One more thing the embedding has to get right before any proof: speed. Some of you
+            have been wondering about the bang. A choice between branches is a list of
+            closures, built and walked on every draw. [click] So <code>frequency!</code> is a
+            macro, and it elaborates to three things: the plain <code>frequency</code>, which
+            is what every proof sees; the code that runs, one draw and a chain of tests, with
+            the running totals 2, 7 and 10 added up while the macro runs; and a proof that the
+            two are equal, which the kernel checks. <code>frequencyWith</code> just returns the
+            second. <code>oneOf!</code> is the same with equality tests. This is what
+            <code>#print</code> shows for the definition, with notation off, less the
+            <code>fun _ =&gt;</code> thunks around each branch
+            (<code>Basalt/Combinators.lean</code>).
+          </aside>
+        </section>
+
+        <!-- What the macros buy, from Basalt's own ablation run
+             (basalt-raw-speed, results/2026-09-26-ablation, 20 rounds on an
+             Apple M5 Max). Each benchmark is scaled so the plain combinators
+             are 1; a bar is 270px per unit from x = 300. -->
+        <section class="stage">
+          <svg class="speed" viewBox="0 0 1280 720" role="img"
+               aria-label="Generation speed with the macros, relative to the plain
+                           combinators, on four benchmarks: 1.8 times on bst, 2.6 on heap,
+                           3.0 on sorted, 2.6 on nat. QuickCheck falls between the two on
+                           every one.">
+            <rect class="s-plain" x="300" y="78" width="30" height="22" />
+            <text class="s-key" x="344" y="97">oneOf, frequency</text>
+            <rect class="s-macro" x="610" y="78" width="30" height="22" />
+            <text class="s-key" x="654" y="97">oneOf!, frequency!</text>
+            <path class="s-ref" d="M946,72 V106" />
+            <text class="s-key" x="962" y="97">QuickCheck</text>
+
+            <text class="s-row" x="272" y="210">bst</text>
+            <rect class="s-plain" x="300" y="168" width="270" height="28" />
+            <rect class="s-macro" x="300" y="200" width="476" height="28" />
+            <path class="s-ref" d="M708,160 V236" />
+            <text class="s-value" x="792" y="225">1.8×</text>
+
+            <text class="s-row" x="272" y="330">heap</text>
+            <rect class="s-plain" x="300" y="288" width="270" height="28" />
+            <rect class="s-macro" x="300" y="320" width="712" height="28" />
+            <path class="s-ref" d="M719,280 V356" />
+            <text class="s-value" x="1028" y="345">2.6×</text>
+
+            <text class="s-row" x="272" y="450">sorted</text>
+            <rect class="s-plain" x="300" y="408" width="270" height="28" />
+            <rect class="s-macro" x="300" y="440" width="807" height="28" />
+            <path class="s-ref" d="M814,400 V476" />
+            <text class="s-value" x="1123" y="465">3.0×</text>
+
+            <text class="s-row" x="272" y="570">nat</text>
+            <rect class="s-plain" x="300" y="528" width="270" height="28" />
+            <rect class="s-macro" x="300" y="560" width="696" height="28" />
+            <path class="s-ref" d="M772,520 V596" />
+            <text class="s-value" x="1012" y="585">2.6×</text>
+
+            <text class="s-axis" x="300" y="652">values per second, relative to the plain combinators</text>
+          </svg>
+          <aside class="notes">
+            And it matters. Four benchmarks: search trees, heaps, sorted lists, and a bare
+            natural number. With the plain combinators, Basalt is slower than QuickCheck on
+            every one. With the macros it is 1.8 to 3 times faster than itself, and ahead of
+            QuickCheck on every one, by 1.2 to 1.7 times. Base_quickcheck is behind QuickCheck
+            throughout, so it is not drawn. And every proof still sees the plain combinator.
+            Numbers: geometric mean of 20 rounds on an Apple M5 Max, values per second of CPU
+            time; the first three generate a value, serialize it to JSON and write it, and the
+            last only generates (basalt-raw-speed, results/2026-09-26-ablation). The other
+            ablation there, SplitMix against Lean’s own random numbers, is worth about as
+            much again.
+          </aside>
+        </section>
+
+        <section class="card">
+          <p class="big">What do <span class="proved">proofs</span><br />buy you?</p>
+          <aside class="notes">
+            Signpost, part three. We can write it and run it. Now the reason for all of it.
+            Everything from here builds to the open slot on the last slide.
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="1-2|4-5|7-8">
+theorem genFrames.sound_complete :
+    IsSoundAndComplete genFrames framesOK
+
+theorem genFrames.terminates :
+    IsAlmostSurelyTerminating genFrames
+
+theorem genFrames.expect_length :
+    SPMF.expect genFrames (·.length) ≤ 1
+          </code></pre>
+          <aside class="notes">
+            Now the proofs. For <code>genFrames</code>, with no fuel anywhere: it makes exactly
+            the valid lists, which is all the set semantics could say. [click] It terminates
+            with probability 1: the empty slot in the picture. [click] And a run is at most one
+            frame long on average: the statistic from the end of Palamedes, as a theorem. All
+            three are checked. There the spec is the <code>Prop</code>
+            <code>FramesOK</code>,
+            and the length is cast to ℝ≥0∞. From here on, every slide is something a proof
+            buys, building to the last engagement point.
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim>
+/-- How long a frame took. A tick is 1000. -/
+def genElapsed : G Nat :=
+  frequency! [
+    (2, pure 0),
+    (5, chooseNat 1 450),
+    (3, chooseNat 900 1100),
+    (1, pure 1000),
+    (2, chooseNat 1001 16999),
+    (1, chooseNat 14000 200000)]
+          </code></pre>
+          <aside class="notes">
+            Now the generator we skipped: where <code>genFrames</code> gets a frame time. This
+            is one of the 43, written by hand for the game’s tests: six weighted cases, most of
+            the weight on frames that run no tick or that straddle a tick boundary. Is it right?
+            Does it produce every frame time up to 200 ticks? Running it will not say: a sample
+            shows what came out, not what cannot. Do not point at the gap; the proof finds it on
+            the next slides. As in lean-mc (<code>proptest/PropTest/Gen.lean</code>), less the
+            <code>fun _ =&gt;</code> thunks and the side condition.
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="|3|4|5">
+example : IsCompleteFor genElapsed (· ≤ 200000) := by
+  intro n hn
+  rw [genElapsed, SPMF.mem_support_iff_may]
+  walk
+  omega
+          </code></pre>
+          <aside class="notes">
+            So ask it as a theorem: can <code>genElapsed</code> produce every frame time up to
+            200 ticks? [click] Restate the law in its logic. [click] <code>walk</code> walks the
+            generator’s syntax: verification-condition generation. [click] What is left is
+            arithmetic. Checked (talk-code/Frames.lean, <code>genElapsedGap</code>), less one
+            <code>simp only</code> that unfolds the spec’s name.
+          </aside>
+        </section>
+
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+n : ℕ
+hn : n ≤ 200000
+⊢ 0 = n ∨ 1 ≤ n ∧ n ≤ 450
+  ∨ 900 ≤ n ∧ n ≤ 1100 ∨ 1000 = n
+  ∨ 1001 ≤ n ∧ n ≤ 16999
+  ∨ 14000 ≤ n ∧ n ≤ 200000
+            </code></pre>
+            <pre class="is-error fragment"><code class="language-plaintext" data-trim>
+omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  451 ≤ a ≤ 899
+            </code></pre>
+          </div>
+          <aside class="notes">
+            The goal <code>walk</code> leaves: no generator in sight, one disjunct per case.
+            [click] And the proof does not go through. Nearly half of the frames shorter than
+            one tick are never tested, and the proof found it; sampling never would. Both are
+            Lean’s real output, pinned in talk-code/Frames.lean; the goal is re-wrapped to fit.
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="5">
+/-- How long a frame took. A tick is 1000. -/
+def genElapsed : G Nat :=
+  frequency! [
+    (2, pure 0),
+    (5, chooseNat 1 899),
+    (3, chooseNat 900 1100),
+    (1, pure 1000),
+    (2, chooseNat 1001 16999),
+    (1, chooseNat 14000 200000)]
+          </code></pre>
+          <aside class="notes">
+            The fix is one number, and now the same proof goes through.
+            <code>genElapsed.sound_complete</code>, checked; so are
+            <code>genElapsed.terminates</code> and a cost bound of two random choices.
+          </aside>
+        </section>
+
+        <section class="code">
+          <pre><code class="language-lean" data-trim data-line-numbers="1-4|1-7">
+def genUniform := chooseNat 0 200000
+
+QC.support genUniform = {n | n ≤ 200000}
+QC.support genElapsed = {n | n ≤ 200000}
+
+SPMF.prob genUniform {0} = 1 / 200001
+SPMF.prob genElapsed {0} ≥ 1 / 7
+          </code></pre>
+          <aside class="notes">
+            Proofs can also say more than a set can. <code>genUniform</code> is what Palamedes
+            derived for one frame time, and a set of values cannot tell it from the hand-tuned
+            generator. [click] A distribution can: a zero-length frame is one draw in seven, or
+            one in two hundred thousand. Both probabilities are theorems
+            (<code>genUniform.prob_zero</code>, <code>genElapsed.prob_zero</code>). The
+            <code>QC.support</code> lines are how the old semantics would say what
+            <code>sound_complete</code> says.
+          </aside>
+        </section>
+
+        <!-- The Basalt takeaway, in the format of the Palamedes one: one line
+             for each of the three questions. Orange runs; green is proved. -->
+        <section class="card recap">
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
+          </svg>
+          <p class="big">A generator is a distribution.</p>
+          <p class="big">What you <span class="tested">run</span> is what you <span class="proved">prove</span>.</p>
+          <p class="big">
+            <span class="proved">Proofs</span> find what <span class="tested">sampling</span> can’t.</p>
+          <aside class="notes">
+            What to take from Basalt, one answer per question. A generator means a
+            distribution, so “how often” is something you can say. One term is both the code
+            you run and the object you prove things about, with no fuel, and fast. And the
+            proofs say what it generates, how often, and whether it stops: one of them found a
+            hole that no amount of sampling would have. Then the last slide puts the same list
+            back up with a slot open.
+          </aside>
+        </section>
+
+        <!-- What a proof about a generator can say today, and one slot that is
+             not filled in. Every law named is proved for genFrames or
+             genElapsed in talk-code/Frames.lean. -->
+        <section class="stage">
+          <p class="tag" style="left: 96px; top: 130px; width: 520px">
+            <code>IsSoundAndComplete</code>
+            What it generates
+          </p>
+          <p class="tag" style="left: 664px; top: 130px; width: 520px">
+            <code>IsAlmostSurelyTerminating</code>
+            That it stops
+          </p>
+          <p class="tag" style="left: 96px; top: 300px; width: 520px">
+            <code>SPMF.prob</code>
+            How often a value comes up
+          </p>
+          <p class="tag" style="left: 664px; top: 300px; width: 520px">
+            <code>SPMF.expect</code>
+            How big its values are
+          </p>
+          <p class="tag" style="left: 96px; top: 470px; width: 520px">
+            <code>IsCostBounded</code>
+            How much randomness it uses
+          </p>
+          <p class="tag open fragment" style="left: 664px; top: 470px; width: 520px; height: 110px">
+            ?
+          </p>
+          <aside class="notes">
+            <p>
+              What the proofs buy, in one place: what a generator makes, that it stops, how
+              often a value comes up, how big its values are, and how much randomness it uses.
+              Each is a theorem about <code>genFrames</code> or <code>genElapsed</code> in
+              talk-code/Frames.lean.
+            </p>
+            <p>
+              [click] <strong>ENGAGEMENT POINT</strong>, and the close. Ask the room: what else
+              would you want proved about a generator? Backups from my notes: Which of these are
+              the most compelling? How much is a proof of soundness worth over validating it by
+              testing? MCMC generators such as mutation walks? Second moments: how likely are
+              ten thousand samples to have a given property?
+            </p>
+          </aside>
+        </section>
+      </div>
+    </div>
+
+    <script type="module" src="/src/intro.js"></script>
+  </body>
+</html>

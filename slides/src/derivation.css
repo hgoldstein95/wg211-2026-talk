@@ -25,11 +25,15 @@
 
      <div class="derivation animated" data-derivation="pick"></div>
 
-   and lines slide in from the left, arriving goals rise half a line, the two
-   goals a `pick` opens FLIP out of the parent's box, and the changed span
-   flashes to full accent before settling. It reads as fussy, and the FLIP
-   overlaps the two goals into unreadable text for its first ~100ms at the
-   sizes this talk uses. Nothing in the deck uses it.
+   and lines slide in from the left, arriving goals rise half a line one after
+   another, a goal that persists slides to its new place, and the changed span
+   flashes to full accent before settling. The talk found that fussy and does
+   not use it. The stylized deck (`intro.html`) does, slowed down (its
+   `intro.css` sets --deriv-move and --deriv-fade).
+
+   An arriving goal used to fly out of the box of the goal it was split from.
+   That started the two goals a `pick` opens on top of each other, unreadable
+   for the first ~100ms, and it has been taken out of src/derivation.js.
 
    TYPE: the three panes are set like every other Lean listing in the deck —
    Fira Mono at --code-weight, and the highlight.js colours from the foot of
@@ -46,6 +50,11 @@
   --deriv-fade: var(--t-fade);
   --deriv-move: var(--t-move);
   --deriv-ease: cubic-bezier(0.22, 0.9, 0.3, 1);
+
+  /* Nothing on the widget itself transitions. This is where src/derivation.js
+     reads --deriv-move back from, resolved to a time. */
+  transition-property: none;
+  transition-duration: var(--deriv-move);
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -191,11 +200,12 @@
   color: var(--code-string);
 }
 
-/* In `.animated` mode a goal arriving fresh (not by splitting a parent) rises
-   half a line as it fades. By default it only fades. */
+/* In `.animated` mode an arriving goal rises half a line as it fades, and the
+   second of two waits a beat for the first. By default it only fades. */
 .reveal .derivation.animated .derivation-goal.is-entering,
 .reveal .derivation.animated .derivation-empty.is-entering {
   animation: deriv-goal-in var(--deriv-move) var(--deriv-ease) both;
+  animation-delay: calc(var(--enter, 0) * var(--deriv-move) / 4);
 }
 
 @keyframes deriv-goal-in {
@@ -302,11 +312,9 @@
    since src/derivation.js keys the script lines by position, a line dropping
    back to `is-past` transitions too.
 
-   Travel was tried and taken back out: a line sliding in and the goals rising
-   into place read as fussy at this size, and the branch FLIP behind
-   `.animated` is worse — the two goals a `pick` opens sit on top of each other
-   for its first ~100ms and the text is unreadable. The cross-fade is the
-   whole of it. */
+   Travel was tried and taken back out of the talk: a line sliding in and the
+   goals rising into place read as fussy at this size. There, the cross-fade
+   is the whole of it. */
 .reveal .derivation-line.is-new,
 .reveal .derivation-goal.is-entering,
 .reveal .derivation-empty.is-entering {

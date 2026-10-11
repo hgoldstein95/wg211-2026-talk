@@ -39,6 +39,12 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       emptyOutDir: true,
       assetsInlineLimit: 0,
+      // Two pages: the talk, and the intro spike beside it at `intro.html`.
+      // The offline pack stays the talk alone — the single-file plugin
+      // inlines one entry, and can't split a build between two.
+      rolldownOptions: {
+        input: offline ? ['index.html'] : ['index.html', 'intro.html'],
+      },
     },
   }
 })

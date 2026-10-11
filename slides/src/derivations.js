@@ -145,4 +145,27 @@ const frames = {
   ],
 }
 
-export const derivations = { frames }
+// The same derivation as the stylized deck (`intro.html`) tells it. Two
+// further liberties, both the deck's own: a goal is an existential, `∃ g,
+// g.support = P`, where Palamedes has the subtype `CorrectGen P`, so that the
+// term pane reads as the witness being filled in; and the layer's
+// constructors are spelled `nilF` and `consF`, where Palamedes derives
+// `ListF.nil` and `ListF.cons`. Everything else is `frames`, step for step.
+const restate = (text) =>
+  text
+    .replaceAll('CorrectGen fun tv =>', '∃ g, g.support = fun l =>')
+    .replaceAll('CorrectGen fun n =>', '∃ g, g.support = fun n =>')
+    .replaceAll('tv = ', 'l = ')
+    .replaceAll('.nil', '.nilF')
+    .replaceAll('.cons ', '.consF ')
+
+const layer = {
+  steps: frames.steps.map((step) => ({
+    ...step,
+    lines: step.lines.map((line) => ({ ...line, text: restate(line.text) })),
+    goals: step.goals.map((goal) => ({ ...goal, text: restate(goal.text) })),
+    term: restate(step.term),
+  })),
+}
+
+export const derivations = { frames, layer }

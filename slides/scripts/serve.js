@@ -17,6 +17,7 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
   '.json': 'application/json',
 }
 

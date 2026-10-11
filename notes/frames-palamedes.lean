@@ -60,3 +60,26 @@ def genFrames [Gen G] : G (List Nat) := by
 #print genFrames
 
 end Frames
+
+/-!
+The stylized deck writes the predicate as a fold from the start. That synthesizes too, and to the
+same generator: `generator_search` prints the `List.unfoldGo` term above for it.
+
+The deck's own spelling is a pretence, and is not what is checked here: there `List.fold` takes one
+function out of `ListF` (`fun | .nilF => true | .consF n ok => n ≤ 200000 && ok`), so that the
+fold's cases line up with the layer predicate and with the unfold's branches. Palamedes's
+`List.fold` takes the answer for nil and the function for cons separately, as below.
+-/
+
+namespace FramesFold
+
+@[simp]
+def framesOK (ns : List Nat) : Bool :=
+  List.fold true (fun n ok => n < 200001 && ok) ns
+
+def genFrames [Gen G] : G (List Nat) := by
+  generator_search (fun ns => framesOK ns)
+
+#print genFrames
+
+end FramesFold

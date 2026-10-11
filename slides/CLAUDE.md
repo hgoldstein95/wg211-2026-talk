@@ -27,6 +27,14 @@ a snapshot is what catches an overlong slide.
 `talk.md` is the talk and the only deck; `src/themes/nord.css` is the
 only theme. Both are hardcoded in `src/main.js`.
 
+`intro.html` is a spike beside it: the same talk in a stylized form, with its
+own entry (`src/intro.js`) and its own stylesheet (`src/intro.css`), and
+nothing from `talk.md` or `base.css`. It does import `lean-hljs.js`,
+`code-marks.js` and the derivation widget, so a change to one of those shows
+in both decks; `intro.css` restyles them. The README has how to run it. The
+motion rule below holds there too — its one clip plays once when its slide
+arrives.
+
 `nord.css` should only set variables. Anything structural — spacing, a new
 layout class — belongs in `src/base.css`.
 

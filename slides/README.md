@@ -9,6 +9,23 @@ npm run dev      # http://localhost:5173, hot reload
 
 `AUTHORING.md` is how to write a slide. `CLAUDE.md` is what bites you.
 
+## The stylized deck
+
+`intro.html` is a second, separate deck: the talk in a more produced style,
+tried out beside it. It began as a cold open and now runs through Palamedes
+and Basalt. Its slides are written straight into `intro.html`, its look is
+`src/intro.css`, and `src/voxel.js` draws its blocks with lean-mc's own
+texture function. Its footage and screenshot are in `public/intro/`. It shares
+the talk's Lean grammar, code marks and derivation widget, restyled.
+
+```sh
+npm run dev                     # then http://localhost:5173/intro.html
+npm run snap -- --deck intro    # -> snapshots/intro/NN.png
+```
+
+`npm run build` puts it in `dist/` beside the talk; `npm run pack` and
+`npm run pdf` are the talk alone.
+
 ## Scripts
 
 | Command | What it does |
