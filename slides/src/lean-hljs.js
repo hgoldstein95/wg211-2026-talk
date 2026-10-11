@@ -48,7 +48,7 @@ export default function lean(hljs) {
     // Not keywords, but not ordinary identifiers either — they get the colour
     // OCaml's ppx attributes take, so the two languages name the idea alike.
     // Add the ones a given talk leans on here.
-    meta: 'derive_generator generator_search generator_search?',
+    meta: 'derive_generator generator_search generator_search? aesop',
   }
 
   // `#check`, `#eval`, `#visualize`: commands, so they read as keywords.

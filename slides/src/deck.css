@@ -676,6 +676,8 @@ html.reveal-print .reveal pre:has(.code-annot) code {
   --lh: 1.4;
   --move: calc(var(--t-open) * 1.1);
   --turn: calc(var(--t-open) * 0.7);
+  /* The least overshoot that still reads as one. */
+  --settle: cubic-bezier(0.2, 1.06, 0.3, 1);
 
   position: relative;
   flex: none;
@@ -696,12 +698,12 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 }
 
 /* The pieces leave just after one another, quickly, and settle where they
-   land with the least overshoot that still reads as one. */
+   land. */
 .reveal .exploded .piece {
   --x: var(--whole-x);
   --y: var(--whole-y);
   transition:
-    transform var(--move) cubic-bezier(0.2, 1.06, 0.3, 1) calc(var(--i) * var(--t-fade) * 0.12),
+    transform var(--move) var(--settle) calc(var(--i) * var(--t-fade) * 0.12),
     opacity var(--t-fade);
 }
 
@@ -795,6 +797,40 @@ html.reveal-print .reveal pre:has(.code-annot) code {
   color: var(--dim);
   font: 500 28px / 40px var(--mono);
   text-align: center;
+}
+
+/* One more press moves the built listing over, all of a piece, for what
+   comes in beside it. That is placed on the same grid as the pieces, by its
+   edges and not by a transform, which reveal takes off a fragment in print.
+   It comes in as the listing lands, and may hold presses of its own. */
+.reveal .exploded {
+  transition: transform var(--move) var(--settle);
+}
+
+.reveal .exploded.is-moved {
+  transform: translateX(calc(var(--over) * -1ch));
+}
+
+.reveal .exploded .beside {
+  position: absolute;
+  left: calc(var(--x) * 1ch);
+  top: calc(var(--y) * var(--lh) * 1em);
+}
+
+.reveal .exploded .beside,
+.reveal .exploded .beside > .fragment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.reveal .exploded .beside.visible {
+  transition: opacity var(--t-fade) calc(var(--move) / 4);
+}
+
+.reveal .exploded .beside svg {
+  display: block;
 }
 
 /* --- A distribution, drawn ------------------------------------------------- */

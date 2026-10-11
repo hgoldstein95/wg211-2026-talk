@@ -5,10 +5,11 @@
 // function is ported here line for line, so a block in a diagram is the block
 // in the footage, texel for texel, with no image files to keep in step.
 //
-// Two blocks are not the game's, and each stands for one of the talk's two
-// systems. Basalt is drawn after Minecraft's, with the same kind of noise the
-// game's own textures are made of. The die is Palamedes's: he is the Greek
-// credited with inventing dice.
+// Three blocks are not the game's. Two stand for the talk's two systems.
+// Basalt is drawn after Minecraft's, with the same kind of noise the game's
+// own textures are made of. The die is Palamedes's: he is the Greek credited
+// with inventing dice. The third is TNT, also after Minecraft's, and it stands
+// for raylib.
 
 /** `Atlas.hash`: 32-bit arithmetic, hence the `imul` and the `>>> 0`s. */
 const hash = (x, y, salt) => {
@@ -49,22 +50,14 @@ function tilePixel(tile, x, y) {
       return y % 4 === 3
         ? rgb(112, 88, 52)
         : rgb(166, 134, 82, jitter(x, y, 9, 5) + jitter(0, Math.floor(y / 4), 9, 8))
-    case 10: {
-      // cobble
-      const sx = x + (Math.floor(y / 4) % 2) * 2
-      return sx % 4 === 0 || y % 4 === 0
-        ? rgb(78, 78, 78, jitter(x, y, 10, 6))
-        : rgb(
-            126,
-            126,
-            126,
-            jitter(Math.floor(sx / 4), Math.floor(y / 4), 10, 22) + jitter(x, y, 11, 5),
-          )
-    }
     case 20:
       return basaltSide(x, y)
     case 21:
       return basaltTop(x, y)
+    case 30:
+      return tntSide(x, y)
+    case 31:
+      return tntTop(x, y)
     default:
       return tile in PIPS ? diePixel(tile, x, y) : [255, 0, 255]
   }
@@ -146,17 +139,50 @@ function basaltSide(x, y) {
   return rgb(...grey.map((v) => v - 22), jitter(x, y, 28, 4))
 }
 
+// TNT is a bundle of sticks, four across a face, tied with a paper band that
+// says what is in it.
+const TNT_RED = [198, 50, 36]
+const TNT_JOIN = -64
+const TNT_PAPER = [232, 228, 216]
+const TNT_INK = [34, 30, 32]
+
+// The band's lettering, four texels tall, two texels in from the left.
+const TNT_LETTERS = [
+  'XXX.X..X.XXX',
+  '.X..XX.X..X.',
+  '.X..X.XX..X.',
+  '.X..X..X..X.',
+]
+
+/** The sticks standing, each lit from the left, with the band across them. */
+function tntSide(x, y) {
+  if (y >= 5 && y <= 10) {
+    const ink = TNT_LETTERS[y - 6]?.[x - 2] === 'X'
+    return ink ? TNT_INK : rgb(...TNT_PAPER, jitter(x, y, 31, 4))
+  }
+  const round = [TNT_JOIN, 16, 0, -24][x % 4]
+  return rgb(...TNT_RED, round + jitter(x, y, 30, 5))
+}
+
+/** The ends of the sticks, sixteen of them, each with its fuse. */
+function tntTop(x, y) {
+  if (x % 4 === 0 || y % 4 === 0) return rgb(...TNT_RED, TNT_JOIN + jitter(x, y, 32, 5))
+  if (x % 4 === 2 && y % 4 === 2) return rgb(...TNT_PAPER, jitter(x, y, 33, 6) - 20)
+  return rgb(...TNT_RED, jitter(x, y, 32, 5))
+}
+
 // Tile numbers as in `Block.tile`: which tile a block shows on top and on its
 // two visible sides.
 const BLOCKS = {
   grass: { top: 3, left: 4, right: 4 },
   stone: { top: 1, left: 1, right: 1 },
-  cobble: { top: 10, left: 10, right: 10 },
   planks: { top: 9, left: 9, right: 9 },
   sand: { top: 5, left: 5, right: 5 },
   log: { top: 7, left: 6, right: 6 },
   basalt: { top: 21, left: 20, right: 20 },
   die: { top: 100, left: 101, right: 102 },
+  // The texel the other blocks take their hull from is ink on this one.
+  tnt: { top: 31, left: 30, right: 30, hull: [9, 2] },
 }
 
 // How much light each visible face gets. The game dims a face by the way it
@@ -206,10 +232,10 @@ export function installBlocks(svg) {
     `<image href="${faceImage(tile, shade)}" width="1" height="1" ` +
     `preserveAspectRatio="none" transform="matrix(${matrix})"/>`
 
-  const blocks = Object.entries(BLOCKS).map(([name, { top, left, right }]) => {
+  const blocks = Object.entries(BLOCKS).map(([name, { top, left, right, hull = [9, 9] }]) => {
     // The plain hull under the faces takes up the hairline that antialiasing
     // would otherwise leave along the edges where two faces meet.
-    const [r, g, b] = tilePixel(right, 9, 9).map((v) => Math.round(v * SHADE.right))
+    const [r, g, b] = tilePixel(right, ...hull).map((v) => Math.round(v * SHADE.right))
     return (
       `<g id="blk-${name}">` +
       `<path d="${HULL}" fill="rgb(${r} ${g} ${b})"/>` +

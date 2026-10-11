@@ -129,8 +129,8 @@
         </section>
 
         <!-- One picture, four states. The blocks stay where they are: game at
-             x = 220, model at 640, raylib at 1060, links at y = 326. The model
-             is smooth stone to raylib's cobblestone: the same rock, tidied. In
+             x = 220, model at 640, raylib at 1060, links at y = 326. raylib is
+             TNT: the one block here that nothing is proved about. In
              lean-mc the model is `LeanMc.Gpu` and the test is `lake exe native`. -->
         <section class="stage">
           <svg viewBox="0 0 1280 720" role="img"
@@ -139,9 +139,9 @@
                            against the model, and the model is tested against raylib.">
             <use href="#blk-grass" transform="translate(220 220) scale(100)"/>
             <text class="t-name" x="220" y="516">Game Logic</text>
-            <text class="t-sub proved" x="220" y="556">Lean, proved</text>
+            <text class="t-sub proved" x="220" y="556">Lean</text>
 
-            <use href="#blk-cobble" transform="translate(1060 220) scale(100)"/>
+            <use href="#blk-tnt" transform="translate(1060 220) scale(100)"/>
             <text class="t-name" x="1060" y="516">raylib</text>
             <text class="t-sub" x="1060" y="556">C</text>
 
@@ -229,7 +229,7 @@
             <g transform="translate(0 30)">
               <use href="#blk-stone" transform="translate(1000 70) scale(78)"/>
               <text class="t-name at-start" x="1100" y="172">Model</text>
-              <use href="#blk-cobble" transform="translate(1000 400) scale(78)"/>
+              <use href="#blk-tnt" transform="translate(1000 400) scale(78)"/>
               <text class="t-name at-start" x="1100" y="502">raylib</text>
               <path class="link is-tested" d="M1000,256 V388"/>
 
@@ -243,15 +243,15 @@
                   <text x="615" y="355">draw 3</text>
                   <text x="615" y="407">unload 3</text>
                 </g>
-                <path class="flow" d="M732,318 H810 V153 H886 M810,318 V483 H886"/>
-                <path class="flowhead" d="M882,133 L914,153 L882,173 Z M882,463 L914,483 L882,503 Z"/>
+                <path class="flow" d="M732,318 H810 V153 H896 M810,318 V483 H896"/>
+                <path class="flowhead" d="M892,139 L914,153 L892,167 Z M892,469 L914,483 L892,497 Z"/>
                 <text class="t-link tested at-start" x="1028" y="336">≈</text>
               </g>
 
               <g class="fragment" data-fragment-index="1">
                 <use href="#blk-basalt" transform="translate(220 236) scale(78)"/>
-                <path class="flow" d="M314,318 H462"/>
-                <path class="flowhead" d="M458,298 L490,318 L458,338 Z"/>
+                <path class="flow" d="M314,318 H472"/>
+                <path class="flowhead" d="M468,304 L490,318 L468,332 Z"/>
                 <text class="t-answer tested" x="220" y="496">Generators</text>
               </g>
             </g>
@@ -405,7 +405,7 @@ def framesOK (fs : List Frame) : Bool :=
     fs
             </code></pre>
             <pre class="fragment"><code class="language-lean" data-trim>
-def genFrames [Gen G] : G (List Frame) := by
+def genFrames : G (List Frame) := by
   generator_search (fun fs => framesOK fs)
             </code></pre>
           </div>
@@ -484,8 +484,11 @@ fun (l : ListF Frame Unit) =>
         <!-- The layer predicate, taken apart, changed a piece at a time, and
              put back together as the layer generator (src/exploded.js). The
              first press spreads the pieces out, the or lifted over its two
-             sides; the next five turn one rule's pieces each; the last closes
-             them up into the step function the unfold is given four slides on.
+             sides; the next five turn one rule's pieces each; the seventh
+             closes them up into the step function the unfold is given four
+             slides on. The eighth moves that over to the left, and sets the
+             five rules beside it as a tactic script. The last puts an arrow
+             under the script, down to `aesop`.
 
              Only the or moves, from between its sides to in front of them.
              Everything else keeps the order it is written in, because `do`
@@ -535,31 +538,39 @@ fun (l : ListF Frame Unit) =>
                            turns into a piece of a program: or into oneOf, an equation
                            into pure, exists into a draw, a bound into chooseNat, and
                            into a semicolon. The pieces close up into the layer
-                           generator, a do block on lines of its own.">
+                           generator, a do block on lines of its own. Beside it are
+                           the five rules as a tactic script, and an arrow from the
+                           script down to aesop.">
             <span class="glue" data-in="whole" data-at="0 0">fun (l : ListF Frame Unit) =&gt;</span>
             <span class="piece" data-swap="pick"
                   data-whole="12 1" data-apart="0 0" data-built="0 0">
-              <span class="from">∨</span><span class="to">oneOf</span>
+              <span class="from">∨</span>
+              <span class="to">oneOf</span>
             </span>
             <span class="piece" data-swap="nil"
                   data-whole="2 1" data-apart="4 1.8" data-built="2 1">
-              <span class="from">l = .nilF</span><span class="to">pure .nilF</span>
+              <span class="from">l = .nilF</span>
+              <span class="to">pure .nilF</span>
             </span>
             <span class="piece" data-swap="bind"
                   data-whole="2 2" data-apart="4 3.6" data-built="4 3">
-              <span class="from">∃ n,</span><span class="to">let n ←</span>
+              <span class="from">∃ n,</span>
+              <span class="to">let n ←</span>
             </span>
             <span class="piece" data-swap="between"
                   data-whole="7 2" data-apart="13.6 3.6" data-built="12 3">
-              <span class="from">n ≤ 200000</span><span class="to">chooseNat 0 200000</span>
+              <span class="from">n ≤ 200000</span>
+              <span class="to">chooseNat 0 200000</span>
             </span>
             <span class="piece drops" data-swap="bind"
                   data-whole="18 2" data-apart="34.2 3.6" data-built="30 3">
-              <span class="from">∧</span><span class="to">;</span>
+              <span class="from">∧</span>
+              <span class="to">;</span>
             </span>
             <span class="piece" data-swap="cons"
                   data-whole="20 2" data-apart="37.8 3.6" data-built="4 4">
-              <span class="from">l = .consF n ()</span><span class="to">pure (.consF n ())</span>
+              <span class="from">l = .consF n ()</span>
+              <span class="to">pure (.consF n ())</span>
             </span>
             <span class="glue" data-in="built" data-at="6 0">[</span>
             <span class="glue" data-in="built" data-at="12 1">,</span>
@@ -570,12 +581,34 @@ fun (l : ListF Frame Unit) =>
                  neither is a rule. -->
             <div class="steps">
               <p class="fragment current-visible"></p>
-              <p class="fragment current-visible" data-swap="pick">s_pick</p>
-              <p class="fragment current-visible" data-swap="nil">s_pure</p>
-              <p class="fragment current-visible" data-swap="bind">s_bind</p>
-              <p class="fragment current-visible" data-swap="between">s_between</p>
-              <p class="fragment current-visible" data-swap="cons">s_pure</p>
+              <p class="fragment current-visible" data-swap="pick">apply synth_pick</p>
+              <p class="fragment current-visible" data-swap="nil">apply synth_pure</p>
+              <p class="fragment current-visible" data-swap="bind">apply synth_bind</p>
+              <p class="fragment current-visible" data-swap="between">apply synth_between</p>
+              <p class="fragment current-visible" data-swap="cons">apply synth_pure</p>
               <p class="fragment current-visible"></p>
+            </div>
+            <!-- Two more presses. The listing moves over, and the five steps
+                 are set beside it as the tactic script they make: a bullet
+                 for each goal `synth_pick` and `synth_bind` leave, and the
+                 `intros` the steps left out. Then an arrow down from the
+                 script to `aesop`. -->
+            <div class="beside fragment">
+              <pre><code class="language-lean" data-trim>
+apply synth_pick
+· apply synth_pure
+· apply synth_bind
+  · apply synth_between
+  · intros
+    apply synth_pure
+              </code></pre>
+              <div class="fragment">
+                <svg viewBox="0 0 28 64" width="28" height="64" aria-hidden="true">
+                  <path class="flow ink" d="M14,0 V46"/>
+                  <path class="flowhead ink" d="M0,42 L14,64 L28,42 Z"/>
+                </svg>
+                <pre><code class="language-lean" data-trim>aesop</code></pre>
+              </div>
             </div>
           </div>
           <aside class="notes">
@@ -589,6 +622,8 @@ fun (l : ListF Frame Unit) =>
             together, the semicolon as a line break: a generator for one layer. Nothing
             changed places but the or.
             Every rule comes with its proof, so the generator samples exactly the predicate.
+            [click] Written down, those five steps are a tactic script. [click] And
+            <code>aesop</code> is what finds it.
             The rules are real. The liberties: the search works on goals from the top down,
             not on loose pieces; <code>s_bind</code> takes the existential and its conjunction
             as one, and gives a bind, written here as a <code>do</code> block;
@@ -630,8 +665,8 @@ def framesOK (fs : List Frame) : Bool :=
             <use href="#blk-sand" transform="translate(300 98) scale(44)"/>
             <use class="seam" href="#blk-hull" transform="translate(300 98) scale(44)"/>
 
-            <path class="flow ink" d="M366,193 H962 V300"/>
-            <path class="flowhead ink" d="M940,296 L962,330 L984,296 Z"/>
+            <path class="flow ink" d="M366,193 H962 V312"/>
+            <path class="flowhead ink" d="M948,308 L962,330 L976,308 Z"/>
             <text class="t-fn" x="664" y="160">fold</text>
             <text class="t-sub" x="664" y="240">List Frame → Bool</text>
 
@@ -641,8 +676,8 @@ def framesOK (fs : List Frame) : Bool :=
             </g>
 
             <g class="fragment">
-              <path class="flow" d="M962,402 V533 H556"/>
-              <path class="flowhead" d="M560,511 L526,533 L560,555 Z"/>
+              <path class="flow" d="M962,402 V533 H544"/>
+              <path class="flowhead" d="M548,519 L526,533 L548,547 Z"/>
               <text class="t-fn tested" x="748" y="500">unfold</text>
               <text class="t-sub" x="748" y="580">Bool → G (List Frame)</text>
 
@@ -947,8 +982,8 @@ class Gen (G : Type → Type) where
             <text class="t-sub" x="230" y="552">[Gen G] : G (List Nat)</text>
 
             <g class="fragment" data-fragment-index="0">
-              <path class="flow plain" d="M356,332 H470 V132 H556" />
-              <path class="flowhead plain" d="M552,112 L584,132 L552,152 Z" />
+              <path class="flow plain" d="M356,332 H470 V132 H566" />
+              <path class="flowhead plain" d="M562,118 L584,132 L562,146 Z" />
               <g class="reading runs">
                 <rect x="596" y="100" width="210" height="64" />
                 <text x="701" y="142">IO</text>
@@ -957,8 +992,8 @@ class Gen (G : Type → Type) where
             </g>
 
             <g class="fragment" data-fragment-index="1">
-              <path class="flow plain" d="M470,332 V232 H556" />
-              <path class="flowhead plain" d="M552,212 L584,232 L552,252 Z" />
+              <path class="flow plain" d="M470,332 V232 H566" />
+              <path class="flowhead plain" d="M562,218 L584,232 L562,246 Z" />
               <g class="reading proves">
                 <rect x="596" y="200" width="210" height="64" />
                 <text x="701" y="242">SPMF</text>
@@ -967,15 +1002,15 @@ class Gen (G : Type → Type) where
             </g>
 
             <g class="fragment" data-fragment-index="2">
-              <path class="flow plain" d="M470,332 H556" />
-              <path class="flowhead plain" d="M552,312 L584,332 L552,352 Z" />
+              <path class="flow plain" d="M470,332 H566" />
+              <path class="flowhead plain" d="M562,318 L584,332 L562,346 Z" />
               <g class="reading proves">
                 <rect x="596" y="300" width="210" height="64" />
                 <text x="701" y="342">SPMF.Cost</text>
               </g>
               <text class="t-says at-start" x="834" y="343">what each value costs</text>
-              <path class="flow plain" d="M470,332 V432 H556" />
-              <path class="flowhead plain" d="M552,412 L584,432 L552,452 Z" />
+              <path class="flow plain" d="M470,332 V432 H566" />
+              <path class="flowhead plain" d="M562,418 L584,432 L562,446 Z" />
               <g class="reading runs">
                 <rect x="596" y="400" width="210" height="64" />
                 <text x="701" y="442">FuzzGen</text>
@@ -984,8 +1019,8 @@ class Gen (G : Type → Type) where
             </g>
 
             <g class="fragment" data-fragment-index="3">
-              <path class="flow plain" d="M470,432 V532 H556" />
-              <path class="flowhead plain" d="M552,512 L584,532 L552,552 Z" />
+              <path class="flow plain" d="M470,432 V532 H566" />
+              <path class="flowhead plain" d="M562,518 L584,532 L562,546 Z" />
               <g class="reading open">
                 <rect x="596" y="500" width="210" height="64" />
                 <text x="701" y="542">?</text>

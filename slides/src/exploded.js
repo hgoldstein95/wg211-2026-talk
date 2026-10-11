@@ -15,6 +15,7 @@
 //         <p class="fragment current-visible" data-swap="pick">s_pick</p>
 //         <p class="fragment current-visible"></p>
 //       </div>
+//       <div class="beside fragment"><pre><code>…</code></pre></div>
 //     </div>
 //
 // There are three layouts. `whole` is the first listing, `apart` is its pieces
@@ -31,14 +32,23 @@
 // pieces whose `data-swap` matches the step's, and shows what the step holds:
 // the name of its rule.
 //
+// A `.beside` is optional, and is one more press after the last step. The
+// built listing moves over to the left, and the `.beside` comes in on its
+// right, level with its first line. The first `pre` in it is what the room is
+// made for. Anything after that hangs below, and a fragment there is a press
+// of its own.
+//
 // The look, and all the motion, is the "A listing taken apart" section of
 // deck.css. This file only says which state the slide is in.
 
 const LAYOUTS = ['whole', 'apart', 'built']
+// Columns between the built listing and what comes in beside it.
+const GAP = 6
 
 const point = (text) => text.trim().split(/\s+/).map(Number)
 // Characters, not UTF-16 units: the face is monospaced, so this is its width.
 const width = (el) => [...el.textContent].length
+const widest = (el) => Math.max(...el.textContent.trim().split('\n').map((line) => [...line].length))
 
 function prepare(root, hljs) {
   // A print page is a clone of a slide, and may be a clone of one already
@@ -89,6 +99,16 @@ function prepare(root, hljs) {
     el.style.setProperty('--y', y)
   }
 
+  // The built listing and what stands beside it are centered as one, so the
+  // listing moves left by half of what it gains.
+  const beside = root.querySelector('.beside')
+  if (beside) {
+    const [x, y] = centered('built', [extent.built.cols + GAP, 0])
+    beside.style.setProperty('--x', x)
+    beside.style.setProperty('--y', y)
+    root.style.setProperty('--over', (GAP + widest(beside.querySelector('pre'))) / 2)
+  }
+
   // Painted by the grammar every listing uses, so a piece is the same code
   // whether it is in a listing or out of one.
   for (const el of root.querySelectorAll('.from, .to, .glue')) {
@@ -102,6 +122,7 @@ function sync(root) {
 
   root.classList.toggle('is-apart', shown.length > 0 && shown.length < steps.length)
   root.classList.toggle('is-built', steps.length > 0 && shown.length === steps.length)
+  root.classList.toggle('is-moved', root.querySelector('.beside.visible') !== null)
 
   const swapped = new Set(shown.map((step) => step.dataset.swap).filter(Boolean))
   for (const piece of root.querySelectorAll('.piece')) {
