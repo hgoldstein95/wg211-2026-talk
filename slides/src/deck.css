@@ -549,6 +549,18 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   gap: 34px;
 }
 
+/* Where a listing's idea comes from: one quiet line in the footer, on the
+   slide number's baseline and set like it. */
+.reveal .cite {
+  position: absolute;
+  left: var(--pad);
+  bottom: 28px;
+  margin: 0;
+  padding: 4px 0;
+  font: 400 22px var(--mono);
+  color: var(--dim);
+}
+
 /* What Lean said back, when it was not good news. */
 .reveal pre.is-error code {
   color: var(--fail);

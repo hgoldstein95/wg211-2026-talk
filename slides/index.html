@@ -285,13 +285,11 @@
         <!-- The two systems, each with its block: a die for Palamedes, who is
              credited with inventing dice, and basalt for Basalt.
 
-             TODO (dry run): Harry does not like the two taglines, "generators
-             from predicates" and "generators with proofs", here or on the two
-             section openers, and wants to change them. -->
+             The taglines here are the ones on the two section openers. -->
         <section class="stage">
           <svg viewBox="0 0 1280 720" role="img"
-               aria-label="Two parts. Palamedes: generators from predicates. Basalt:
-                           generators with proofs.">
+               aria-label="Two parts. Palamedes: synthesizing generators. Basalt:
+                           foundations for generators.">
             <use href="#blk-die" transform="translate(360 150) scale(110)"/>
             <text class="t-title" x="360" y="492">Palamedes</text>
             <text class="t-sub" x="360" y="540">Synthesizing Generators</text>
@@ -815,8 +813,8 @@ def genFrames :=
         </section>
 
         <section class="card">
-          <p class="big huge">49.2%</p>
-          <p class="big quiet" style="margin-top: 0.3em">of the lists it generates are empty</p>
+          <p class="big huge">~50%</p>
+          <p class="big quiet" style="margin-top: 0.3em">of lists genFrames outputs are empty.</p>
           <aside class="notes">
             Sound and complete is not the same as good. Half the runs are empty, and a frame of
             exactly zero or exactly one tick almost never comes up. Which is the second half of
@@ -825,31 +823,44 @@ def genFrames :=
             10000), not pinned in the Palamedes tests.
           </aside>
         </section>
-
         <!-- ================= Basalt ================= -->
 
+        <!-- TODO (dry run): Harry feels the opening of this section runs
+             backwards. It introduces one thing after another (the support,
+             SPMF, the type class, the CCPO) without first saying why. He
+             wants a couple of slides here, at the start, on what Basalt is
+             and why: what the problems are. A lot of the motivation is
+             pushed too late. -->
         <section class="card opener">
           <h2 class="big">Basalt</h2>
-          <p class="big quiet">Generators with proofs</p>
+          <p class="big quiet">Foundations for Generators</p>
           <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
             <use href="#blk-basalt" transform="translate(1050 190) scale(150)"/>
           </svg>
+          <aside class="notes">
+            So now I’m going to introduce Basalt, which is a new foundational framework for
+            property-based testing generators. It allows us to write proofs about generator
+            distributions, and hopefully avoid this kind of problem.
+          </aside>
         </section>
 
         <!-- Basalt runs in three parts, each opened by a question set like the
-             ones in the cold open: what a generator means, how to run that,
-             and what proofs buy. The takeaway before the last slide answers
-             the three in order. -->
+             ones in the cold open: what a generator is formally, what we
+             run, and what proofs buy. The takeaway before the last slide
+             answers the three in order. -->
         <section class="card">
-          <p class="big">What does a<br/>generator <span class="pointed">mean</span>?</p>
+          <p class="big">What is a generator,<br/>
+            <span class="pointed">formally</span>?</p>
           <aside class="notes">
-            Signpost, part one of three. Palamedes left us with a number we could measure and
-            not state. So start with what a generator means.
+            This project started with a question: what is the formal semantics of a generator?
           </aside>
         </section>
 
         <!-- Basalt picks up where Palamedes stopped: half the lists are empty,
-             and the usual meaning of a generator has no way to say so. -->
+             and the usual meaning of a generator has no way to say so.
+
+             Paraskevopoulou, Hriţcu, Dénès, Lampropoulos, Pierce. Foundational
+             Property-Based Testing. ITP 2015. -->
         <section class="code">
           <div class="stack">
             <pre><code class="language-lean" data-trim>
@@ -858,28 +869,64 @@ def QC.Gen α := Seed → α
 def QC.support (g : QC.Gen α) : Set α :=
   {x | ∃ s, g s = x}
             </code></pre>
+            <pre><code class="language-lean" data-trim>
+QC.support genFrames = {fs | framesOK fs}
+            </code></pre>
+          </div>
+          <p class="cite">
+            Paraskevopoulou et al., <em>Foundational Property-Based Testing</em>, ITP 2015
+          </p>
+          <aside class="notes">
+            And there was an answer to this, in QuickChick, which was the first and main place
+            where people could write proofs about generators. There, a generator is represented
+            as a function from a seed to a value, and the generator’s meaning is defined by its
+            support: the values <code>x</code> such that there exists a seed <code>s</code>
+            where <code>g s</code> produces <code>x</code>. So in our <code>genFrames</code>
+            example, the support is the set of lists of frames where those frames are OK. This
+            is a perfectly sensible definition. But there’s a downside to this representation.
+            The last line is how that semantics would put it; it is not from QuickChick.
+          </aside>
+        </section>
+
+        <!-- The downside, before any fix: one set, two very different
+             generators. `genMostlyEmpty` can still make every valid list,
+             through its second branch, so its support is the support of
+             `genFrames`. The same point comes back near the end of the
+             section with `genUniform` and `genElapsed`, where both
+             probabilities are theorems. Written for the slide; not checked
+             in Lean. -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+def genMostlyEmpty : G (List Frame) :=
+  frequency [
+    (999999, pure []),
+    (1, genFrames)
+  ]
+            </code></pre>
             <pre class="fragment"><code class="language-lean" data-trim>
-QC.support genFrames = {ns | framesOK ns}
+QC.support genFrames      = {fs | framesOK fs}
+QC.support genMostlyEmpty = {fs | framesOK fs}
             </code></pre>
           </div>
           <aside class="notes">
-            We measured that 49.2%. Can we state it? The existing foundation is QuickChick
-            (Paraskevopoulou et al., Foundational Property-Based Testing, ITP 2015): a generator
-            is a function from seeds, and its meaning is the set of values it can produce.
-            Palamedes started from this semantics too. [click] So this is everything it can say
-            about <code>genFrames</code>: every valid list can come out. That is what Palamedes
-            proved, and it is silent on half of them being empty. The last line is how that
-            semantics would put it; it is not from QuickChick.
+            The downside is that the supports of two generators that are totally different can
+            be the same. Here is a generator with a crazy distribution: it gives the empty list
+            999,999 times in a million, and only otherwise runs <code>genFrames</code>. [click]
+            And its support is exactly the support of <code>genFrames</code>. The support
+            cannot tell these two apart, so it cannot say that one of them is a much worse
+            generator than the other. <code>frequency</code> is a weighted choice. Written for
+            the slide; not checked in Lean.
           </aside>
         </section>
 
         <!-- So a generator should mean a distribution, and here is one, drawn.
-             `CorrectGen` earlier is also a subtype set large, and the two do
-             different jobs, so this is a picture: genFrames by the length of
-             the list. Length k has mass 1/2^(k+1), because the generator
-             chooses evenly between stopping and going on. -->
+             The two halves of the subtype are named, a press each, and then
+             the picture: genFrames by the length of the list. Length k has
+             mass 1/2^(k+1), because the generator chooses evenly between
+             stopping and going on. -->
         <section class="code">
-          <pre><code class="language-lean" data-trim>
+          <pre class="annotate-spmf"><code class="language-lean" data-trim>
 def SPMF (α : Type) : Type :=
   {μ : α → ℝ≥0∞ // (∑' a, μ a) ≤ 1}
           </code></pre>
@@ -887,7 +934,7 @@ def SPMF (α : Type) : Type :=
                aria-label="The distribution of genFrames by list length: one half for the
                            empty list, one quarter for one frame, one eighth for two, one
                            sixteenth for three, and so on. No mass is lost to divergence.">
-            <g class="fragment" data-fragment-index="0">
+            <g class="fragment">
               <text class="m-title" x="60" y="30">genFrames</text>
               <path class="m-axis" d="M60,262 H940" />
               <rect class="m-bar" x="92" y="100" width="120" height="160" />
@@ -904,35 +951,50 @@ def SPMF (α : Type) : Type :=
               <text class="m-label" x="644" y="300">[n, n, n]</text>
               <text class="m-label" x="752" y="300">…</text>
             </g>
-            <g class="fragment" data-fragment-index="1">
+            <g class="fragment">
               <rect class="m-lost" x="802" y="100" width="120" height="160" />
               <text class="m-value" x="862" y="88">0</text>
               <text class="m-label" x="862" y="300">no answer</text>
             </g>
           </svg>
           <aside class="notes">
-            So a generator should mean a distribution, not a set. This is Basalt’s. [click] A
-            mass for every value: for <code>genFrames</code>, by length, a half for the empty
-            list, a quarter for one frame, and so on. That half is the 49.2%, and now it is
-            something we can write down. [click] And the masses may sum to less than one: what
-            is missing is the chance of no answer at all. For <code>genFrames</code> that is
-            zero, which is a theorem coming up. The bars follow from the generator choosing
-            evenly between two branches; they are not themselves a theorem in
-            talk-code/Frames.lean.
+            So we want a representation of generator distributions that can capture these rich
+            distributional properties, not just the support. For this, we’re using
+            subprobability mass functions. It has this type in Lean. Conceptually, you can think
+            of it as [click] a function from values to real numbers, [click] and a promise that
+            the total of the distribution sums to no more than one. [click] So you can think of
+            one of these as looking like a kind of histogram, like this, [click] where there’s
+            some probability that we just don’t give an answer at all. The reason we’re
+            representing it this way, which I’ll show you in just a moment, is that it’s
+            important that we’re able to represent non-terminating generators. We’re going to
+            interpret the probability of not terminating as whatever mass is left over if the
+            SPMF doesn’t sum to one. For <code>genFrames</code> that is zero, which is a theorem
+            coming up. The bars follow from the generator choosing evenly between two branches;
+            they are not themselves a theorem in talk-code/Frames.lean.
           </aside>
         </section>
 
         <section class="card">
-          <p class="big">How do you <span class="tested">run</span><br />a distribution?</p>
+          <p class="big">What do we<br />actually <span class="tested">run</span>?</p>
           <aside class="notes">
-            Signpost, part two. A distribution is the right meaning, but it is a mathematical
-            object, and a test has to run something. This part builds to the engagement point
-            on the readings slide, and then to what the embedding costs to write and to run.
+            OK, so that’s all well and good. But if we choose that as our definition of
+            generators, we won’t actually be able to run them, right? Because an SPMF in Lean is
+            not computable. This part builds to the engagement point on the readings slide, and
+            then to what the embedding costs to write and to run.
           </aside>
         </section>
 
+        <!-- The second press pulls the full type down over the definition:
+             what `[Gen G]` in the header is short for. `partial_fixpoint` is
+             left alone here; the fuel slide comes back to it. `#check
+             @genFrames` prints the type with no ∀ and `ℕ` for `Nat`; the ∀
+             is written in so the quantifier can be pointed at. -->
         <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|1|9">
+          <div class="stack">
+            <pre class="fragment pulls-in" data-fragment-index="1"><code class="language-lean" data-trim>
+-- genFrames : ∀ {G : Type → Type}, [Gen G] → G (List Nat)
+            </code></pre>
+            <pre><code class="language-lean" data-trim data-line-numbers="|1" data-fragment-index="0">
 def genFrames [Gen G] : G (List Nat) :=
   oneOf! [
     fun _ => pure [],
@@ -942,31 +1004,39 @@ def genFrames [Gen G] : G (List Nat) :=
       return n :: ns
   ]
 partial_fixpoint
-          </code></pre>
+            </code></pre>
+          </div>
           <aside class="notes">
-            A distribution is a mathematical object, and a test has to run something. Which one
-            is the generator? Both. This is <code>genFrames</code> as you would write it in
-            QuickCheck. [click] It is polymorphic in its interpretation: <code>G</code> is any
-            monad with random choice. [click] And its recursion is a least fixed point.
-            <code>genElapsed</code> makes one frame time; hold that thought, we open it up in a
-            few slides. Checked, as written (talk-code/Frames.lean).
+            So what we’re actually going to do is represent generators this way. [click] We’re
+            going to have generators be a type class: this <code>Gen</code> thing is a type
+            class. [click] And then we’re going to define generators as universally quantified
+            over that type class. This is the full type of <code>genFrames</code>: it
+            quantifies over the <code>G</code>, then over the <code>Gen G</code>, and then
+            gives a <code>G (List Nat)</code>. We’ll come back to the
+            <code>partial_fixpoint</code> later. <code>genElapsed</code> makes one frame time;
+            hold that thought, we open it up in a few slides. Checked, as written
+            (talk-code/Frames.lean); the type in the comment was not run through
+            <code>#check</code>.
           </aside>
         </section>
 
         <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|3|4-5">
+          <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4">
 class Gen (G : Type → Type) where
   instMonad        : Monad G
   instRandomChoice : RandomChoice G
   instCCPO         : ∀ α, CCPO (G α)
-  instMonoBind     : MonoBind G
           </code></pre>
           <aside class="notes">
-            The tagless-final embedding: this is everything an interpretation has to provide.
-            [click] One operation, <code>choose</code>, is the only source of randomness; every
-            combinator is built on it. [click] And a chain-complete partial order with a
-            monotone bind, which is what <code>partial_fixpoint</code> needs. As in
-            <code>Basalt/Gen.lean</code>, less an <code>Inhabited</code> field.
+            OK, so this is what the type class actually looks like. Some parts of this are not
+            going to be surprising to you. [click] Certainly, a generator should be a monad, and
+            it should have random choice. This is straight from QuickCheck, right? In
+            QuickCheck, a generator is a monad with some ability to make choices. [click] The
+            other thing we need is for our generators to be a chain-complete partial order. This
+            is what allows us to handle non-terminating generators elegantly. As in
+            <code>Basalt/Gen.lean</code>, less an <code>Inhabited</code> field and the
+            <code>MonoBind</code> field, a monotone bind, which <code>partial_fixpoint</code>
+            also needs.
           </aside>
         </section>
 

@@ -113,6 +113,19 @@ function annotate(pre, text, label) {
   range.insertNode(wrapper)
 }
 
+// Reveal numbered the slide's fragments before the annotations were there, and
+// a fragment with no number arrives after every numbered one. A listing is
+// named before the rest of its slide is shown, so its annotations take the
+// first numbers and the slide's other fragments move up to make room.
+function annotationsFirst(pre) {
+  const marks = [...pre.querySelectorAll('.code-annot-mark')]
+  const slide = pre.closest('section')
+  for (const el of slide.querySelectorAll('.fragment[data-fragment-index]')) {
+    el.dataset.fragmentIndex = Number(el.dataset.fragmentIndex) + marks.length
+  }
+  marks.forEach((mark, i) => (mark.dataset.fragmentIndex = i))
+}
+
 // The text node and offset `offset` characters into `root`. A start on the
 // seam between two nodes goes to the later one and an end to the earlier, so
 // the range never reaches into a neighbouring span for nothing.
@@ -134,6 +147,7 @@ export function applyCodeMarks(root = document) {
   for (const [cls, notes] of Object.entries(ANNOTATIONS)) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) {
       for (const [text, label] of notes) annotate(pre, text, label)
+      annotationsFirst(pre)
     }
   }
 }
