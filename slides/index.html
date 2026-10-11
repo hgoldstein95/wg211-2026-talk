@@ -812,25 +812,19 @@ def genFrames :=
           </aside>
         </section>
 
-        <section class="card">
-          <p class="big huge">~50%</p>
-          <p class="big quiet" style="margin-top: 0.3em">of lists genFrames outputs are empty.</p>
-          <aside class="notes">
-            Sound and complete is not the same as good. Half the runs are empty, and a frame of
-            exactly zero or exactly one tick almost never comes up. Which is the second half of
-            the question from the start: what does “good” mean? One
-            <code>#genstats</code> run of the synthesized generator (2000 draws, seed 0, fuel
-            10000), not pinned in the Palamedes tests.
-          </aside>
-        </section>
         <!-- ================= Basalt ================= -->
 
-        <!-- TODO (dry run): Harry feels the opening of this section runs
-             backwards. It introduces one thing after another (the support,
-             SPMF, the type class, the CCPO) without first saying why. He
-             wants a couple of slides here, at the start, on what Basalt is
-             and why: what the problems are. A lot of the motivation is
-             pushed too late. -->
+        <!-- Basalt opens with why and what, and does not lean on where
+             Palamedes stopped. Why: not every generator can be synthesized, so
+             agents write the rest and need rails, and here is one Claude wrote;
+             and a correct support is not enough, since half the lists
+             `genFrames` makes are empty and its support cannot say so. After
+             the first card the why is shown, not said: a listing each.
+
+             What, in one slide: two promises. They are the section's two
+             parts, in order: prove, then run. The slide comes back before the
+             second with its line lit. Ergonomics is not a part. It is pointed
+             out where it comes up, on the fuel slide. -->
         <section class="card opener">
           <h2 class="big">Basalt</h2>
           <p class="big quiet">Foundations for Generators</p>
@@ -839,25 +833,127 @@ def genFrames :=
           </svg>
           <aside class="notes">
             So now I’m going to introduce Basalt, which is a new foundational framework for
-            property-based testing generators. It allows us to write proofs about generator
-            distributions, and hopefully avoid this kind of problem.
+            property-based testing generators. Let me start with why we need one.
           </aside>
         </section>
 
-        <!-- Basalt runs in three parts, each opened by a question set like the
-             ones in the cold open: what a generator is formally, what we
-             run, and what proofs buy. The takeaway before the last slide
-             answers the three in order. -->
+        <section class="card">
+          <p class="big">Not <span class="pointed">every</span><br/>generator can<br/>be synthesized.</p>
+          <p class="big quiet fragment">We still want agents on the rails.</p>
+          <aside class="notes">
+            First: not all generators are going to be synthesizable by Palamedes. Some
+            predicates are outside what it handles, and some generators need tuning that no
+            predicate asks for. So agents are going to keep writing generators by hand, like the
+            43 in the game. [click] And we still want to be able to keep those agents on the
+            rails.
+          </aside>
+        </section>
+
+        <!-- The rails, shown. This is the listing the proofs come back to, hole
+             and all (451 to 899 is never made). Nothing here points at it. -->
+        <section class="code">
+          <pre><code class="language-lean" data-trim>
+/-- How long a frame took. A tick is 1000. -/
+def genElapsed : G Nat :=
+  frequency! [
+    (2, pure 0),
+    (5, chooseNat 1 450),
+    (3, chooseNat 900 1100),
+    (1, pure 1000),
+    (2, chooseNat 1001 16999),
+    (1, chooseNat 14000 200000)
+  ]
+          </code></pre>
+          <aside class="notes">
+            Here is one that an agent wrote. This is one of the 43 generators in the game,
+            written by Claude by hand: it makes the time that one frame took. Palamedes would
+            not give you this. From the predicate, a frame time of at most 200 ticks, it
+            synthesizes a uniform choice. This one has six weighted cases, with most of the
+            weight on frames that run no tick or that straddle a tick boundary. That tuning is a
+            judgment that no predicate asks for. So we want generators like this one. But is it
+            right? Hold that thought: there is a bug in it, and we will come back and find it
+            with a proof. Do not point at the gap. As in lean-mc
+            (<code>proptest/PropTest/Gen.lean</code>), less the <code>fun _ =&gt;</code> thunks
+            and the side condition.
+          </aside>
+        </section>
+
+        <!-- The second why. The slide after this one shows why the support
+             cannot say so. -->
+        <section class="card">
+          <p class="big huge">~50%</p>
+          <p class="big quiet" style="margin-top: 0.3em">of lists genFrames outputs are empty.</p>
+          <aside class="notes">
+            Furthermore, stopping at just the support is not good enough. Even Palamedes produces
+            badly distributed generators. The generator I showed you, <code>genFrames</code>: about
+            50% of the things it generates are empty. And this is a shame. One
+            <code>#genstats</code> run of the synthesized generator (2000 draws, seed 0, fuel
+            10000), not pinned in the Palamedes tests.
+          </aside>
+        </section>
+
+        <!-- Why the support is not enough, shown: one set, two very different
+             generators. `genMostlyEmpty` can still make every valid list,
+             through its second branch, so its support is the support of
+             `genFrames`. The supports are spelled as Palamedes's goal was,
+             `g.support = P`; `QC.support` is not on a slide yet. The same point
+             comes back near the end of the section with `genUniform` and
+             `genElapsed`, where both probabilities are theorems. Written for
+             the slide; not checked in Lean. -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+def genMostlyEmpty : G (List Frame) :=
+  frequency [
+    (999999, pure []),
+    (1, genFrames)
+  ]
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+genFrames.support      = framesOK
+genMostlyEmpty.support = framesOK
+            </code></pre>
+          </div>
+          <aside class="notes">
+            And what Palamedes proved cannot see the problem. Here is a generator with a crazy
+            distribution: it gives the empty list 999,999 times in a million, and only otherwise
+            runs <code>genFrames</code>. [click] And its support is exactly the support of
+            <code>genFrames</code>: the theorem Palamedes proved holds of both. So the supports of
+            two generators that are totally different can be the same. The support cannot tell
+            these two apart, so it cannot say that one of them is a much worse generator than the
+            other. <code>frequency</code> is a weighted choice. Written for the slide; not checked
+            in Lean.
+          </aside>
+        </section>
+
+        <!-- The promises, in the format of a takeaway. The verbs take the
+             deck's colors: green is proved, orange runs. -->
+        <section class="card recap">
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
+          </svg>
+          <p class="big">
+            <span class="proved">Prove</span> things about generators,<br/>down to the distribution.</p>
+          <p class="big fragment"><span class="tested">Run</span> them efficiently.</p>
+          <aside class="notes">
+            Basalt fixes all of this. It allows users to prove complex things about generators,
+            down to the distribution, [click] and to run them efficiently. Those are the two
+            parts of the rest of the talk, in that order. Along the way, it also lets you write
+            complex generators ergonomically, and I will point that out when we get there.
+          </aside>
+        </section>
+
         <section class="card">
           <p class="big">What is a generator,<br/>
             <span class="pointed">formally</span>?</p>
           <aside class="notes">
-            This project started with a question: what is the formal semantics of a generator?
+            To prove anything about a generator, we have to say what a generator is. This project
+            started with a question: what is the formal semantics of a generator?
           </aside>
         </section>
 
-        <!-- Basalt picks up where Palamedes stopped: half the lists are empty,
-             and the usual meaning of a generator has no way to say so.
+        <!-- The usual meaning of a generator, a set of values. It has no way to
+             say that half the lists are empty.
 
              Paraskevopoulou, Hriţcu, Dénès, Lampropoulos, Pierce. Foundational
              Property-Based Testing. ITP 2015. -->
@@ -883,40 +979,10 @@ QC.support genFrames = {fs | framesOK fs}
             support: the values <code>x</code> such that there exists a seed <code>s</code>
             where <code>g s</code> produces <code>x</code>. So in our <code>genFrames</code>
             example, the support is the set of lists of frames where those frames are OK. This
-            is a perfectly sensible definition. But there’s a downside to this representation.
+            is a perfectly sensible definition. But there’s a downside to this representation,
+            and you have already seen it: this set is the same for the generator that is almost
+            always empty.
             The last line is how that semantics would put it; it is not from QuickChick.
-          </aside>
-        </section>
-
-        <!-- The downside, before any fix: one set, two very different
-             generators. `genMostlyEmpty` can still make every valid list,
-             through its second branch, so its support is the support of
-             `genFrames`. The same point comes back near the end of the
-             section with `genUniform` and `genElapsed`, where both
-             probabilities are theorems. Written for the slide; not checked
-             in Lean. -->
-        <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-def genMostlyEmpty : G (List Frame) :=
-  frequency [
-    (999999, pure []),
-    (1, genFrames)
-  ]
-            </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
-QC.support genFrames      = {fs | framesOK fs}
-QC.support genMostlyEmpty = {fs | framesOK fs}
-            </code></pre>
-          </div>
-          <aside class="notes">
-            The downside is that the supports of two generators that are totally different can
-            be the same. Here is a generator with a crazy distribution: it gives the empty list
-            999,999 times in a million, and only otherwise runs <code>genFrames</code>. [click]
-            And its support is exactly the support of <code>genFrames</code>. The support
-            cannot tell these two apart, so it cannot say that one of them is a much worse
-            generator than the other. <code>frequency</code> is a weighted choice. Written for
-            the slide; not checked in Lean.
           </aside>
         </section>
 
@@ -969,24 +1035,16 @@ def SPMF (α : Type) : Type :=
             important that we’re able to represent non-terminating generators. We’re going to
             interpret the probability of not terminating as whatever mass is left over if the
             SPMF doesn’t sum to one. For <code>genFrames</code> that is zero, which is a theorem
-            coming up. The bars follow from the generator choosing evenly between two branches;
-            they are not themselves a theorem in talk-code/Frames.lean.
-          </aside>
-        </section>
-
-        <section class="card">
-          <p class="big">What do we<br />actually <span class="tested">run</span>?</p>
-          <aside class="notes">
-            OK, so that’s all well and good. But if we choose that as our definition of
-            generators, we won’t actually be able to run them, right? Because an SPMF in Lean is
-            not computable. This part builds to the engagement point on the readings slide, and
-            then to what the embedding costs to write and to run.
+            coming up. OK, so that’s all well and good. But if we choose that as our definition
+            of generators, we won’t actually be able to run them, right? Because an SPMF in Lean
+            is not computable. The bars follow from the generator choosing evenly
+            between two branches; they are not themselves a theorem in talk-code/Frames.lean.
           </aside>
         </section>
 
         <!-- The second press pulls the full type down over the definition:
              what `[Gen G]` in the header is short for. `partial_fixpoint` is
-             left alone here; the fuel slide comes back to it. `#check
+             left alone here; the fuel slide, two on, comes back to it. `#check
              @genFrames` prints the type with no ∀ and `ℕ` for `Nat`; the ∀
              is written in so the quantifier can be pointed at. -->
         <section class="code">
@@ -1007,14 +1065,15 @@ partial_fixpoint
             </code></pre>
           </div>
           <aside class="notes">
-            So what we’re actually going to do is represent generators this way. [click] We’re
-            going to have generators be a type class: this <code>Gen</code> thing is a type
-            class. [click] And then we’re going to define generators as universally quantified
-            over that type class. This is the full type of <code>genFrames</code>: it
-            quantifies over the <code>G</code>, then over the <code>Gen G</code>, and then
-            gives a <code>G (List Nat)</code>. We’ll come back to the
-            <code>partial_fixpoint</code> later. <code>genElapsed</code> makes one frame time;
-            hold that thought, we open it up in a few slides. Checked, as written
+            So what we’re actually going to do is represent generators this way. This is
+            <code>genFrames</code> again, in Basalt, written the way you would write it in
+            QuickCheck. [click] We’re going to have generators be a type class: this
+            <code>Gen</code> thing is a type class. [click] And then we’re going to define
+            generators as universally quantified over that type class. This is the full type of
+            <code>genFrames</code>: it quantifies over the <code>G</code>, then over the
+            <code>Gen G</code>, and then gives a <code>G (List Nat)</code>. We’ll come back to the
+            <code>partial_fixpoint</code> in a moment. <code>genElapsed</code> is Claude’s
+            generator from the start of the section; we open it up in a few slides. Checked, as written
             (talk-code/Frames.lean); the type in the comment was not run through
             <code>#check</code>.
           </aside>
@@ -1037,6 +1096,48 @@ class Gen (G : Type → Type) where
             <code>Basalt/Gen.lean</code>, less an <code>Inhabited</code> field and the
             <code>MonoBind</code> field, a monotone bind, which <code>partial_fixpoint</code>
             also needs.
+          </aside>
+        </section>
+
+        <!-- Ergonomics, as an aside where it comes up: what the CCPO on the
+             slide before buys. The definition as written, beside what a total
+             language would have asked for. -->
+        <section class="code code-sm">
+          <div class="pair">
+            <pre class="mark-fixpoint"><code class="language-lean" data-trim>
+def genFrames [Gen G] : G (List Nat) :=
+  oneOf! [
+    fun _ => pure [],
+    fun _ => do
+      let n ← genElapsed
+      let ns ← genFrames
+      return n :: ns
+  ]
+partial_fixpoint
+            </code></pre>
+            <pre class="mark-fuel fragment"><code class="language-lean" data-trim>
+def genFrames fuel :=
+  match fuel with
+  | 0 => return []
+  | fuel + 1 =>
+    oneOf [
+      return [],
+      do
+        let n ← genElapsed
+        let ns ← genFrames fuel
+        return n :: ns
+    ]
+            </code></pre>
+          </div>
+          <aside class="notes">
+            An aside on ergonomics, because this is what that partial order buys: you write the
+            generator the way you would anyway. Its recursion is a least fixed point, so nothing has to decrease.
+            [click] Where generators are ordinary total functions, this is what you write
+            instead. And the fuel ends up in every specification: the support becomes the lists
+            of length at most <code>fuel</code>. That is what happened in the game’s own tests:
+            the run generators are <code>listOfMaxLength n</code>, and their proved spec says
+            <code>length ≤ n</code>. The fuel listing is written for the slide; not from
+            QuickChick.
           </aside>
         </section>
 
@@ -1099,10 +1200,10 @@ class Gen (G : Type → Type) where
           </svg>
           <aside class="notes">
             <p>
-              The payoff of the embedding: the same term at different types. [click] At
+              The payoff of the type class: the same term at different types. [click] At
               <code>IO</code> it runs. [click] At <code>SPMF</code> it is the distribution from the
-              picture, which is what the proofs are about: the code you prove things about is
-              the code you run.
+              picture, which is what the proofs are about. The code you prove things about is the
+              code you run.
               [click] <code>SPMF.Cost</code> also counts random choices, and
               <code>FuzzGen</code> reads its choices from a byte buffer, so a coverage-guided
               fuzzer drives generation. Also: <code>Plausible.Gen</code>, and a statistics
@@ -1114,149 +1215,6 @@ class Gen (G : Type → Type) where
               symbolic execution? Is <code>Gen</code> the right interface: one operation plus a
               CCPO? What would you add, and what would it cost the proofs?
             </p>
-          </aside>
-        </section>
-
-        <!-- Ergonomics, as a consequence of the embedding rather than a problem
-             set up in advance: the definition just shown, beside what a total
-             language would have asked for. -->
-        <section class="code code-sm">
-          <div class="pair">
-            <pre class="mark-fixpoint"><code class="language-lean" data-trim>
-def genFrames [Gen G] : G (List Nat) :=
-  oneOf! [
-    fun _ => pure [],
-    fun _ => do
-      let n ← genElapsed
-      let ns ← genFrames
-      return n :: ns
-  ]
-partial_fixpoint
-            </code></pre>
-            <pre class="mark-fuel fragment"><code class="language-lean" data-trim>
-def genFrames fuel :=
-  match fuel with
-  | 0 => return []
-  | fuel + 1 =>
-    oneOf [
-      return [],
-      do
-        let n ← genElapsed
-        let ns ← genFrames fuel
-        return n :: ns
-    ]
-            </code></pre>
-          </div>
-          <aside class="notes">
-            One thing the embedding buys before any proof: you write the generator the way you
-            would anyway. Its recursion is a least fixed point, so nothing has to decrease.
-            [click] Where generators are ordinary total functions, this is what you write
-            instead. And the fuel ends up in every specification: the support becomes the lists
-            of length at most <code>fuel</code>. That is what happened in the game’s own tests:
-            the run generators are <code>listOfMaxLength n</code>, and their proved spec says
-            <code>length ≤ n</code>. The fuel listing is written for the slide; not from
-            QuickChick.
-          </aside>
-        </section>
-
-        <!-- The bang. `frequency!` elaborates to the combinator proofs know,
-             the code that runs, and a proof that the two are equal. The
-             weights are summed while the macro runs, so the running totals in
-             the chain are literals. As Lean prints it, less the thunks, and
-             with `_` for the proof term. -->
-        <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-frequency! [(2, a), (5, b), (3, c)]
-            </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
-frequencyWith
-  [(2, a), (5, b), (3, c)]    -- what proofs see
-  (do let n ← chooseNat 0 9   -- what runs
-      if n &lt; 2 then a
-      else if n &lt; 7 then b
-      else if n &lt; 10 then c
-      else default)
-  _                           -- a proof they are equal
-            </code></pre>
-          </div>
-          <aside class="notes">
-            One more thing the embedding has to get right before any proof: speed. Some of you
-            have been wondering about the bang. A choice between branches is a list of
-            closures, built and walked on every draw. [click] So <code>frequency!</code> is a
-            macro, and it elaborates to three things: the plain <code>frequency</code>, which
-            is what every proof sees; the code that runs, one draw and a chain of tests, with
-            the running totals 2, 7 and 10 added up while the macro runs; and a proof that the
-            two are equal, which the kernel checks. <code>frequencyWith</code> just returns the
-            second. <code>oneOf!</code> is the same with equality tests. This is what
-            <code>#print</code> shows for the definition, with notation off, less the
-            <code>fun _ =&gt;</code> thunks around each branch
-            (<code>Basalt/Combinators.lean</code>).
-          </aside>
-        </section>
-
-        <!-- What the macros buy, from Basalt's own ablation run
-             (basalt-raw-speed, results/2026-09-26-ablation, 20 rounds on an
-             Apple M5 Max). Each benchmark is scaled so the plain combinators
-             are 1; a bar is 270px per unit from x = 300. -->
-        <section class="stage">
-          <svg class="speed" viewBox="0 0 1280 720" role="img"
-               aria-label="Generation speed with the macros, relative to the plain
-                           combinators, on four benchmarks: 1.8 times on bst, 2.6 on heap,
-                           3.0 on sorted, 2.6 on nat. QuickCheck falls between the two on
-                           every one.">
-            <rect class="s-plain" x="300" y="78" width="30" height="22" />
-            <text class="s-key" x="344" y="97">oneOf, frequency</text>
-            <rect class="s-macro" x="610" y="78" width="30" height="22" />
-            <text class="s-key" x="654" y="97">oneOf!, frequency!</text>
-            <path class="s-ref" d="M946,72 V106" />
-            <text class="s-key" x="962" y="97">QuickCheck</text>
-
-            <text class="s-row" x="272" y="210">bst</text>
-            <rect class="s-plain" x="300" y="168" width="270" height="28" />
-            <rect class="s-macro" x="300" y="200" width="476" height="28" />
-            <path class="s-ref" d="M708,160 V236" />
-            <text class="s-value" x="792" y="225">1.8×</text>
-
-            <text class="s-row" x="272" y="330">heap</text>
-            <rect class="s-plain" x="300" y="288" width="270" height="28" />
-            <rect class="s-macro" x="300" y="320" width="712" height="28" />
-            <path class="s-ref" d="M719,280 V356" />
-            <text class="s-value" x="1028" y="345">2.6×</text>
-
-            <text class="s-row" x="272" y="450">sorted</text>
-            <rect class="s-plain" x="300" y="408" width="270" height="28" />
-            <rect class="s-macro" x="300" y="440" width="807" height="28" />
-            <path class="s-ref" d="M814,400 V476" />
-            <text class="s-value" x="1123" y="465">3.0×</text>
-
-            <text class="s-row" x="272" y="570">nat</text>
-            <rect class="s-plain" x="300" y="528" width="270" height="28" />
-            <rect class="s-macro" x="300" y="560" width="696" height="28" />
-            <path class="s-ref" d="M772,520 V596" />
-            <text class="s-value" x="1012" y="585">2.6×</text>
-
-            <text class="s-axis" x="300" y="652">values per second, relative to the plain combinators</text>
-          </svg>
-          <aside class="notes">
-            And it matters. Four benchmarks: search trees, heaps, sorted lists, and a bare
-            natural number. With the plain combinators, Basalt is slower than QuickCheck on
-            every one. With the macros it is 1.8 to 3 times faster than itself, and ahead of
-            QuickCheck on every one, by 1.2 to 1.7 times. Base_quickcheck is behind QuickCheck
-            throughout, so it is not drawn. And every proof still sees the plain combinator.
-            Numbers: geometric mean of 20 rounds on an Apple M5 Max, values per second of CPU
-            time; the first three generate a value, serialize it to JSON and write it, and the
-            last only generates (basalt-raw-speed, results/2026-09-26-ablation). The other
-            ablation there, SplitMix against Lean’s own random numbers, is worth about as
-            much again.
-          </aside>
-        </section>
-
-        <section class="card">
-          <p class="big">What do <span class="proved">proofs</span><br />buy you?</p>
-          <aside class="notes">
-            Signpost, part three. We can write it and run it. Now the reason for all of it.
-            Everything from here builds to the open slot on the last slide.
           </aside>
         </section>
 
@@ -1275,14 +1233,16 @@ theorem genFrames.expect_length :
             Now the proofs. For <code>genFrames</code>, with no fuel anywhere: it makes exactly
             the valid lists, which is all the set semantics could say. [click] It terminates
             with probability 1: the empty slot in the picture. [click] And a run is at most one
-            frame long on average: the statistic from the end of Palamedes, as a theorem. All
+            frame long on average: the kind of fact that “half are empty” was pointing at, as a
+            theorem. All
             three are checked. There the spec is the <code>Prop</code>
             <code>FramesOK</code>,
-            and the length is cast to ℝ≥0∞. From here on, every slide is something a proof
-            buys, building to the last engagement point.
+            and the length is cast to ℝ≥0∞. From here to the end of this part, every slide is
+            something a proof buys.
           </aside>
         </section>
 
+        <!-- Claude's generator again, as at the start of the section. -->
         <section class="code">
           <pre><code class="language-lean" data-trim>
 /-- How long a frame took. A tick is 1000. -/
@@ -1297,8 +1257,9 @@ def genElapsed : G Nat :=
   ]
           </code></pre>
           <aside class="notes">
-            Now the generator we skipped: where <code>genFrames</code> gets a frame time. This
-            is one of the 43, written by hand for the game’s tests: six weighted cases, most of
+            Back to Claude’s generator from the start of the section, which is where
+            <code>genFrames</code> gets a frame time. I said it has a bug in it. Six weighted
+            cases, most of
             the weight on frames that run no tick or that straddle a tick boundary. Is it right?
             Does it produce every frame time up to 200 ticks? Running it will not say: a sample
             shows what came out, not what cannot. Do not point at the gap; the proof finds it on
@@ -1389,8 +1350,114 @@ SPMF.prob genElapsed {0} ≥ 1 / 7
           </aside>
         </section>
 
-        <!-- The Basalt takeaway, in the format of the Palamedes one: one line
-             for each of the three questions. Orange runs; green is proved. -->
+        <section class="card recap">
+          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
+            <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
+          </svg>
+          <p class="big quiet">Prove things about generators,<br/>down to the distribution.</p>
+          <p class="big"><span class="tested">Run</span> them efficiently.</p>
+          <aside class="notes">
+            Signpost, part two. That is what the proofs buy. The other promise was running these
+            generators efficiently. At <code>IO</code> the term runs, as you saw; the question is
+            how fast.
+          </aside>
+        </section>
+
+        <!-- The bang. `frequency!` elaborates to the combinator proofs know,
+             the code that runs, and a proof that the two are equal. The
+             weights are summed while the macro runs, so the running totals in
+             the chain are literals. As Lean prints it, less the thunks, and
+             with `_` for the proof term. -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+frequency! [(2, a), (5, b), (3, c)]
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+frequencyWith
+  [(2, a), (5, b), (3, c)]    -- what proofs see
+  (do let n ← chooseNat 0 9   -- what runs
+      if n &lt; 2 then a
+      else if n &lt; 7 then b
+      else if n &lt; 10 then c
+      else default)
+  _                           -- a proof they are equal
+            </code></pre>
+          </div>
+          <aside class="notes">
+            Running them also has to be fast. Some of you
+            have been wondering about the bang. A choice between branches is a list of
+            closures, built and walked on every draw. [click] So <code>frequency!</code> is a
+            macro, and it elaborates to three things: the plain <code>frequency</code>, which
+            is what every proof sees; the code that runs, one draw and a chain of tests, with
+            the running totals 2, 7 and 10 added up while the macro runs; and a proof that the
+            two are equal, which the kernel checks. <code>frequencyWith</code> just returns the
+            second. <code>oneOf!</code> is the same with equality tests. This is what
+            <code>#print</code> shows for the definition, with notation off, less the
+            <code>fun _ =&gt;</code> thunks around each branch
+            (<code>Basalt/Combinators.lean</code>).
+          </aside>
+        </section>
+
+        <!-- What the macros buy, from Basalt's own ablation run
+             (basalt-raw-speed, results/2026-09-26-ablation, 20 rounds on an
+             Apple M5 Max). Each benchmark is scaled so the plain combinators
+             are 1; a bar is 270px per unit from x = 300. -->
+        <section class="stage">
+          <svg class="speed" viewBox="0 0 1280 720" role="img"
+               aria-label="Generation speed with the macros, relative to the plain
+                           combinators, on four benchmarks: 1.8 times on bst, 2.6 on heap,
+                           3.0 on sorted, 2.6 on nat. QuickCheck falls between the two on
+                           every one.">
+            <rect class="s-plain" x="300" y="78" width="30" height="22" />
+            <text class="s-key" x="344" y="97">oneOf, frequency</text>
+            <rect class="s-macro" x="610" y="78" width="30" height="22" />
+            <text class="s-key" x="654" y="97">oneOf!, frequency!</text>
+            <path class="s-ref" d="M946,72 V106" />
+            <text class="s-key" x="962" y="97">QuickCheck</text>
+
+            <text class="s-row" x="272" y="210">bst</text>
+            <rect class="s-plain" x="300" y="168" width="270" height="28" />
+            <rect class="s-macro" x="300" y="200" width="476" height="28" />
+            <path class="s-ref" d="M708,160 V236" />
+            <text class="s-value" x="792" y="225">1.8×</text>
+
+            <text class="s-row" x="272" y="330">heap</text>
+            <rect class="s-plain" x="300" y="288" width="270" height="28" />
+            <rect class="s-macro" x="300" y="320" width="712" height="28" />
+            <path class="s-ref" d="M719,280 V356" />
+            <text class="s-value" x="1028" y="345">2.6×</text>
+
+            <text class="s-row" x="272" y="450">sorted</text>
+            <rect class="s-plain" x="300" y="408" width="270" height="28" />
+            <rect class="s-macro" x="300" y="440" width="807" height="28" />
+            <path class="s-ref" d="M814,400 V476" />
+            <text class="s-value" x="1123" y="465">3.0×</text>
+
+            <text class="s-row" x="272" y="570">nat</text>
+            <rect class="s-plain" x="300" y="528" width="270" height="28" />
+            <rect class="s-macro" x="300" y="560" width="696" height="28" />
+            <path class="s-ref" d="M772,520 V596" />
+            <text class="s-value" x="1012" y="585">2.6×</text>
+
+            <text class="s-axis" x="300" y="652">values per second, relative to the plain combinators</text>
+          </svg>
+          <aside class="notes">
+            And it matters. Four benchmarks: search trees, heaps, sorted lists, and a bare
+            natural number. With the plain combinators, Basalt is slower than QuickCheck on
+            every one. With the macros it is 1.8 to 3 times faster than itself, and ahead of
+            QuickCheck on every one, by 1.2 to 1.7 times. Base_quickcheck is behind QuickCheck
+            throughout, so it is not drawn. And every proof still sees the plain combinator.
+            Numbers: geometric mean of 20 rounds on an Apple M5 Max, values per second of CPU
+            time; the first three generate a value, serialize it to JSON and write it, and the
+            last only generates (basalt-raw-speed, results/2026-09-26-ablation). The other
+            ablation there, SplitMix against Lean’s own random numbers, is worth about as
+            much again.
+          </aside>
+        </section>
+
+        <!-- The Basalt takeaway, in the format of the Palamedes one and of the
+             promises that opened the section. Orange runs; green is proved. -->
         <section class="card recap">
           <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
             <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
@@ -1400,7 +1467,7 @@ SPMF.prob genElapsed {0} ≥ 1 / 7
           <p class="big">
             <span class="proved">Proofs</span> find what <span class="tested">sampling</span> can’t.</p>
           <aside class="notes">
-            What to take from Basalt, one answer per question. A generator means a
+            What to take from Basalt. A generator means a
             distribution, so “how often” is something you can say. One term is both the code
             you run and the object you prove things about, with no fuel, and fast. And the
             proofs say what it generates, how often, and whether it stops: one of them found a
