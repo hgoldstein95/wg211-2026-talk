@@ -791,6 +791,65 @@ def genFrames :=
           </aside>
         </section>
 
+        <!-- Two bigger predicates from the Palamedes corpus
+             (PalamedesTest/Corpus/Tree/RBT and .../STLC/WellTyped), each with
+             the call that synthesizes its generator. Neither is written as a
+             fold: the search turns the recursion into one first.
+
+             `isRR`, `isBST` and `isBH` are no red node under a red node, keys
+             in order between `lo` and `hi`, and `h` black nodes on every
+             path. `getType` is an ordinary type checker, with `Γ` a list of
+             types indexed by de Bruijn variable.
+
+             The liberties: `Tree` is `Palamedes.Tree`, and both generators
+             take `[Gen G]`. `genRBT` filters, which is the `Option` in its
+             type, and it needs `maxHeartbeats` and `maxRecDepth` raised.
+             `genWellTyped` also takes a `Tuning` there, the weights that make
+             it terminate; its fold-spelled twin has the signature shown. -->
+        <section class="code code-xs">
+          <div class="pair">
+            <div class="stack">
+              <pre><code class="language-lean" data-trim>
+/-- Red-black trees. -/
+def isRBT (t : Tree (Color × Nat))
+    (h lo hi : Nat) : Bool :=
+  isRR t &amp;&amp; isBST t (lo, hi) &amp;&amp; isBH t h
+              </code></pre>
+              <pre><code class="language-lean" data-trim>
+def genRBT (h lo hi : Nat) :
+    G (Option (Tree (Color × Nat))) := by
+  generator_search
+    (fun t => isRBT t h lo hi)
+              </code></pre>
+            </div>
+            <div class="stack fragment">
+              <pre><code class="language-lean" data-trim>
+/-- Well-typed lambda terms. -/
+def isWellTyped (Γ : List Ty)
+    (t : Term) : Prop :=
+  ∃ τ, getType t Γ = some τ
+              </code></pre>
+              <pre><code class="language-lean" data-trim>
+def genWellTyped (Γ : List Ty) :
+    G Term := by
+  generator_search
+    (fun t => isWellTyped Γ t)
+              </code></pre>
+            </div>
+          </div>
+          <aside class="notes">
+            Lists of frames are the small example. The same tactic handles much bigger
+            predicates. Here are red-black trees: no red node has a red child, the keys are in
+            order, and every path has the same number of black nodes. Those are three recursive
+            functions, and the search finds one generator that satisfies all three at once. It
+            does filter a little, which is the <code>Option</code> in its type. [click] And
+            here are well-typed terms of the simply typed lambda calculus.
+            <code>getType</code> is an ordinary type checker. We hand Palamedes the type
+            checker, and it gives back a generator for well-typed terms. The corpus also has
+            binary search trees, AVL trees, sorted lists, and well-scoped terms.
+          </aside>
+        </section>
+
         <!-- A takeaway: the section's block, and one sentence broken by hand
              into lines of about one length. Orange is the generator's side,
              as on the fold slide; green is what is proved. -->
