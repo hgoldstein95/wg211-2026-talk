@@ -276,7 +276,7 @@
               <use href="#blk-basalt" transform="translate(920 150) scale(110)"/>
               <text class="t-title" x="920" y="492">Basalt</text>
               <text class="t-sub" x="920" y="540">Foundations for Generators</text>
-              <text class="t-sub" x="920" y="588">Coming Soon</text>
+              <text class="t-sub" x="920" y="588">Still Forming</text>
             </g>
           </svg>
           <aside class="notes">
@@ -589,8 +589,70 @@ def framesOK (fs : List Frame) : Bool :=
           </aside>
         </section>
 
-        <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|4-5|6-7">
+        <!-- The picture is the slide. The theorem it stands for is kept under
+             it: down from the picture, and right carries on past both. The
+             theorem is uncounted, so the slides after it keep their numbers. -->
+        <section>
+          <section class="stage">
+            <svg viewBox="0 0 1280 720" role="img"
+                 aria-label="One step of the fold takes one layer of a list to true, and
+                             one step of the unfold takes true back to a layer. It is
+                             proved that this is enough: the fold takes a whole list to
+                             true, and the unfold takes true back to a whole list.">
+              <!-- One layer: a block, and a place for the rest of the list. -->
+              <use class="rest" href="#blk-hull" transform="translate(275 128) scale(44)"/>
+              <use href="#blk-sand" transform="translate(275 79) scale(44)"/>
+              <use class="seam" href="#blk-hull" transform="translate(275 79) scale(44)"/>
+
+              <path class="flow ink" d="M349,128 H890"/>
+              <path class="flowhead ink" d="M886,114 L908,128 L886,142 Z"/>
+              <text class="t-link" x="628" y="106">one step of the fold</text>
+
+              <g class="value">
+                <rect x="920" y="118" width="124" height="64" stroke="#8fd15f"/>
+                <text x="982" y="161">true</text>
+              </g>
+
+              <path class="flow" d="M908,172 H367"/>
+              <path class="flowhead" d="M371,158 L349,172 L371,186 Z"/>
+              <text class="t-link tested" x="628" y="216">one step of the unfold</text>
+
+              <g class="fragment">
+                <path class="flow proved" d="M628,254 V322"/>
+                <path class="flowhead proved" d="M614,318 L628,340 L642,318 Z"/>
+                <text class="t-link proved at-start" x="662" y="310">proved</text>
+
+                <use href="#blk-sand" transform="translate(275 502) scale(44)"/>
+                <use class="seam" href="#blk-hull" transform="translate(275 502) scale(44)"/>
+                <use href="#blk-sand" transform="translate(275 453) scale(44)"/>
+                <use class="seam" href="#blk-hull" transform="translate(275 453) scale(44)"/>
+                <use href="#blk-sand" transform="translate(275 404) scale(44)"/>
+                <use class="seam" href="#blk-hull" transform="translate(275 404) scale(44)"/>
+
+                <path class="flow ink" d="M349,478 H890"/>
+                <path class="flowhead ink" d="M886,464 L908,478 L886,492 Z"/>
+                <text class="t-fn" x="628" y="445">fold</text>
+
+                <g class="value">
+                  <rect x="920" y="468" width="124" height="64" stroke="#8fd15f"/>
+                  <text x="982" y="511">true</text>
+                </g>
+
+                <path class="flow" d="M908,522 H367"/>
+                <path class="flowhead" d="M371,508 L349,522 L371,536 Z"/>
+                <text class="t-fn tested" x="628" y="598">unfold</text>
+              </g>
+            </svg>
+            <aside class="notes">
+              And the nice thing is that we only have to find that unfold one layer at a time. If
+              we have a generator that undoes one step of the fold, so it takes true back to the
+              layers that the step accepts, then unfolding that generator undoes the whole fold.
+              And that’s a theorem, so we only had to prove it once.
+            </aside>
+          </section>
+
+          <section class="code" data-visibility="uncounted">
+            <pre><code class="language-lean" data-trim data-line-numbers="|4-5|6-7">
 theorem fold_unfold_inverse
     (alg  : ListF α β → β)
     (step : β → G (ListF α β)) :
@@ -598,12 +660,13 @@ theorem fold_unfold_inverse
       fun l => alg l = b) →
     (∀ b, (List.unfold step b).support =
       fun xs => List.fold alg xs = b)
-          </code></pre>
-          <aside class="notes">
-            Formally, this looks like this. This is a theorem that says if we have a step generator
-            whose support satisfies the algebra of the fold, then we can have an unfolding that step
-            gives us a thing that satisfies the full fold.
-          </aside>
+            </code></pre>
+            <aside class="notes">
+              Formally, this looks like this. This is a theorem that says if we have a step
+              generator whose support satisfies the algebra of the fold, then we can have an
+              unfolding that step gives us a thing that satisfies the full fold.
+            </aside>
+          </section>
         </section>
 
         <section class="code code-xs">
@@ -664,41 +727,98 @@ def genFrames :=
           </aside>
         </section>
 
-        <section class="code code-xs">
-          <div class="pair">
-            <div class="stack">
-              <pre><code class="language-lean" data-trim>
+        <!-- The claim is the slide, and the listings behind it are kept under
+             it, as the theorem is under its picture. -->
+        <section>
+          <section class="stage">
+            <svg viewBox="0 0 1280 720" role="img"
+                 aria-label="Palamedes can handle red-black trees, shown as a small tree of
+                             red and black nodes, and STLC terms, shown as a term whose
+                             lambdas are annotated with types.">
+              <text class="t-fn" x="640" y="170">Palamedes can handle…</text>
+
+              <g class="tree">
+                <path d="M340,280 L240,370 M340,280 L440,370"/>
+                <path d="M240,370 L190,460 M240,370 L290,460 M440,370 L490,460"/>
+                <g>
+                  <rect x="312" y="252" width="56" height="56"/>
+                  <text x="340" y="290">4</text>
+                </g>
+                <g class="is-red">
+                  <rect x="212" y="342" width="56" height="56"/>
+                  <text x="240" y="380">2</text>
+                </g>
+                <g>
+                  <rect x="412" y="342" width="56" height="56"/>
+                  <text x="440" y="380">6</text>
+                </g>
+                <g>
+                  <rect x="162" y="432" width="56" height="56"/>
+                  <text x="190" y="470">1</text>
+                </g>
+                <g>
+                  <rect x="262" y="432" width="56" height="56"/>
+                  <text x="290" y="470">3</text>
+                </g>
+                <g class="is-red">
+                  <rect x="462" y="432" width="56" height="56"/>
+                  <text x="490" y="470">7</text>
+                </g>
+              </g>
+              <text class="t-name" x="340" y="590">Red-Black Trees</text>
+
+              <g>
+                <!-- Three lines, each two characters in from the last. -->
+                <text class="t-term at-start" x="753" y="319">
+                  <tspan class="is-keyword">λ</tspan> x : <tspan class="is-type">Nat</tspan>.</text>
+                <text class="t-term at-start" x="811" y="386">
+                  <tspan class="is-keyword">λ</tspan> y : <tspan class="is-type">Bool</tspan>.</text>
+                <text class="t-term at-start" x="868" y="453">x</text>
+                <text class="t-name" x="940" y="590">STLC Terms</text>
+              </g>
+            </svg>
+            <aside class="notes">
+              And this scales beyond simple things like <code>genFrames</code>. So we can produce
+              generators for red-black trees, and we can also do well-typed lambda terms.
+            </aside>
+          </section>
+
+          <section class="code code-xs" data-visibility="uncounted">
+            <div class="pair">
+              <div class="stack">
+                <pre><code class="language-lean" data-trim>
 /-- Red-black trees. -/
 def isRBT (t : Tree (Color × Nat))
     (h lo hi : Nat) : Bool :=
   isRR t &amp;&amp; isBST t (lo, hi) &amp;&amp; isBH t h
-              </code></pre>
-              <pre><code class="language-lean" data-trim>
+                </code></pre>
+                <pre><code class="language-lean" data-trim>
 def genRBT (h lo hi : Nat) :
     G (Option (Tree (Color × Nat))) := by
   generator_search
     (fun t => isRBT t h lo hi)
-              </code></pre>
-            </div>
-            <div class="stack fragment">
-              <pre><code class="language-lean" data-trim>
+                </code></pre>
+              </div>
+              <div class="stack fragment">
+                <pre><code class="language-lean" data-trim>
 /-- Well-typed lambda terms. -/
 def isWellTyped (Γ : List Ty)
     (t : Term) : Prop :=
   ∃ τ, getType t Γ = some τ
-              </code></pre>
-              <pre><code class="language-lean" data-trim>
+                </code></pre>
+                <pre><code class="language-lean" data-trim>
 def genWellTyped (Γ : List Ty) :
     G Term := by
   generator_search
     (fun t => isWellTyped Γ t)
-              </code></pre>
+                </code></pre>
+              </div>
             </div>
-          </div>
-          <aside class="notes">
-            And this scales beyond simple things like <code>genFrames</code>. So we can produce
-            generators for red-black trees like this, and we can also do well-typed lambda terms.
-          </aside>
+            <aside class="notes">
+              Here is what those two look like. Each one is a predicate, and then a generator that is
+              just a call to <code>generator_search</code> on that predicate.
+            </aside>
+          </section>
         </section>
 
         <section class="card recap">

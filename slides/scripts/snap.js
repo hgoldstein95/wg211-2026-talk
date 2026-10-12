@@ -77,15 +77,19 @@ await page.addStyleTag({
   content: ':root { --t-fade: 0s !important; --t-open: 0s !important; }',
 })
 
+// Asked of the document, since `Reveal.getSlides()` leaves out a slide that is
+// `data-visibility="uncounted"`.
 const indices = await page.evaluate(() =>
-  Reveal.getSlides().map((slide) => {
+  [...document.querySelectorAll('.reveal .slides section:not(.stack)')].map((slide) => {
     const { h, v } = Reveal.getIndices(slide)
     return { h, v: v ?? 0 }
   })
 )
 
-for (const [i, { h, v }] of indices.entries()) {
-  const n = i + 1
+// A slide kept under another takes the number of the one above it, as it does
+// on screen, and a `-v` suffix.
+for (const { h, v } of indices) {
+  const n = h + 1
   if (only && !only.includes(n)) continue
 
   await page.evaluate(

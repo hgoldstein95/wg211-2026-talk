@@ -68,7 +68,10 @@ body,
   text-align: left;
 }
 
-.reveal .slides > section {
+/* A slide kept under another is a section inside a section, and reveal's own
+   rule for those would otherwise outrank this one. */
+.reveal .slides > section,
+.reveal .slides > section > section {
   box-sizing: border-box;
   height: 720px;
   padding: 0;
@@ -168,7 +171,7 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 
 /* --- Cards: a few words, set large ---------------------------------------- */
 
-.reveal .slides > section.card {
+.reveal .slides section.card {
   flex-direction: column;
   justify-content: center;
   padding: 0 var(--pad);
@@ -253,7 +256,7 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   margin: 0;
 }
 
-.reveal .slides > section.stage {
+.reveal .slides section.stage {
   overflow: hidden;
 }
 
@@ -367,6 +370,15 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 
 .flowhead.ink {
   fill: var(--ink);
+}
+
+/* From what is assumed to what follows from it. */
+.flow.proved {
+  stroke: var(--proved);
+}
+
+.flowhead.proved {
+  fill: var(--proved);
 }
 
 /* --- The footage ---------------------------------------------------------- */
@@ -564,7 +576,7 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
      .code-sm  26px   two listings side by side, 68 characters between them
      .code-xs  24px   two wide listings side by side, 76 between them */
 
-.reveal .slides > section.code {
+.reveal .slides section.code {
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -619,7 +631,7 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 
 /* A pair may be wider than one listing, so its slide gives up some of its
    side padding. */
-.reveal .slides > section.code:has(.pair) {
+.reveal .slides section.code:has(.pair) {
   padding: 0 48px;
 }
 
@@ -1076,6 +1088,53 @@ html.reveal-print .reveal pre:has(.code-annot) code {
   fill: none;
   stroke: var(--bg);
   stroke-width: 4;
+}
+
+/* Where the rest of a list goes, when a picture is of one layer of it. */
+.stage .rest {
+  fill: none;
+  stroke: var(--dim);
+  stroke-width: 4;
+  stroke-dasharray: 10 8;
+}
+
+/* A red-black tree. A black node is the stage's own colour, outlined. */
+.stage .tree path {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 4;
+}
+
+.stage .tree rect {
+  fill: var(--bg);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+
+.stage .tree text {
+  font: 500 28px var(--mono);
+}
+
+.stage .tree .is-red rect {
+  fill: var(--fail);
+  stroke: var(--fail);
+}
+
+.stage .tree .is-red text {
+  fill: var(--bg);
+}
+
+/* A term, in a listing's colours. */
+.stage .t-term {
+  font: 500 48px var(--mono);
+}
+
+.stage .t-term .is-keyword {
+  fill: var(--code-keyword);
+}
+
+.stage .t-term .is-type {
+  fill: var(--code-type);
 }
 
 /* A law that is not written yet. */
