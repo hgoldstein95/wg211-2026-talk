@@ -482,6 +482,78 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   font: 400 84px var(--display);
 }
 
+/* --- Thanks --------------------------------------------------------------- */
+
+/* The names on the left, four codes to scan on the right, laid over the
+   screenshot. The scrim is heavier than `.proofs`: here the words sit on the
+   picture with no box behind them. */
+.reveal .credits {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  box-sizing: border-box;
+  padding: 0 var(--pad);
+  justify-content: space-between;
+  align-items: center;
+  background: rgb(15 17 21 / 0.6);
+}
+
+.reveal .thanks .big {
+  font-size: 128px;
+}
+
+.reveal .thanks .with {
+  margin: 40px 0 12px;
+  font: 400 22px var(--mono);
+}
+
+.reveal .thanks .people {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.32;
+}
+
+.reveal .qrs {
+  display: grid;
+  grid-template-columns: repeat(2, 224px);
+  gap: 32px 48px;
+}
+
+/* A light tile holding a code and its name: a code needs a light ground and
+   a quiet margin to scan off a dark slide, and the name reads there too. */
+.reveal .qr {
+  display: flex;
+  box-sizing: border-box;
+  width: 224px;
+  padding: 20px 20px 12px;
+  flex-direction: column;
+  align-items: center;
+  background: var(--ink);
+  font: 400 22px var(--mono);
+  color: var(--bg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.reveal .qr-code {
+  width: 184px;
+  height: 184px;
+  margin-bottom: 14px;
+}
+
+.reveal .qr-code img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+}
+
 /* --- Listings ------------------------------------------------------------- */
 
 /* Code sits in no box, as in the talk: Fira Mono at one weight, centred as a
@@ -589,6 +661,24 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   background: rgb(255 215 94 / 0.16);
   padding: 0.02em 0.1em;
   margin: 0 -0.1em;
+}
+
+/* A mark that waits for a press (`mark-step`): the text is there from the
+   start, and the press only colors it. */
+.reveal pre code .code-mark.fragment {
+  opacity: 1;
+  visibility: inherit;
+  transition: color var(--t-fade), background-color var(--t-fade);
+}
+
+.reveal pre code .code-mark.fragment:not(.visible) {
+  color: inherit;
+  background: none;
+}
+
+/* A mark cut across tokens holds highlight.js's spans; they take its color. */
+.reveal pre code .code-mark span {
+  color: inherit;
 }
 
 /* A stretch underlined and named, one press each (`annotate-*`). The label

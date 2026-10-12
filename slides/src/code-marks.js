@@ -10,6 +10,8 @@
 //
 //     <pre class="mark-sorry"><code class="language-lean">…</code></pre>
 //
+// Add `mark-step` and the listing arrives plain; the marks come on a press.
+//
 // Styling is `.code-mark` in deck.css.
 //
 // A mark is one entry here: the class the slide asks for, and the regex that
@@ -41,6 +43,15 @@ const MARKS = {
   'mark-sorry': /\bsorry\b/g,
   // What lets a generator call itself with nothing decreasing.
   'mark-fixpoint': /\bpartial_fixpoint\b/g,
+  // The edges of the hole in `genElapsed`: 451 to 899 is never made.
+  'mark-hole': /\b(?:450|900)\b/g,
+}
+
+// A mark that crosses highlight.js's token spans, which a regex cannot reach:
+// the class the slide asks for, and the stretch's exact text.
+const STRETCHES = {
+  // The branch of the synthesized generator that stops.
+  'mark-nil': 'pure .nilF',
 }
 
 const ANNOTATIONS = {
@@ -74,6 +85,12 @@ function wrapMatches(pre, re) {
       if (m.index > last) frag.append(text.slice(last, m.index))
       const span = document.createElement('span')
       span.className = 'code-mark'
+      // `mark-step` beside the mark's class: the marks wait for a press, and
+      // all arrive on the same one.
+      if (pre.classList.contains('mark-step')) {
+        span.classList.add('fragment')
+        span.dataset.fragmentIndex = 0
+      }
       span.textContent = m[0]
       frag.append(span)
       last = m.index + m[0].length
@@ -83,14 +100,16 @@ function wrapMatches(pre, re) {
   }
 }
 
-function annotate(pre, text, label) {
+// Cuts `text` out of the listing as a DOM range and puts it back inside one
+// span of class `cls`, which is returned.
+function wrapStretch(pre, text, cls) {
   const code = pre.querySelector('code') ?? pre
   const at = code.textContent.indexOf(text)
   // A stretch that isn't in the listing is a typo in the table or an edit to
   // the slide. Say so, rather than leave a press that shows nothing.
   if (at < 0) {
     console.warn(`code-marks: "${text}" is not in the listing`, pre)
-    return
+    return null
   }
 
   const range = document.createRange()
@@ -100,8 +119,15 @@ function annotate(pre, text, label) {
   // extractContents clones any highlight.js span the range cuts through, so
   // the pieces keep their colours; the wrapper goes back where they came from.
   const wrapper = document.createElement('span')
-  wrapper.className = 'code-annot'
+  wrapper.className = cls
   wrapper.append(range.extractContents())
+  range.insertNode(wrapper)
+  return wrapper
+}
+
+function annotate(pre, text, label) {
+  const wrapper = wrapStretch(pre, text, 'code-annot')
+  if (!wrapper) return
 
   // The underline and its label are one *empty* element — the label is CSS
   // content — so the listing's text is unchanged. Reveal's auto-animate pairs
@@ -110,7 +136,6 @@ function annotate(pre, text, label) {
   mark.className = 'code-annot-mark fragment'
   mark.dataset.label = label
   wrapper.append(mark)
-  range.insertNode(wrapper)
 }
 
 // Reveal numbered the slide's fragments before the annotations were there, and
@@ -143,6 +168,9 @@ function textPoint(root, offset, isEnd) {
 export function applyCodeMarks(root = document) {
   for (const [cls, re] of Object.entries(MARKS)) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) wrapMatches(pre, re)
+  }
+  for (const [cls, text] of Object.entries(STRETCHES)) {
+    for (const pre of root.querySelectorAll(`pre.${cls}`)) wrapStretch(pre, text, 'code-mark')
   }
   for (const [cls, notes] of Object.entries(ANNOTATIONS)) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) {

@@ -631,6 +631,36 @@ def genFrames :=
           <aside class="notes"></aside>
         </section>
 
+        <!-- The same predicate with the fold taken out: ordinary recursion, as
+             anyone would write it. The generator beside it has not changed.
+             The search turns the recursion into the fold first, and goes on
+             from there as before (notes/frames-palamedes.lean, where both
+             spellings synthesize to one generator).
+
+             The recursion's longest line is as long as the fold's, so the
+             generator stays where it was on the slide before. -->
+        <section class="code code-xs">
+          <div class="pair">
+            <pre><code class="language-lean" data-trim>
+def framesOK : List Frame → Bool
+  | [] => true
+  | n :: fs => n ≤ 200000 &amp;&amp; framesOK fs
+            </code></pre>
+            <pre><code class="language-lean" data-trim>
+def genFrames :=
+  List.unfold
+    (fun () => oneOf [
+      pure .nilF,
+      do
+        let n ← chooseNat 0 200000
+        pure (.consF n ())
+    ])
+    ()
+            </code></pre>
+          </div>
+          <aside class="notes"></aside>
+        </section>
+
         <!-- Two bigger predicates from the Palamedes corpus
              (PalamedesTest/Corpus/Tree/RBT and .../STLC/WellTyped), each with
              the call that synthesizes its generator. Neither is written as a
@@ -725,16 +755,16 @@ def genWellTyped (Γ : List Ty) :
         </section>
 
         <section class="card">
-          <p class="big">Not <span class="pointed">every</span><br/>generator can<br/>be synthesized.</p>
-          <p class="big quiet fragment">We still want agents on the rails.</p>
+          <p class="big">What about the long tail of <span class="tested">generators</span>?</p>
           <aside class="notes"></aside>
         </section>
 
         <!-- The rails, shown. This is the listing the proofs come back to, hole
-             and all (451 to 899 is never made). Nothing here points at it. -->
+             and all (451 to 899 is never made). A press marks its two edges. -->
         <section class="code">
-          <pre><code class="language-lean" data-trim>
-/-- How long a frame took. A tick is 1000. -/
+          <pre class="mark-hole mark-step"><code class="language-lean" data-trim>
+def elapsedOK n := n ≤ 200000
+
 def genElapsed : G Nat :=
   frequency! [
     (2, pure 0),
@@ -748,36 +778,22 @@ def genElapsed : G Nat :=
           <aside class="notes"></aside>
         </section>
 
-        <!-- The second why. The slide after this one shows why the support
-             cannot say so. -->
-        <section class="card">
-          <p class="big huge">~50%</p>
-          <p class="big quiet" style="margin-top: 0.3em">of lists genFrames outputs are empty.</p>
-          <aside class="notes"></aside>
-        </section>
-
-        <!-- Why the support is not enough, shown: one set, two very different
-             generators. `genMostlyEmpty` can still make every valid list,
-             through its second branch, so its support is the support of
-             `genFrames`. The supports are spelled as Palamedes's goal was,
-             `g.support = P`; `QC.support` is not on a slide yet. The same point
-             comes back at the end of the proofs with `genUniform` and
-             `genElapsed`, where both probabilities are theorems. Written for
-             the slide; not checked in Lean. -->
+        <!-- The second why. Why the support cannot say so is shown once the
+             support has been defined, after `QC.support`. The generator is the
+             one Palamedes synthesized, with the branch that stops marked:
+             `oneOf` takes it half the time, so half the lists are empty. -->
         <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-def genMostlyEmpty : G (List Frame) :=
-  frequency [
-    (999999, pure []),
-    (1, genFrames)
-  ]
-            </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
-genFrames.support      = framesOK
-genMostlyEmpty.support = framesOK
-            </code></pre>
-          </div>
+          <pre class="mark-nil"><code class="language-lean" data-trim>
+def genFrames :=
+  List.unfold
+    (fun () => oneOf [
+      pure .nilF,
+      do
+        let n ← chooseNat 0 200000
+        pure (.consF n ())
+    ])
+    ()
+          </code></pre>
           <aside class="notes"></aside>
         </section>
 
@@ -788,7 +804,7 @@ genMostlyEmpty.support = framesOK
             <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
           </svg>
           <p class="big">
-            <span class="proved">Prove</span> things about generators,<br/>down to the distribution.</p>
+            <span class="proved">Prove</span> distributional<br/>facts about generators.</p>
           <p class="big fragment">
             <span class="tested">Run</span> them efficiently.</p>
           <aside class="notes"></aside>
@@ -823,6 +839,31 @@ QC.support genFrames = {fs | framesOK fs}
           <aside class="notes"></aside>
         </section>
 
+        <!-- Why the support is not enough, shown: one set, two very different
+             generators. `genMostlyEmpty` can still make every valid list,
+             through its second branch, so its support is the support of
+             `genFrames`. The supports are spelled as Palamedes's goal was,
+             `g.support = P`, not with the `QC.support` of the slide before.
+             The same point comes back at the end of the proofs with
+             `genUniform` and `genElapsed`, where both probabilities are
+             theorems. Written for the slide; not checked in Lean. -->
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+def genMostlyEmpty : G (List Frame) :=
+  frequency [
+    (999999, pure []),
+    (1, genFrames)
+  ]
+            </code></pre>
+            <pre class="fragment"><code class="language-lean" data-trim>
+genFrames.support      = framesOK
+genMostlyEmpty.support = framesOK
+            </code></pre>
+          </div>
+          <aside class="notes"></aside>
+        </section>
+
         <!-- So a generator should mean a distribution. Three slides: the type,
              then two generators, each beside its distribution. This one is the
              type; the two halves of the subtype are named, a press each. -->
@@ -842,14 +883,13 @@ def SPMF (α : Type) : Type :=
         <section class="code code-sm">
           <div class="pair drawn">
             <pre><code class="language-lean" data-trim>
-def spin : G Bool := spin
-partial_fixpoint
+def loop : G Bool := loop
 
 def genCoin : G Bool :=
   oneOf! [
     fun _ => pure true,
     fun _ => pure false,
-    fun _ => spin
+    fun _ => loop
   ]
             </code></pre>
             <svg class="masses" viewBox="0 0 620 328" width="620" height="328" role="img"
@@ -867,7 +907,7 @@ def genCoin : G Bool :=
               <g class="fragment">
                 <rect class="m-lost has-mass" x="472" y="127" width="96" height="133" />
                 <text class="m-value" x="520" y="115">1/3</text>
-                <text class="m-label" x="520" y="300">no answer</text>
+                <text class="m-label" x="520" y="300">diverge</text>
               </g>
             </svg>
           </div>
@@ -889,7 +929,6 @@ def genFrames : G (List Nat) :=
       let ns ← genFrames
       return n :: ns
   ]
-partial_fixpoint
             </code></pre>
             <svg class="masses" viewBox="0 0 620 328" width="620" height="328" role="img"
                  aria-label="The distribution of genFrames by list length: one half for the
@@ -911,7 +950,7 @@ partial_fixpoint
               <g class="fragment">
                 <rect class="m-lost" x="472" y="127" width="96" height="133" />
                 <text class="m-value" x="520" y="115">0</text>
-                <text class="m-label" x="520" y="300">no answer</text>
+                <text class="m-label" x="520" y="300">diverge</text>
               </g>
             </svg>
           </div>
@@ -927,7 +966,7 @@ theorem genFrames.terminates :
     IsAlmostSurelyTerminating genFrames
 
 theorem genFrames.expect_length :
-    SPMF.expect genFrames (·.length) ≤ 1
+    HasExpectedValue genFrames (·.length) ≤ 1
           </code></pre>
           <aside class="notes"></aside>
         </section>
@@ -935,7 +974,6 @@ theorem genFrames.expect_length :
         <!-- Claude's generator again, as at the start of the section. -->
         <section class="code">
           <pre><code class="language-lean" data-trim>
-/-- How long a frame took. A tick is 1000. -/
 def genElapsed : G Nat :=
   frequency! [
     (2, pure 0),
@@ -1016,23 +1054,23 @@ SPMF.prob genElapsed {0} ≥ 1 / 7
         <section class="stage">
           <p class="tag" style="left: 96px; top: 130px; width: 520px">
             <code>IsSoundAndComplete</code>
-            What it generates
+            What is the support?
           </p>
           <p class="tag" style="left: 664px; top: 130px; width: 520px">
             <code>IsAlmostSurelyTerminating</code>
-            That it stops
+            Does it terminate?
           </p>
           <p class="tag" style="left: 96px; top: 300px; width: 520px">
             <code>SPMF.prob</code>
-            How often a value comes up
+            How likely is a value?
           </p>
           <p class="tag" style="left: 664px; top: 300px; width: 520px">
             <code>SPMF.expect</code>
-            How big its values are
+            How frequent is some event?
           </p>
           <p class="tag" style="left: 96px; top: 470px; width: 520px">
             <code>IsCostBounded</code>
-            How much randomness it uses
+            How many choices are made?
           </p>
           <p class="tag open fragment" style="left: 664px; top: 470px; width: 520px; height: 110px">
             ?
@@ -1044,7 +1082,7 @@ SPMF.prob genElapsed {0} ≥ 1 / 7
           <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
             <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
           </svg>
-          <p class="big quiet">Prove things about generators,<br/>down to the distribution.</p>
+          <p class="big quiet">Prove distributional<br/>facts about generators.</p>
           <p class="big">
             <span class="tested">Run</span> them efficiently.</p>
           <aside class="notes"></aside>
@@ -1056,9 +1094,11 @@ SPMF.prob genElapsed {0} ≥ 1 / 7
 
              The second press fades the full type in over the definition:
              what `[Gen G]` in the header is short for. `partial_fixpoint` is
-             left alone here; the fuel slide, two on, comes back to it. `#check
-             @genFrames` prints the type with no ∀ and `ℕ` for `Nat`; the ∀
-             is written in so the quantifier can be pointed at. -->
+             left off here, as on the slides before, so the definition does
+             not compile as shown; it first appears on the fuel slide, two on,
+             once `CCPO` has been introduced. `#check @genFrames` prints the
+             type with no ∀ and `ℕ` for `Nat`; the ∀ is written in so the
+             quantifier can be pointed at. -->
         <section class="code">
           <div class="stack">
             <pre class="fragment" data-fragment-index="1"><code class="language-lean" data-trim>
@@ -1073,7 +1113,6 @@ def genFrames [Gen G] : G (List Nat) :=
       let ns ← genFrames
       return n :: ns
   ]
-partial_fixpoint
             </code></pre>
           </div>
           <p class="cite">
@@ -1139,52 +1178,52 @@ def genFrames fuel :=
                aria-label="One generator term, interpreted at several types: IO runs it,
                            SPMF is its distribution, SPMF.Cost adds costs, FuzzGen lets a
                            fuzzer drive it, and one more is left open.">
-            <use href="#blk-basalt" transform="translate(230 216) scale(110)" />
+            <use href="#blk-basalt" transform="translate(230 216) scale(110)"/>
             <text class="t-name" x="230" y="512">genFrames</text>
             <text class="t-sub" x="230" y="552">[Gen G] : G (List Nat)</text>
 
             <g class="fragment" data-fragment-index="0">
-              <path class="flow plain" d="M356,332 H470 V132 H566" />
-              <path class="flowhead plain" d="M562,118 L584,132 L562,146 Z" />
+              <path class="flow plain" d="M356,332 H470 V132 H566"/>
+              <path class="flowhead plain" d="M562,118 L584,132 L562,146 Z"/>
               <g class="reading runs">
-                <rect x="596" y="100" width="210" height="64" />
+                <rect x="596" y="100" width="210" height="64"/>
                 <text x="701" y="142">IO</text>
               </g>
               <text class="t-says at-start" x="834" y="143">run it</text>
             </g>
 
             <g class="fragment" data-fragment-index="1">
-              <path class="flow plain" d="M470,332 V232 H566" />
-              <path class="flowhead plain" d="M562,218 L584,232 L562,246 Z" />
+              <path class="flow plain" d="M470,332 V232 H566"/>
+              <path class="flowhead plain" d="M562,218 L584,232 L562,246 Z"/>
               <g class="reading proves">
-                <rect x="596" y="200" width="210" height="64" />
+                <rect x="596" y="200" width="210" height="64"/>
                 <text x="701" y="242">SPMF</text>
               </g>
               <text class="t-says at-start" x="834" y="243">its distribution</text>
             </g>
 
             <g class="fragment" data-fragment-index="2">
-              <path class="flow plain" d="M470,332 H566" />
-              <path class="flowhead plain" d="M562,318 L584,332 L562,346 Z" />
+              <path class="flow plain" d="M470,332 H566"/>
+              <path class="flowhead plain" d="M562,318 L584,332 L562,346 Z"/>
               <g class="reading proves">
-                <rect x="596" y="300" width="210" height="64" />
+                <rect x="596" y="300" width="210" height="64"/>
                 <text x="701" y="342">SPMF.Cost</text>
               </g>
               <text class="t-says at-start" x="834" y="343">what each value costs</text>
-              <path class="flow plain" d="M470,332 V432 H566" />
-              <path class="flowhead plain" d="M562,418 L584,432 L562,446 Z" />
+              <path class="flow plain" d="M470,332 V432 H566"/>
+              <path class="flowhead plain" d="M562,418 L584,432 L562,446 Z"/>
               <g class="reading runs">
-                <rect x="596" y="400" width="210" height="64" />
+                <rect x="596" y="400" width="210" height="64"/>
                 <text x="701" y="442">FuzzGen</text>
               </g>
               <text class="t-says at-start" x="834" y="443">driven by a fuzzer</text>
             </g>
 
             <g class="fragment" data-fragment-index="3">
-              <path class="flow plain" d="M470,432 V532 H566" />
-              <path class="flowhead plain" d="M562,518 L584,532 L562,546 Z" />
+              <path class="flow plain" d="M470,432 V532 H566"/>
+              <path class="flowhead plain" d="M562,518 L584,532 L562,546 Z"/>
               <g class="reading open">
-                <rect x="596" y="500" width="210" height="64" />
+                <rect x="596" y="500" width="210" height="64"/>
                 <text x="701" y="542">?</text>
               </g>
             </g>
@@ -1204,13 +1243,13 @@ frequency! [(2, a), (5, b), (3, c)]
             </code></pre>
             <pre class="fragment"><code class="language-lean" data-trim>
 frequencyWith
-  [(2, a), (5, b), (3, c)]    -- what proofs see
-  (do let n ← chooseNat 0 9   -- what runs
+  [(2, a), (5, b), (3, c)]    -- version for proofs
+  (do let n ← chooseNat 0 9   -- version for execution
       if n &lt; 2 then a
       else if n &lt; 7 then b
       else if n &lt; 10 then c
       else default)
-  _                           -- a proof they are equal
+  ...                         -- bridge proof
             </code></pre>
           </div>
           <p class="cite">
@@ -1265,18 +1304,61 @@ frequencyWith
           <aside class="notes"></aside>
         </section>
 
-        <!-- The Basalt takeaway, in the format of the Palamedes one and of the
-             promises that opened the section. Orange runs; green is proved.
-             The lines follow the section's order, and this is the last
-             slide. -->
+        <!-- The Basalt takeaway, in the format of the Palamedes one: one
+             sentence broken by hand. Orange runs; green is proved. -->
         <section class="card recap">
           <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
             <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
           </svg>
-          <p class="big">A generator is a distribution.</p>
-          <p class="big">
-            <span class="proved">Proofs</span> find what <span class="tested">sampling</span> can’t.</p>
-          <p class="big">What you <span class="tested">run</span> is what you <span class="proved">prove</span>.</p>
+          <p class="big" style="line-height: 1.3">
+            Basalt uses a tagless-final<br>
+            embedding to enable <span class="proved">distributional<br>
+            proofs</span> and <span class="tested">efficient execution</span>.
+          </p>
+          <aside class="notes"></aside>
+        </section>
+
+        <!-- Thanks, and where to find everything. This is the last slide.
+             The fox from the cold open is back, under a heavier scrim than
+             it had there, and stands in the gap between the names and the
+             codes. Each code in `public/qr/` encodes the link it sits in.
+             They are all QR version 4 at level M with no margin, so they
+             share one grid; the tile supplies the quiet margin. -->
+        <section class="stage thanks">
+          <img class="bleed crop-hud" src="/fox.png" alt=""/>
+          <div class="credits">
+            <div>
+              <p class="big">Thank you!</p>
+              <p class="with">Collaborators</p>
+              <ul class="people">
+                <li>Cassia Torczon</li>
+                <li>Daniel Sainati</li>
+                <li>Thia Richey</li>
+                <li>Joe Cutler</li>
+                <li>Hila Peleg</li>
+                <li>Leo Lampropoulos</li>
+                <li>Benjamin Pierce</li>
+              </ul>
+            </div>
+            <div class="qrs">
+              <a class="qr" href="https://doi.org/10.1145/3808329">
+                <span class="qr-code"><img src="/qr/paper.svg" alt=""/></span>
+                Palamedes Paper
+              </a>
+              <a class="qr" href="https://github.com/hgoldstein95/basalt-palamedes">
+                <span class="qr-code"><img src="/qr/basalt-palamedes.svg" alt=""/></span>
+                Palamedes
+              </a>
+              <a class="qr" href="https://github.com/hgoldstein95/basalt">
+                <span class="qr-code"><img src="/qr/basalt.svg" alt=""/></span>
+                Basalt
+              </a>
+              <a class="qr" href="https://hgoldstein95.github.io/wg211-talk/">
+                <span class="qr-code"><img src="/qr/slides.svg" alt=""/></span>
+                These Slides
+              </a>
+            </div>
+          </div>
           <aside class="notes"></aside>
         </section>
       </div>
