@@ -811,8 +811,8 @@ def genFrames :=
         </section>
 
         <section class="card">
-          <p class="big">What is a generator,<br/>
-            <span class="pointed">formally</span>?</p>
+          <p class="big">What should a<br/>generator
+            <span class="pointed">denote</span>?</p>
           <aside class="notes"></aside>
         </section>
 
@@ -878,8 +878,8 @@ def SPMF (α : Type) : Type :=
         <!-- Why "at most one", shown on a generator that plainly may not
              answer: a third of the time it takes a branch that calls itself
              and does nothing else. A third of the mass is on each answer and
-             the last third is on no value. The slot for it is drawn in the
-             same place on the next slide, where it is empty. -->
+             the last third is on no value. The next slide keeps that label
+             in the same place and has no bar over it. -->
         <section class="code code-sm">
           <div class="pair drawn">
             <pre><code class="language-lean" data-trim>
@@ -905,7 +905,7 @@ def genCoin : G Bool :=
                 <text class="m-label" x="190" y="300">false</text>
               </g>
               <g class="fragment">
-                <rect class="m-lost has-mass" x="472" y="127" width="96" height="133" />
+                <rect class="m-lost" x="472" y="127" width="96" height="133" />
                 <text class="m-value" x="520" y="115">1/3</text>
                 <text class="m-label" x="520" y="300">diverge</text>
               </g>
@@ -948,8 +948,7 @@ def genFrames : G (List Nat) :=
                 <text class="m-label" x="400" y="300">…</text>
               </g>
               <g class="fragment">
-                <rect class="m-lost" x="472" y="127" width="96" height="133" />
-                <text class="m-value" x="520" y="115">0</text>
+                <text class="m-value" x="520" y="248">0</text>
                 <text class="m-label" x="520" y="300">diverge</text>
               </g>
             </svg>
@@ -988,7 +987,7 @@ def genElapsed : G Nat :=
         </section>
 
         <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|3|4|5">
+          <pre><code class="language-lean" data-trim>
 example : IsCompleteFor genElapsed (· ≤ 200000) := by
   intro n hn
   rw [genElapsed, SPMF.mem_support_iff_may]
@@ -1029,19 +1028,6 @@ def genElapsed : G Nat :=
     (2, chooseNat 1001 16999),
     (1, chooseNat 14000 200000)
   ]
-          </code></pre>
-          <aside class="notes"></aside>
-        </section>
-
-        <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="1-4|1-7">
-def genUniform := chooseNat 0 200000
-
-QC.support genUniform = {n | n ≤ 200000}
-QC.support genElapsed = {n | n ≤ 200000}
-
-SPMF.prob genUniform {0} = 1 / 200001
-SPMF.prob genElapsed {0} ≥ 1 / 7
           </code></pre>
           <aside class="notes"></aside>
         </section>
@@ -1175,8 +1161,8 @@ def genFrames fuel :=
              green ones are what proofs are about; the last is not written. -->
         <section class="stage">
           <svg viewBox="0 0 1280 720" role="img"
-               aria-label="One generator term, interpreted at several types: IO runs it,
-                           SPMF is its distribution, SPMF.Cost adds costs, FuzzGen lets a
+               aria-label="One generator term, interpreted at several types: SPMF is its
+                           distribution, SPMF.Cost adds costs, IO runs it, FuzzGen lets a
                            fuzzer drive it, and one more is left open.">
             <use href="#blk-basalt" transform="translate(230 216) scale(110)"/>
             <text class="t-name" x="230" y="512">genFrames</text>
@@ -1185,41 +1171,38 @@ def genFrames fuel :=
             <g class="fragment" data-fragment-index="0">
               <path class="flow plain" d="M356,332 H470 V132 H566"/>
               <path class="flowhead plain" d="M562,118 L584,132 L562,146 Z"/>
-              <g class="reading runs">
+              <g class="reading proves">
                 <rect x="596" y="100" width="210" height="64"/>
-                <text x="701" y="142">IO</text>
+                <text x="701" y="142">SPMF</text>
               </g>
-              <text class="t-says at-start" x="834" y="143">run it</text>
-            </g>
-
-            <g class="fragment" data-fragment-index="1">
+              <text class="t-says at-start" x="834" y="143">for distributional proofs</text>
               <path class="flow plain" d="M470,332 V232 H566"/>
               <path class="flowhead plain" d="M562,218 L584,232 L562,246 Z"/>
               <g class="reading proves">
                 <rect x="596" y="200" width="210" height="64"/>
-                <text x="701" y="242">SPMF</text>
+                <text x="701" y="242">SPMF.Cost</text>
               </g>
-              <text class="t-says at-start" x="834" y="243">its distribution</text>
+              <text class="t-says at-start" x="834" y="243">for proofs about cost</text>
             </g>
 
-            <g class="fragment" data-fragment-index="2">
+            <g class="fragment" data-fragment-index="1">
               <path class="flow plain" d="M470,332 H566"/>
               <path class="flowhead plain" d="M562,318 L584,332 L562,346 Z"/>
-              <g class="reading proves">
+              <g class="reading runs">
                 <rect x="596" y="300" width="210" height="64"/>
-                <text x="701" y="342">SPMF.Cost</text>
+                <text x="701" y="342">IO</text>
               </g>
-              <text class="t-says at-start" x="834" y="343">what each value costs</text>
+              <text class="t-says at-start" x="834" y="343">for standard PBT</text>
               <path class="flow plain" d="M470,332 V432 H566"/>
               <path class="flowhead plain" d="M562,418 L584,432 L562,446 Z"/>
               <g class="reading runs">
                 <rect x="596" y="400" width="210" height="64"/>
                 <text x="701" y="442">FuzzGen</text>
               </g>
-              <text class="t-says at-start" x="834" y="443">driven by a fuzzer</text>
+              <text class="t-says at-start" x="834" y="443">for fuzzing</text>
             </g>
 
-            <g class="fragment" data-fragment-index="3">
+            <g class="fragment" data-fragment-index="2">
               <path class="flow plain" d="M470,432 V532 H566"/>
               <path class="flowhead plain" d="M562,518 L584,532 L562,546 Z"/>
               <g class="reading open">
@@ -1298,8 +1281,6 @@ frequencyWith
             <rect class="s-macro" x="300" y="560" width="696" height="28"/>
             <path class="s-ref" d="M772,520 V596"/>
             <text class="s-value" x="1012" y="585">2.6×</text>
-
-            <text class="s-axis" x="300" y="652">values per second, relative to the plain combinators</text>
           </svg>
           <aside class="notes"></aside>
         </section>

@@ -10,6 +10,9 @@
 // own textures are made of. The die is Palamedes's: he is the Greek credited
 // with inventing dice. The third is TNT, also after Minecraft's, and it stands
 // for raylib.
+//
+// Water and lava are tiles without a block: they fill the bars of a chart.
+// Both are drawn after Minecraft's.
 
 /** `Atlas.hash`: 32-bit arithmetic, hence the `imul` and the `>>> 0`s. */
 const hash = (x, y, salt) => {
@@ -58,6 +61,10 @@ function tilePixel(tile, x, y) {
       return tntSide(x, y)
     case 31:
       return tntTop(x, y)
+    case 40:
+      return liquid(WATER, x, y, 40)
+    case 41:
+      return liquid(LAVA, x, y, 41)
     default:
       return tile in PIPS ? diePixel(tile, x, y) : [255, 0, 255]
   }
@@ -171,6 +178,46 @@ function tntTop(x, y) {
   return rgb(...TNT_RED, jitter(x, y, 32, 5))
 }
 
+// Water and lava, each four shades from deep to bright. Water is mostly its
+// middle blues with a few bright ripples; lava is the same shapes, hot.
+const WATER = [
+  [38, 84, 196],
+  [48, 103, 214],
+  [66, 126, 228],
+  [108, 164, 240],
+]
+const LAVA = [
+  [200, 64, 8],
+  [226, 102, 14],
+  [244, 150, 28],
+  [253, 214, 92],
+]
+
+/**
+ * Smooth noise from 0 to 1, in cells `cw` texels by `ch`. It repeats every
+ * 16 texels each way, so a tile meets its own copies without a seam.
+ */
+function swell(x, y, cw, ch, salt) {
+  const gx = (x + 0.5) / cw
+  const gy = (y + 0.5) / ch
+  const x0 = Math.floor(gx)
+  const y0 = Math.floor(gy)
+  const at = (i, j) => (hash(i % (16 / cw), j % (16 / ch), salt) % 256) / 255
+  const ease = (t) => t * t * (3 - 2 * t)
+  const fx = ease(gx - x0)
+  const fy = ease(gy - y0)
+  const above = at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx
+  const below = at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx
+  return above * (1 - fy) + below * fy
+}
+
+/** A still liquid: wide, shallow swells, cut into the four shades. */
+function liquid(shades, x, y, salt) {
+  const n = 0.65 * swell(x, y, 8, 4, salt) + 0.35 * swell(x, y, 4, 2, salt + 100)
+  const shade = n < 0.36 ? 0 : n < 0.54 ? 1 : n < 0.7 ? 2 : 3
+  return rgb(...shades[shade], jitter(x, y, salt, 4))
+}
+
 // Tile numbers as in `Block.tile`: which tile a block shows on top and on its
 // two visible sides.
 const BLOCKS = {
@@ -220,9 +267,19 @@ export const EDGE = 1.118
 
 const HULL = `M0,0 L1,.5 V${0.5 + EDGE} L0,${1 + EDGE} L-1,${0.5 + EDGE} V.5 Z`
 
+// The tiles a chart fills its bars with, as `fill: url(#tex-NAME)`.
+const TEXTURES = { water: 40, lava: 41 }
+
+// A texture's texel is 6px, so a 96px bar is one tile across. The pattern
+// starts at the first bar's left edge and the baseline of `.masses`, and every
+// bar there is a whole number of texels from both.
+const TEXEL = 6
+const TEXTURE_ORIGIN = [22, 260]
+
 /**
  * Fill `svg` with one `<g id="blk-NAME">` per block, plus `#blk-hull`, the
- * silhouette, as a bare path to stroke.
+ * silhouette, as a bare path to stroke, and one `<pattern id="tex-NAME">` per
+ * texture.
  *
  * The definitions live in an SVG of their own, outside the slides: a `<use>`
  * that points into a hidden slide's SVG stops rendering.
@@ -246,8 +303,18 @@ export function installBlocks(svg) {
     )
   })
 
+  const [tx, ty] = TEXTURE_ORIGIN
+  const tile = TEXELS * TEXEL
+  const textures = Object.entries(TEXTURES).map(
+    ([name, id]) =>
+      `<pattern id="tex-${name}" patternUnits="userSpaceOnUse" ` +
+      `x="${tx}" y="${ty}" width="${tile}" height="${tile}">` +
+      `<image href="${faceImage(id, 1)}" width="${tile}" height="${tile}"/>` +
+      `</pattern>`,
+  )
+
   svg.innerHTML =
-    `<defs>${blocks.join('')}` +
+    `<defs>${blocks.join('')}${textures.join('')}` +
     `<path id="blk-hull" d="${HULL}" vector-effect="non-scaling-stroke"/>` +
     `</defs>`
 }

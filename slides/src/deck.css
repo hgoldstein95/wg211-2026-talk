@@ -954,8 +954,8 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 
 /* --- A distribution, drawn ------------------------------------------------- */
 
-/* One series, so no legend: the listing beside the bars names it. Bars are the
-   proved green, since the distribution is the reading proofs are about; every
+/* One series, so no legend: the listing beside the bars names it. Mass on a
+   value is water and mass on no value is lava; src/voxel.js draws both. Every
    number and label is ink, not the bar's colour. Square ends, like every
    other edge in the deck. Not interactive: it is a slide. */
 .reveal .masses {
@@ -966,20 +966,11 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 }
 
 .masses .m-bar {
-  fill: var(--proved);
+  fill: url(#tex-water);
 }
 
 .masses .m-lost {
-  fill: none;
-  stroke: var(--dim);
-  stroke-width: 3;
-  stroke-dasharray: 10 8;
-}
-
-/* The slot when some of the mass is in it. Grey, not green: it is on no value. */
-.masses .m-lost.has-mass {
-  fill: var(--dim);
-  fill-opacity: 0.3;
+  fill: url(#tex-lava);
 }
 
 .masses .m-axis {
