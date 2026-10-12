@@ -346,8 +346,7 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 
 /* --- The footage ---------------------------------------------------------- */
 
-/* 480x270 footage at exactly twice its size, so each of its pixels is four of
-   the slide's and stays square. */
+/* 1280x720 footage at three quarters of its size. */
 .reveal .clip {
   position: absolute;
   left: 160px;
@@ -367,7 +366,6 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   max-width: none;
   max-height: none;
   margin: 0;
-  image-rendering: pixelated;
 }
 
 .reveal .caption {
