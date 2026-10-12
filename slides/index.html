@@ -1312,6 +1312,9 @@ def genFrames [Gen G] : G (List Nat) :=
 partial_fixpoint
             </code></pre>
           </div>
+          <p class="cite">
+            Carette et al., <em>Finally Tagless, Partially Evaluated</em>, JFP 2009
+          </p>
           <aside class="notes">
             So what we’re actually going to do is represent generators this way. This is
             <code>genFrames</code> again, in Basalt, written the way you would write it in
@@ -1328,12 +1331,19 @@ partial_fixpoint
         </section>
 
         <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4">
+          <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4" data-fragment-index="0">
 class Gen (G : Type → Type) where
   instMonad        : Monad G
   instRandomChoice : RandomChoice G
   instCCPO         : ∀ α, CCPO (G α)
           </code></pre>
+          <p class="cite fragment current-visible" data-fragment-index="0">
+            Claessen and Hughes, <em>QuickCheck</em>, ICFP 2000
+          </p>
+          <p class="cite fragment" data-fragment-index="1">
+            Knaster–Tarski fixpoint theorem (Knaster 1928, Tarski 1955)<br/>
+            <em>The Lean Language Reference</em>, “Recursive Definitions”
+          </p>
           <aside class="notes">
             OK, so this is what the type class actually looks like. Some parts of this are not
             going to be surprising to you. [click] Certainly, a generator should be a monad, and
@@ -1488,6 +1498,9 @@ frequencyWith
   _                           -- a proof they are equal
             </code></pre>
           </div>
+          <p class="cite">
+            Richey, Cutler et al., <em>Fail Faster</em>, OOPSLA 2026
+          </p>
           <aside class="notes">
             So they run. Running them also has to be fast. Some of you
             have been wondering about the bang. A choice between branches is a list of
