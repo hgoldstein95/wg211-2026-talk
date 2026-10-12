@@ -83,3 +83,50 @@ def genFrames [Gen G] : G (List Nat) := by
 #print genFrames
 
 end FramesFold
+
+/-!
+## The slot predicate
+
+The deck's first predicate is not recursive: a hotbar slot is empty, or holds a stack of 1 to 64
+blocks. In lean-mc the type says so (`Stack.extra : Fin 64`), so `slotOK` and the theorem the deck
+states with it, `takeOne_ok`, are the deck's own. Both are checked here.
+
+What comes out:
+
+    genSlot =
+      frequency
+        [(1, fun x => pure none),
+         (1, fun x => do
+           let a ← chooseNat 1 64
+           pure (some a))]
+
+The brackets around the bound are needed. Without them `∧` nests to the right, as
+`1 ≤ n ∧ (n ≤ 64 ∧ slot = some n)`, and no rule matches ("No search rule matched this predicate").
+The predicate also has to be handed over written out. Given `fun slot => slotOK slot`, with
+`slotOK` marked `@[simp]`, the search splits on the option instead and then finds no rule for
+`fun slot => 1 ≤ slot ∧ slot ≤ 64`.
+-/
+
+namespace Slot
+
+def slotOK (slot : Option Nat) : Prop :=
+  slot = none ∨ ∃ n, (1 ≤ n ∧ n ≤ 64) ∧ slot = some n
+
+def genSlot [Gen G] : G (Option Nat) := by
+  generator_search (fun slot => slot = none ∨ ∃ n, (1 ≤ n ∧ n ≤ 64) ∧ slot = some n)
+
+#print genSlot
+
+/-- The slot after one block is taken from it. -/
+def takeOne : Option Nat → Option Nat
+  | none => none
+  | some n => if n ≤ 1 then none else some (n - 1)
+
+theorem takeOne_ok (slot : Option Nat) : slotOK slot → slotOK (takeOne slot) := by
+  rintro (rfl | ⟨n, ⟨h1, h64⟩, rfl⟩)
+  · exact .inl rfl
+  · by_cases h : n ≤ 1
+    · exact .inl (by simp [takeOne, h])
+    · exact .inr ⟨n - 1, ⟨by omega, by omega⟩, by simp [takeOne, h]⟩
+
+end Slot

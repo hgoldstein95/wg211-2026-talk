@@ -569,9 +569,10 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 /* --- Listings ------------------------------------------------------------- */
 
 /* Code sits in no box, as in the talk: Fira Mono at one weight, centred as a
-   block and ranged left inside it. Three sizes, set on the slide:
+   block and ranged left inside it. Four sizes, set on the slide:
 
      default   30px   up to 60 characters a line
+     .code-xl  48px   one line, 37 characters
      .code-lg  38px   one to four lines, 46 characters
      .code-sm  26px   two listings side by side, 68 characters between them
      .code-xs  24px   two wide listings side by side, 76 between them */
@@ -596,6 +597,10 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   --code-lh: 1.4;
   line-height: var(--code-lh);
   text-align: left;
+}
+
+.reveal section.code-xl pre {
+  font-size: 48px;
 }
 
 .reveal section.code-lg pre {
@@ -792,6 +797,48 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 }
 
 /* --- A listing taken apart ------------------------------------------------ */
+
+/* What a generator made: a grid of values under a listing, set in its face
+   (src/samples.js numbers them, and wraps what each one says). The grid is a
+   fragment. Its press draws the values one just after another, as the pieces
+   of a listing leave, and every value not marked `ok` is struck out a beat
+   after it lands. */
+.reveal .samples {
+  display: grid;
+  grid-template-columns: repeat(5, 13ch);
+  gap: 0 3ch;
+  font: 500 24px / 1.55 var(--mono);
+  font-variant-ligatures: none;
+  white-space: pre;
+}
+
+/* The grid keeps its room before the press, so the listings do not move. */
+.reveal .samples.fragment {
+  opacity: 1;
+  visibility: inherit;
+}
+
+.reveal .samples > span {
+  --at: calc(var(--i) * var(--t-fade) * 0.2);
+  opacity: 0;
+  transition: opacity var(--t-fade) var(--at);
+}
+
+.reveal .samples.visible > span {
+  opacity: 1;
+}
+
+.reveal .samples > span > span {
+  text-decoration: line-through transparent 2px;
+  transition:
+    opacity var(--t-fade) calc(var(--at) + var(--t-fade)),
+    text-decoration-color var(--t-fade) calc(var(--at) + var(--t-fade));
+}
+
+.reveal .samples.visible > span:not(.ok) > span {
+  opacity: var(--code-dim);
+  text-decoration-color: var(--fail);
+}
 
 /* One listing comes apart into tiles, each tile turns over, and the tiles
    close up into another listing (src/exploded.js has the markup). This is the

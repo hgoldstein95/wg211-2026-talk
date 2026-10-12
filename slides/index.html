@@ -303,166 +303,128 @@
           </aside>
         </section>
 
-        <section class="code" data-auto-animate>
+        <section class="code">
           <div class="stack">
-            <div class="stack fragment" data-fragment-index="0" style="gap: 42px">
-              <pre><code class="language-lean" data-trim>
-/-- Duration of one frame. -/
-def Frame := Nat
-              </code></pre>
-              <pre data-id="framesOK"><code class="language-lean" data-trim>
-def framesOK (fs : List Frame) : Bool :=
-  List.fold
-    (fun
-      | .nilF => true
-      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
-    fs
-              </code></pre>
-            </div>
-            <pre><code class="language-lean" data-trim data-line-numbers="|2" data-fragment-index="0">
-theorem play_correct (fs : List Frame) :
-    framesOK fs →
-    (play fs).Correct
+            <pre><code class="language-lean" data-trim>
+def slotOK (slot : Option Nat) : Prop :=
+  slot = none ∨
+  ∃ n, (1 ≤ n ∧ n ≤ 64) ∧ slot = some n
             </code></pre>
-            <pre class="mark-sorry fragment" data-fragment-index="1"><code class="language-lean" data-trim>
-def genFrames : G (List Frame) := sorry
+            <pre><code class="language-lean" data-trim>
+theorem takeOne_ok (slot : Option Nat) :
+    slotOK slot →
+    slotOK (takeOne slot)
             </code></pre>
           </div>
+          <!-- One press draws 30 values, one after another. Each one the
+               precondition turns away, which is every one not marked `ok`, is
+               struck out as it lands. -->
+          <div class="samples fragment" role="img"
+               aria-label="30 generated values of type Option Nat, most of them
+                           some of a large number, and struck out. Only 4 satisfy
+                           slotOK: none, twice, and some of 37 and of 12.">
+            <span>some 513</span>
+            <span>some 90417</span>
+            <span class="ok">none</span>
+            <span>some 2466</span>
+            <span>some 0</span>
+            <span>some 7731802</span>
+            <span>some 148</span>
+            <span>some 30566</span>
+            <span>some 912</span>
+            <span>some 4400219</span>
+            <span>some 68201</span>
+            <span class="ok">some 37</span>
+            <span>some 5024</span>
+            <span>some 801133</span>
+            <span>some 65</span>
+            <span>some 0</span>
+            <span>some 1290</span>
+            <span>some 27718</span>
+            <span>some 366</span>
+            <span>some 9052471</span>
+            <span>some 4087</span>
+            <span class="ok">none</span>
+            <span>some 615220</span>
+            <span>some 73</span>
+            <span>some 18849</span>
+            <span>some 2203</span>
+            <span>some 540916</span>
+            <span>some 0</span>
+            <span>some 7140</span>
+            <span class="ok">some 12</span>
+          </div>
           <aside class="notes">
-            So here’s a theorem from our Minecraft library, and it checks that this
-            <code>play</code> function is correct. And what <code>play</code> takes is a bunch of
-            durations of frames. This theorem is checking that, like, no matter how long the frames
-            take, the logic of the game continues to run properly. And so we’re going to have this
-            condition, this precondition, that the frames are okay, that the frame durations make
-            some sense. And so here is our <code>framesOK</code> function, which is just actually
-            doing something very simple. It’s just checking that every value in the list of frame
-            durations is less than 200,000. We could get infinitely more complicated than this, but
-            I’m trying to, you know, give you the most basic, the least that you need to kind of
-            understand how this is working. So we have this <code>framesOK</code> precondition, and
-            what we’d like to do is we’d like to generate lists of frames that are compatible with
-            <code>framesOK</code>, right? We want to generate all sorts of okay lists of frames, but
-            also no invalid lists of frames.
+            So here’s a theorem about our Minecraft game, and it’s about the slots in your
+            inventory. A slot is either empty, or it holds a stack of blocks, and a stack is
+            somewhere between 1 and 64 blocks. That’s what <code>slotOK</code> says. Either the
+            slot is <code>none</code>, or it’s <code>some</code> of <code>n</code>, where
+            <code>n</code> is between 1 and 64. And the theorem says that if you have a slot that’s
+            okay, and you take one block out of it, then you still have a slot that’s okay. So
+            <code>slotOK</code> is our precondition. Now, if we want to test this, we need slots.
+            A slot here is just an optional number, so we could generate a whole bunch of optional
+            numbers. But most of those are not okay slots, right? A stack of zero blocks is not a
+            stack, and neither is a stack of 90,000. Only a handful of these satisfy the
+            precondition, so almost all of our tests would check nothing at all. What we’d like is
+            a generator that produces all sorts of okay slots, but also no invalid slots.
           </aside>
         </section>
 
-        <section class="code" data-auto-animate>
-          <div class="stack">
-            <pre data-id="framesOK"><code class="language-lean" data-trim>
-def framesOK (fs : List Frame) : Bool :=
-  List.fold
-    (fun
-      | .nilF => true
-      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
-    fs
-            </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
-def genFrames : G (List Frame) := by
-  generator_search (fun fs => framesOK fs)
-            </code></pre>
-          </div>
-          <aside class="notes">
-            Okay, so how are we going to do this? Well, in the Palamedes framework, that’s as simple
-            as simply calling a tactic in Lean. So you just say <code>generator_search</code>, hand
-            it <code>framesOK</code>, and it will find you a generator that automatically satisfies
-            that precondition.
-          </aside>
-        </section>
-
-        <section class="code code-lg">
+        <section class="code code-xl">
           <pre class="annotate-exists"><code class="language-lean" data-trim>
-∃ g : G α, g.support = P
+∃ g : G α, ∀ a, a ∈ g.support ↔ P a
           </code></pre>
           <aside class="notes">
-            So how do we do this? Well, the first thing to recognize is that the thing we want,
-            really, is a solution to this theorem. So we want to know that there exists some
-            generator <code>g</code>, such that the support of that generator, the values that it
-            can produce, is exactly <code>P</code>, where <code>P</code> in our case is
-            <code>framesOK</code>. But you want a generator that kind of will produce exactly the
-            values that satisfy <code>P</code>.
-          </aside>
-        </section>
-
-        <section class="code code-xs">
-          <div class="pair">
-            <div class="stack">
-              <pre><code class="language-lean" data-trim>
-inductive ListF (α β : Type)
-  | nilF
-  | consF (head : α) (rest : β)
-              </code></pre>
-              <pre><code class="language-lean" data-trim data-line-numbers="|4-5">
-def framesOK (fs : List Frame) : Bool :=
-  List.fold
-    (fun
-      | .nilF => true
-      | .consF n ok => n ≤ 200000 &amp;&amp; ok)
-    fs
-              </code></pre>
-            </div>
-            <!-- Pushed down past `ListF` (three rows and the stack's gap) and
-                 two rows of the fold, so each clause sits beside the case of
-                 the fold it restates. -->
-            <pre class="fragment" style="margin-top: calc(5 * 1.4em + 34px)"><code class="language-lean" data-trim>
-fun (l : ListF Frame Unit) =>
-  l = .nilF ∨
-  ∃ n, n ≤ 200000 ∧ l = .consF n ()
-            </code></pre>
-          </div>
-          <aside class="notes">
-            Now, I told you that that <code>generator_search</code> tactic can do this. But I want
-            to first try to convince you that this problem can be kind of broken down into pieces.
-            So, our <code>framesOK</code> function here at its core has this disjunction, right?
-            Either the list is empty, or it’s a cons, where the value is less than 200,000, and the
-            rest of the list is okay. And so we can actually break this out into its own predicate
-            on these, you know, the characteristic function of lists. And we know we want
-            <code>l</code> to be either nil, or we want there to exist some <code>n</code> that is
-            less than 200,000, such that <code>l</code> is <code>consF</code> of <code>n</code> and
-            unit.
+            So what is it that we want, precisely? Well, the thing we want, really, is a solution
+            to this theorem. So we want to know that there exists some generator <code>g</code>,
+            such that for every value <code>a</code>, <code>a</code> is in the support of that
+            generator, the values that it can produce, if and only if <code>P</code> holds of
+            <code>a</code>. And <code>P</code> in our case is <code>slotOK</code>. So you want a
+            generator that will produce exactly the values that satisfy <code>P</code>.
           </aside>
         </section>
 
         <section class="code">
           <div class="exploded" role="img"
-               aria-label="The layer predicate comes apart into six pieces. Each piece
+               aria-label="The slot predicate comes apart into six pieces. Each piece
                            turns into a piece of a program: or into oneOf, an equation
                            into pure, exists into a draw, a bound into chooseNat, and
-                           into a semicolon. The pieces close up into the layer
+                           into a semicolon. The pieces close up into the slot
                            generator, a do block on lines of its own. Beside it are
                            the five rules as a tactic script, and an arrow from the
                            script down to aesop.">
-            <span class="glue" data-in="whole" data-at="0 0">fun (l : ListF Frame Unit) =&gt;</span>
             <span class="piece" data-swap="pick"
-                  data-whole="12 1" data-apart="0 0" data-built="0 0">
+                  data-whole="12 0" data-apart="0 0" data-built="0 0">
               <span class="from">∨</span>
               <span class="to">oneOf</span>
             </span>
-            <span class="piece" data-swap="nil"
-                  data-whole="2 1" data-apart="4 1.8" data-built="2 1">
-              <span class="from">l = .nilF</span>
-              <span class="to">pure .nilF</span>
+            <span class="piece" data-swap="none"
+                  data-whole="0 0" data-apart="4 1.8" data-built="2 1">
+              <span class="from">slot = none</span>
+              <span class="to">pure none</span>
             </span>
             <span class="piece" data-swap="bind"
-                  data-whole="2 2" data-apart="4 3.6" data-built="4 3">
+                  data-whole="0 1" data-apart="4 3.6" data-built="4 3">
               <span class="from">∃ n,</span>
               <span class="to">let n ←</span>
             </span>
             <span class="piece" data-swap="between"
-                  data-whole="7 2" data-apart="13.6 3.6" data-built="12 3">
-              <span class="from">n ≤ 200000</span>
-              <span class="to">chooseNat 0 200000</span>
+                  data-whole="5 1" data-apart="13.6 3.6" data-built="12 3">
+              <span class="from">(1 ≤ n ∧ n ≤ 64)</span>
+              <span class="to">chooseNat 1 64</span>
             </span>
             <span class="piece drops" data-swap="bind"
-                  data-whole="18 2" data-apart="34.2 3.6" data-built="30 3">
+                  data-whole="22 1" data-apart="32.2 3.6" data-built="26 3">
               <span class="from">∧</span>
               <span class="to">;</span>
             </span>
-            <span class="piece" data-swap="cons"
-                  data-whole="20 2" data-apart="37.8 3.6" data-built="4 4">
-              <span class="from">l = .consF n ()</span>
-              <span class="to">pure (.consF n ())</span>
+            <span class="piece" data-swap="some"
+                  data-whole="24 1" data-apart="35.8 3.6" data-built="4 4">
+              <span class="from">slot = some n</span>
+              <span class="to">pure (some n)</span>
             </span>
             <span class="glue" data-in="built" data-at="6 0">[</span>
-            <span class="glue" data-in="built" data-at="12 1">,</span>
+            <span class="glue" data-in="built" data-at="11 1">,</span>
             <span class="glue" data-in="built" data-at="2 2">do</span>
             <span class="glue" data-in="built" data-at="0 5">]</span>
             <!-- One step a press, each naming the rule it applies. The first
@@ -471,10 +433,10 @@ fun (l : ListF Frame Unit) =>
             <div class="steps">
               <p class="fragment current-visible"></p>
               <p class="fragment current-visible" data-swap="pick">apply synth_pick</p>
-              <p class="fragment current-visible" data-swap="nil">apply synth_pure</p>
+              <p class="fragment current-visible" data-swap="none">apply synth_pure</p>
               <p class="fragment current-visible" data-swap="bind">apply synth_bind</p>
               <p class="fragment current-visible" data-swap="between">apply synth_between</p>
-              <p class="fragment current-visible" data-swap="cons">apply synth_pure</p>
+              <p class="fragment current-visible" data-swap="some">apply synth_pure</p>
               <p class="fragment current-visible"></p>
             </div>
             <!-- Two more presses. The listing moves over, and the five steps
@@ -501,19 +463,20 @@ apply synth_pick
             </div>
           </div>
           <aside class="notes">
-            Okay. So now that we have sort of isolated this like non-recursive part, can we build a
-            generator just for this? Can we build a generator just for these, like,
-            <code>ListF</code> terms? And I think we can. So first we have a disjunction, and that
+            Okay, so let’s do that for slots. Here is the body of <code>slotOK</code> again. A slot
+            is okay if it’s <code>none</code>, or if there exists some <code>n</code> between 1 and 64
+            such that the slot is <code>some</code> of <code>n</code>. Can we build a generator
+            just from this? And I think we can. So first we have a disjunction, and that
             disjunction can just be a random choice. So we can just use this <code>oneOf</code>
             combinator to make a random choice between two different things. Then in the case where
-            <code>l</code> is supposed to be nil, we can just generate nil. If our <code>l</code> is
-            constrained to be nil, we can generate exactly. Now, when we have an existential, what
-            we can do is we can sample from a subgenerator, so we can find some subgenerator that
-            can do the part that generates <code>n</code>. And then we can use that generator, that
-            <code>n</code>, later. Then for this <code>n</code> less than 200,000, we can just
-            generate between 0 and 200,000. And then for this last thing where <code>l</code> has to
-            be <code>consF</code> of <code>n</code> and unit, we can just use <code>pure</code> once
-            again. What this amounts to is actually a proof. So when we put this generator back
+            the slot is supposed to be <code>none</code>, we can just generate <code>none</code>.
+            If our slot is constrained to be one value, we can generate exactly that. Now, when we
+            have an existential, what we can do is we can sample from a subgenerator, so we can
+            find some subgenerator that can do the part that generates <code>n</code>. And then we
+            can use that <code>n</code> later. Then for this <code>n</code> between 1 and 64, we
+            can just generate between 1 and 64. And then for this last thing where the slot has to
+            be <code>some</code> of <code>n</code>, we can just use <code>pure</code> once again.
+            What this amounts to is actually a proof. So when we put this generator back
             together, we can see that the thing that produced it is a sequence of tactics. And this
             is actually literal. So in Lean, this is literally a sequence of tactics. We apply a
             bunch of tactics over and over again. And we get a generator that looks like this. And
@@ -524,17 +487,29 @@ apply synth_pick
         </section>
 
         <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="2">
+          <div class="stack" style="gap: 42px">
+            <pre><code class="language-lean" data-trim>
+/-- Duration of one frame. -/
+def Frame := Nat
+            </code></pre>
+            <pre><code class="language-lean" data-trim data-line-numbers="|2">
 def framesOK (fs : List Frame) : Bool :=
   List.fold
     (fun
       | .nilF => true
       | .consF n ok => n ≤ 200000 &amp;&amp; ok)
     fs
-          </code></pre>
+            </code></pre>
+          </div>
           <aside class="notes">
-            Okay, so that takes care of the non-inductive fragment. Now, let’s look at the more
-            complicated inductive part. So, remember, we had this fold.
+            Okay, so that takes care of predicates like <code>slotOK</code>, that aren’t recursive.
+            But most of the things we want to generate are recursive. So here’s another one from
+            the game. The game runs on a list of frames, and a frame, for us, is just how long it
+            took. And <code>framesOK</code> says that every duration in the list is less than
+            200,000. It’s written one layer of the list at a time. So the empty list,
+            <code>nilF</code>, is okay. And a cons, <code>consF</code>, is okay if its head is less
+            than 200,000, and the rest of the list was okay. Now, let’s look at the thing that
+            makes this more complicated, which is this fold.
           </aside>
         </section>
 
@@ -620,7 +595,6 @@ def framesOK (fs : List Frame) : Bool :=
               <g class="fragment">
                 <path class="flow proved" d="M628,254 V322"/>
                 <path class="flowhead proved" d="M614,318 L628,340 L642,318 Z"/>
-                <text class="t-link proved at-start" x="662" y="310">proved</text>
 
                 <use href="#blk-sand" transform="translate(275 502) scale(44)"/>
                 <use class="seam" href="#blk-hull" transform="translate(275 502) scale(44)"/>
@@ -693,8 +667,9 @@ def genFrames :=
           </div>
           <aside class="notes">
             So, using this theorem, we can take our <code>framesOK</code> predicate and turn this
-            into a <code>genFrames</code> generator that just unfolds the inner piece that we had
-            just synthesized a moment ago.
+            into a <code>genFrames</code> generator that just unfolds one step. And that step has
+            the same shape as the slot generator that we synthesized a moment ago. Either stop, or
+            pick a number in range and keep going. The same rules find it.
           </aside>
         </section>
 

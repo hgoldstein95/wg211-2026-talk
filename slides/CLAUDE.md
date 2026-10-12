@@ -13,6 +13,7 @@ it before adding a slide, and copy the nearest existing slide.
 | `src/voxel.js` | Draws the blocks (`#blk-…`). |
 | `src/code-marks.js` | `mark-*` and `annotate-*` classes on a listing. |
 | `src/exploded.js` | The listing that comes apart, turns a piece at a time, and closes up as another. |
+| `src/samples.js` | The grid of generated values that arrive on a press, the invalid ones struck out as they land. |
 | `src/lean-hljs.js` | The Lean grammar; highlight.js ships none. |
 
 `../materials/` is the previous version of the talk, kept for reference. It is
