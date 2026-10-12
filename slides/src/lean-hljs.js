@@ -15,10 +15,14 @@
 //     are scaffolding and drop to the light grey. A slide that is nothing but
 //     a logical statement is where getting that split wrong shows: it either
 //     greys out the statement or leaves the whole listing shouting.
-//   * **A type ascription is a type.** ` : ` opens a run that is coloured like
-//     one — which is what an inductive's constructor signatures are. Inside
-//     that run the connectives are part of the type and inherit its colour;
-//     so does the colon that opened it.
+//   * **A type ascription is a type, as far as it goes.** ` : ` opens one, and
+//     it ends where Lean ends it: at the bracket that was open before it, at
+//     `:=`, at the comma that closes a binder. So `∃ g : G α, …` colors `G α`
+//     and stops. Inside it an arrow is part of the type and `α` or `β` is a
+//     type variable, and both take the type's color, as does the colon. A
+//     name or a relation there is still what it is anywhere else, because the
+//     type of a hypothesis is a proposition: `hn : n ≤ 200000` reads like the
+//     goal under it.
 //   * **The deriver is meta.** `derive_generator` and `generator_search` are
 //     the metaprogramming the section is about, and they take the same colour
 //     as OCaml's `[@@deriving …]` for that reason.
@@ -71,17 +75,22 @@ export default function lean(hljs) {
   // operator and the number.
   const CONSTRUCTOR = { className: 'type', begin: /ℝ≥0∞|[ℕℤℚℝ]|\b[A-Z][A-Za-z0-9_'.]*/, relevance: 0 }
 
-  // An anonymous constructor, `.leaf` or `.red`. Not a projection: `t.root`
-  // and `(g i).mass` have a name or a bracket right before the dot.
-  const DOT_CONSTRUCTOR = { className: 'type', begin: /(?<![\w'.)\]}₀-₉])\.[a-z][A-Za-z0-9_']*/, relevance: 0 }
+  // An anonymous constructor, `.leaf` or `.red`. Not a projection: `t.root`,
+  // `(g i).mass` and `·.length` have a name, a bracket or the hole right
+  // before the dot.
+  const DOT_CONSTRUCTOR = { className: 'type', begin: /(?<![\w'.)\]}₀-₉·])\.[a-z][A-Za-z0-9_']*/, relevance: 0 }
+
+  // `×` only ever builds a type, so it is one wherever it stands.
+  const PRODUCT = { className: 'type', begin: /×/, relevance: 0 }
 
   // Binders, arrows and relations — the part of a proposition that carries
   // meaning. Multi-character forms first, or `=>` loses its `=`. Unlike the
   // OCaml grammar, `=` *is* an operator here: Lean binds with `:=`, so a bare
-  // `=` is the equality in `sortedGt lo xs = true` and means something.
+  // `=` is the equality in `sortedGt lo xs = true` and means something. A `/`
+  // is one too, but not the pair of them that is the subtype bar.
   const OPERATOR = {
     className: 'operator',
-    begin: /==>|<->|<\$>|<\|>|->|=>|<-|\|\||&&|\+|-|\*|\/|=|<|>|[∀∃λΣΠ→←↔↑↓∧∨¬≠≤≥≈∈∉⊆∪∩∅×∘∑∏⟶↦⊑⋅]/,
+    begin: /==>|<->|<\$>|<\|>|->|=>|<-|\|\||&&|\+|-|\*|\/(?!\/)|=|<|>|[∀∃λΣΠ→←↔↑↓∧∨¬≠≤≥≈∈∉⊆∪∩∅∘∑∏⟶↦⊑⋅]/,
     relevance: 0,
   }
 
@@ -90,43 +99,77 @@ export default function lean(hljs) {
   // `x :: xs` doesn't outweigh the `≤` on the line above it.
   const PUNCTUATION = { className: 'punctuation', begin: /::|:=|\/\/|[()[\]{}⟨⟩⦃⦄,;:|]/, relevance: 0 }
 
-  // No type-expression operator mode, as in src/ocaml-hljs.js: inside a
-  // signature the arrows and relations are the type, and inherit its colour.
-  const TYPE_PUNCTUATION = { className: 'punctuation', begin: /::|[([{⟨,;:|]/, relevance: 0 }
+  const TERM = [
+    COMMENT_LINE,
+    COMMENT_BLOCK,
+    hljs.QUOTE_STRING_MODE,
+    COMMAND,
+    ATTRIBUTE,
+    NIL,
+    NUMBER,
+    CONSTRUCTOR,
+    DOT_CONSTRUCTOR,
+    PRODUCT,
+  ]
 
-  // ` : ` opens a type. In `inductive Sorted … | cons : lo ≤ x → Sorted x l`
-  // that run is a constructor's signature — a proposition — and colouring it
-  // as a type is what makes an inductive read as a table of signatures. The
-  // space is what keeps `:=` and `::` out; the closers end the run so a
-  // `(List Nat)` inside one doesn't run to the end of the line.
+  // What a type has that a term doesn't: its arrows, and its variables, which
+  // by Lean's convention are `α` to `δ`. The rest of the alphabet is terms
+  // here: `μ` is a mass function and `τ` a type the generator has to find.
+  const TYPE_SYNTAX = { className: 'type', begin: /[→α-δ]/, relevance: 0 }
+
+  // ` : ` opens a type, and the type ends where the thing it annotates does.
+  // The space is what keeps `:=` and `::` out. `//` is the subtype bar in
+  // `{μ : α → ℝ≥0∞ // …}`, `|` the bar of a set, and `then` keeps
+  // `if h : lo > hi then` from running on. A type that is still open at the
+  // end of its line ends there.
   const ASCRIPTION = {
-    className: 'type',
     begin: /(?<!:):(?=\s)/,
-    // `//` too: in `{μ : α → ℝ≥0∞ // …}` the type stops at the subtype bar;
-    // and `then`, so `if h : lo > hi then` doesn't run on to the line's end.
-    end: /(?=[)}\]⟩]|:=|\/\/|\bthen\b|$)/,
+    beginScope: 'type',
+    end: /(?=[)}\]⟩⦄,|]|:=|=>|\/\/|\bthen\b|$)/,
     keywords: KEYWORDS,
-    contains: [COMMENT_LINE, COMMENT_BLOCK, NIL, CONSTRUCTOR, DOT_CONSTRUCTOR, NUMBER, TYPE_PUNCTUATION],
     relevance: 0,
   }
+
+  // Brackets inside a type. They are matched here, so that the closer that
+  // ends the type is the one that was open before it: in
+  // `(step : β → G (ListF α β))` that is the second `)`. A comma or a bar
+  // inside them separates, and ends nothing.
+  //
+  // Neither this nor the quantifier below can say `endsWithParent`: the modes
+  // of a type contain one another, and highlight.js copies such a mode once
+  // for each parent, without end. So each one stops at the line's end itself.
+  const TYPE_GROUP = {
+    begin: /[([{⟨⦃]/,
+    beginScope: 'punctuation',
+    end: /[)\]}⟩⦄]|$/,
+    endScope: 'punctuation',
+    keywords: KEYWORDS,
+    relevance: 0,
+  }
+
+  // A quantifier inside a type keeps the comma after its variables, so
+  // `instCCPO : ∀ α, CCPO (G α)` is one type and not two.
+  const TYPE_QUANTIFIER = {
+    begin: /[∀∃λΣΠ]/,
+    beginScope: 'operator',
+    end: /,|(?=[)}\]⟩⦄]|:=|=>|$)/,
+    endScope: 'punctuation',
+    keywords: KEYWORDS,
+    relevance: 0,
+  }
+
+  // The delimiters that can stand in a type without ending it.
+  const TYPE_PUNCTUATION = { className: 'punctuation', begin: /::|;/, relevance: 0 }
+  const TYPE = [...TERM, ASCRIPTION, TYPE_GROUP, TYPE_QUANTIFIER, TYPE_SYNTAX, OPERATOR, TYPE_PUNCTUATION]
+
+  ASCRIPTION.contains = TYPE
+  TYPE_QUANTIFIER.contains = TYPE
+  TYPE_GROUP.contains = [...TYPE, { className: 'punctuation', begin: /[,|]/, relevance: 0 }]
 
   return {
     name: 'Lean',
     aliases: ['lean4'],
     keywords: KEYWORDS,
-    contains: [
-      COMMENT_LINE,
-      COMMENT_BLOCK,
-      hljs.QUOTE_STRING_MODE,
-      COMMAND,
-      ATTRIBUTE,
-      NIL,
-      NUMBER,
-      ASCRIPTION,
-      CONSTRUCTOR,
-      DOT_CONSTRUCTOR,
-      OPERATOR,
-      PUNCTUATION,
-    ],
+    contains: [...TERM, ASCRIPTION, OPERATOR, PUNCTUATION],
   }
 }
