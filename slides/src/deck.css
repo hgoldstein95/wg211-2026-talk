@@ -141,6 +141,31 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   transition-duration: var(--t-fade);
 }
 
+/* A listing that two slides share travels from one to the other
+   (`data-auto-animate` on both slides, one `data-id` on the listing), timed by
+   `autoAnimateDuration` in src/main.js. Around it the change is the usual
+   cross-fade, which takes three corrections to reveal: it cuts the slide
+   being left, where the deck fades it; the listing on that slide goes at
+   once, since the copy that travels is the other slide's; and what is new
+   on the arriving slide fades in on the deck's clock, not reveal's. */
+.reveal-viewport .reveal .slides.disable-slide-transitions > section[data-auto-animate]:not(.present) {
+  transition: opacity var(--t-fade) !important;
+}
+
+.reveal .slides:has(> section.present[data-auto-animate]:not([data-auto-animate=''])) > section:not(.present) [data-auto-animate-target=''] {
+  visibility: hidden;
+}
+
+.reveal [data-auto-animate='running'] [data-auto-animate-target^='unmatched'] {
+  transition: opacity var(--t-fade);
+}
+
+/* A fragment already showing would otherwise ease out to its start instead of
+   starting there, and so arrive at once while its neighbours fade in. */
+.reveal section[data-auto-animate]:not([data-auto-animate='running']) .fragment[data-auto-animate-target^='unmatched'] {
+  transition: none;
+}
+
 /* --- Cards: a few words, set large ---------------------------------------- */
 
 .reveal .slides > section.card {
@@ -499,19 +524,6 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 
 .reveal section.code-xs pre {
   font-size: 24px;
-}
-
-/* A listing that arrives from above, for a definition pulled in over the
-   line that needs it. */
-.reveal .fragment.pulls-in {
-  transform: translateY(-48px);
-  transition:
-    opacity var(--t-open),
-    transform var(--t-open);
-}
-
-.reveal .fragment.pulls-in.visible {
-  transform: none;
 }
 
 .reveal pre code {

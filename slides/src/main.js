@@ -53,6 +53,11 @@ await Reveal.initialize({
   slideNumber: 'c/t',
   transition: 'fade',
   backgroundTransition: 'fade',
+  // A listing that two slides share travels from its place on one to its
+  // place on the next (`data-auto-animate` on both). Reveal times that from
+  // here and not from the stylesheet, so it is handed the token.
+  autoAnimateDuration: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--t-open')),
+  autoAnimateEasing: 'ease',
   pdfSeparateFragments: true,
 })
 
