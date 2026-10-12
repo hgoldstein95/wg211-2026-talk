@@ -551,6 +551,13 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   padding: 0 48px;
 }
 
+/* A generator beside its distribution. The listing keeps one width from slide
+   to slide (31 characters), so the plot, and its slot for no answer, stays
+   where it was. */
+.reveal .pair.drawn > pre {
+  width: 18.6em;
+}
+
 /* Two listings one above the other, sharing a left edge. */
 .reveal .stack {
   display: flex;
@@ -857,7 +864,7 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 
 /* --- A distribution, drawn ------------------------------------------------- */
 
-/* One series, so no legend: the line above the bars names it. Bars are the
+/* One series, so no legend: the listing beside the bars names it. Bars are the
    proved green, since the distribution is the reading proofs are about; every
    number and label is ink, not the bar's colour. Square ends, like every
    other edge in the deck. Not interactive: it is a slide. */
@@ -879,6 +886,12 @@ html.reveal-print .reveal pre:has(.code-annot) code {
   stroke-dasharray: 10 8;
 }
 
+/* The slot when some of the mass is in it. Grey, not green: it is on no value. */
+.masses .m-lost.has-mass {
+  fill: var(--dim);
+  fill-opacity: 0.3;
+}
+
 .masses .m-axis {
   fill: none;
   stroke: var(--line);
@@ -887,12 +900,6 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 
 .masses text {
   text-anchor: middle;
-}
-
-.masses .m-title {
-  font: 400 24px var(--mono);
-  fill: var(--dim);
-  text-anchor: start;
 }
 
 .masses .m-value {

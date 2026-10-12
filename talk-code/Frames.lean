@@ -3,7 +3,7 @@ import Basalt
 /-!
 # The slides' generators, checked
 
-Everything the WG 2.11 slides claim about `genElapsed` and `genFrames`.
+Everything the WG 2.11 slides claim about `genElapsed`, `genFrames` and `genCoin`.
 
 `genElapsedGap` is `PropTest.genElapsed` from lean-mc (`proptest/PropTest/Gen.lean`), copied as
 written. The spec there, `Spec.ElapsedOK`, has the hole between 451 and 899 written into it. Here
@@ -206,3 +206,52 @@ theorem genFrames.expect_length :
 #eval (genFrames : IO (List Nat))
 
 end Frames
+
+/-! ## A generator that may not answer -/
+
+namespace Coin
+
+/-- Never answers. `[Gen G]` is written out here and on `genCoin`: nothing in this body asks for
+the instance, so a `variable` would leave it off. -/
+def spin [Gen G] : G Bool := spin
+partial_fixpoint
+
+/-- A coin that lands one way, lands the other, or never lands. -/
+def genCoin [Gen G] : G Bool :=
+  oneOf! [
+    fun _ => pure true,
+    fun _ => pure false,
+    fun _ => spin
+  ]
+
+theorem spin.mass : (spin : SPMF Bool).mass = 0 := by
+  have h : SPMF.expect (spin : SPMF Bool) (fun _ => 1) ≤ 0 :=
+    spin.fixpoint_induct (G := SPMF) (fun p => SPMF.expect p (fun _ => 1) ≤ 0)
+      (SPMF.admissible_expect_le _ _) fun _ ih => ih
+  rwa [SPMF.expect_one, nonpos_iff_eq_zero] at h
+
+theorem spin.apply (b : Bool) : (spin : SPMF Bool) b = 0 := by
+  have h := spin.mass
+  simp only [SPMF.mass, ENNReal.tsum_eq_zero] at h
+  exact h b
+
+theorem genCoin.prob_true : SPMF.prob (genCoin : SPMF Bool) {true} = 1 / 3 := by
+  rw [genCoin, oneOfWith_eq, SPMF.prob_oneOf]
+  simp [SPMF.prob_singleton, spin.apply]
+
+theorem genCoin.prob_false : SPMF.prob (genCoin : SPMF Bool) {false} = 1 / 3 := by
+  rw [genCoin, oneOfWith_eq, SPMF.prob_oneOf]
+  simp [SPMF.prob_singleton, spin.apply]
+
+/-- A third of the mass is lost: the branch that never answers. -/
+theorem genCoin.mass : (genCoin : SPMF Bool).mass = 2 / 3 := by
+  rw [genCoin, oneOfWith_eq, SPMF.mass_oneOf]
+  simp [SPMF.mass_pure, spin.mass]
+  norm_num
+
+theorem genCoin.not_terminates : ¬ IsAlmostSurelyTerminating (genCoin : SPMF Bool) := by
+  unfold IsAlmostSurelyTerminating
+  rw [genCoin.mass, ENNReal.div_eq_one_iff (by norm_num) (by norm_num)]
+  norm_num
+
+end Coin
