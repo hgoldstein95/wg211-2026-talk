@@ -43,17 +43,16 @@
             <use href="#blk-basalt" transform="translate(1030 160) scale(176)"/>
           </svg>
           <aside class="notes">
-            Hi everyone. Today, I’m going to be telling you about some published and some ongoing
-            work on what I’m calling new foundations for property-based testing.
+            Hi everyone. Today I’m going to be talking about some existing and some ongoing work,
+            focused around new foundations for property-based testing.
           </aside>
         </section>
 
         <section class="card">
           <p class="big">What’s the point<br/>of <span class="tested">testing</span><br/>anymore?</p>
           <aside class="notes">
-            But I want to start this talk with a question that I’ve been asking myself lately that I
-            think is a kind of uncomfortable one, but that has to be asked, which is, what’s the
-            point of testing anymore?
+            And I want to start with a kind of uncomfortable question that I’ve been asking myself
+            recently, which is, what’s the point of testing anymore?
           </aside>
         </section>
 
@@ -72,9 +71,9 @@
           </div>
           <p class="caption">Lean Port of Minecraft</p>
           <aside class="notes">
-            To see why I’d even ask that question, here is an implementation of Minecraft written
-            fully in Lean. And you can see the characters placing blocks, jumping around, flying
-            around.
+            And to see why I might ask a question like that: this is an implementation of Minecraft.
+            It’s written in Lean, and it has proofs in a lot of the places where you might expect
+            there to be tests.
           </aside>
         </section>
 
@@ -104,10 +103,8 @@
             <p class="tally">214 <span class="proved">theorems</span></p>
           </div>
           <aside class="notes">
-            And in lots of the places where I would have had tests in this code base, I instead have
-            proofs. So I’ve been able to prove that the entities collide properly with blocks, and
-            that clicks don’t get lost, and that faces are only drawn if they’re supposed to be
-            visible.
+            So, for example, there’s a proof that entities collide properly with blocks, that clicks
+            don’t get lost, and that faces are only drawn if they’re supposed to be visible.
           </aside>
         </section>
 
@@ -118,10 +115,15 @@
           </p>
           <p class="big huge" style="margin-top: 0.12em">2.5 hours</p>
           <aside class="notes">
-            And this wasn’t some like monumental undertaking. This took me about two and a half
-            hours. It took Claude two and a half hours. And my initial reaction to this was, maybe I
-            should stop researching testing, because maybe in the future, in the far-flung future,
-            actually all we’re going to be doing is proving pieces of software correct.
+            <p>
+              And this wasn’t some huge undertaking to build this. In fact, I built this in 2.5
+              hours. Well, Claude built this in 2.5 hours.
+            </p>
+            <p>
+              And so, there was a point at which I kind of put my head in my hands and I said, you
+              know, maybe all this work I’ve been doing on testing isn’t worth it. Do we actually
+              need tests anymore?
+            </p>
           </aside>
         </section>
 
@@ -158,18 +160,25 @@
             </g>
           </svg>
           <aside class="notes">
-            But then I kind of pulled back the curtain a little bit on what Claude had done. And
-            what I found was that while the core game logic of this game was, indeed, written in
-            Lean, the rendering logic and a bunch of the, like, calls to the graphics libraries
-            happened with a library in C called raylib, that Lean just called into. And actually, I
-            don’t have a problem with this. I think raylib’s quite a nice library. But there
-            certainly weren’t all of the proofs that I could possibly have wanted. And so I asked
-            myself, you know, how can we make this picture more robust? And what I did, what I
-            decided to do, was to build a model. So now we have a model of how raylib should behave,
-            written in Lean. And then we test that that model actually agrees with how raylib
-            renders things. Once we have that, we can prove the association between the model and
-            the game logic, and then we can have really end-to-end proofs about the game’s execution
-            without having to prove things about the C directly.
+            <p>
+              But then I looked a little bit more closely at what Claude had done. And I found that
+              while the core game logic of the Minecraft game was written in Lean, the rendering
+              code and some of the low-level graphics stuff was in a C library called raylib, that
+              was just called from Lean. And to be clear, I don’t actually have a problem with this
+              design. I think raylib’s a perfectly good library. And I don’t see a lot of benefit to
+              writing a bunch of graphics drivers in Lean. But one does wonder, how could we
+              possibly write proofs in Lean that engage with this lower level API of the renderer?
+            </p>
+            <p>
+              And so, I had Claude build a model of the graphics. And then I tested that model
+              against raylib.
+            </p>
+            <p>
+              Once I was confident that the model actually did model raylib, then we wrote some
+              proofs that showed that the game logic interacted correctly with the model graphics
+              engine. And ultimately, then, we could get some end-to-end proofs about how the game
+              logic ended up influencing pixels on the screen.
+            </p>
           </aside>
         </section>
 
@@ -199,11 +208,17 @@
             </g>
           </svg>
           <aside class="notes">
-            And I think this kind of model, even in the most sort of anti-testing view of the
-            far-flung future, is where I think testing continues to be super relevant. No matter how
-            much we try, I think proofs will be more and more common within software components, but
-            then when trying to match up components between languages, tests are going to help us
-            keep all of that in check.
+            <p>
+              And this made me feel quite a bit better about where testing belongs in this world. I
+              think in the sort of far-flung future, in the utopia of formal methods, there will be
+              proofs within most software components that show that the software does what the
+              software says it does.
+            </p>
+            <p>
+              But I think there will continue to be tests between different languages and between
+              different frameworks, where trying to bridge the semantics formally would just be too
+              difficult.
+            </p>
           </aside>
         </section>
 
@@ -242,23 +257,29 @@
             </g>
           </svg>
           <aside class="notes">
-            So let’s pull back the curtain a little bit and look at that testing a little bit
-            deeper. So, we have our model in Lean, and we have our C code in raylib. And what we’re
-            going to do is we’re going to randomly generate sequences of commands. We’re going to
-            run them on each of these, and we’re going to make sure that after we run those
-            commands, the same things have happened, both in the model and in raylib. That’s very
-            nice, but where do we get these sequences of commands? The answer is generators.
-            Generators are the property-based testing term for these programs that produce random
-            data that we can use for testing.
+            <p>
+              Now. Okay, so if I believe this future, then we need to make sure that that testing is
+              actually good. So let’s look at how we did this testing in this Minecraft clone. So,
+              like I said, we had a model and we had raylib, which is being modeled.
+            </p>
+            <p>
+              And what we did is generate lots and lots of sequences of instructions to these two
+              graphics engines. And we checked that for each sequence of instructions, the model and
+              raylib agreed.
+            </p>
+            <p>
+              And in order to come up with these sequences of instructions, we needed a generator.
+              And generators are programs in the property-based testing literature that produce lots
+              and lots of random data which we can use for testing.
+            </p>
           </aside>
         </section>
 
         <section class="card">
           <p class="big">How do we build <span class="proved">great</span> generators?</p>
           <aside class="notes">
-            And that’s going to be the topic of the rest of this talk. Specifically, I’m going to
-            ask, how do we make generators good? And also kind of a subquestion is like, what should
-            good even mean?
+            And so what I’m going to talk about in the rest of this talk is, how do we build great
+            generators?
           </aside>
         </section>
 
@@ -280,10 +301,15 @@
             </g>
           </svg>
           <aside class="notes">
-            I’m going to present two different papers. One is called Palamedes. This was presented
-            at PLDI this past year. And the other is called Basalt, which is my kind of take on a
-            new foundation for property-based testing generators, and hopefully that’s coming soon
-            to a conference near you.
+            <p>
+              And I’m going to do this in two parts. The first is about Palamedes. This was a paper
+              that was presented at PLDI 2026. And it’s about synthesizing PBT generators.
+            </p>
+            <p>
+              And then I’m going to talk about Basalt, which is about a kind of new foundation for
+              generators. And I’d love some feedback on that. In particular, we’re currently writing
+              up some of the results there.
+            </p>
           </aside>
         </section>
 
@@ -298,8 +324,9 @@
             <use href="#blk-die" transform="translate(1050 190) scale(150)"/>
           </svg>
           <aside class="notes">
-            So let’s start with Palamedes. Palamedes, at its core, allows you to automatically
-            synthesize PBT generators. So let’s look at why you might want to do that.
+            Okay. So let’s start by talking about Palamedes. At its core, Palamedes engages with a
+            particular problem that we have with generators, which is that in PBT, our generators
+            are often constrained.
           </aside>
         </section>
 
@@ -355,18 +382,22 @@ theorem takeOne_ok (slot : Option Nat) :
             <span class="ok">some 12</span>
           </div>
           <aside class="notes">
-            So here’s a theorem about our Minecraft game, and it’s about the slots in your
-            inventory. A slot is either empty, or it holds a stack of blocks, and a stack is
-            somewhere between 1 and 64 blocks. That’s what <code>slotOK</code> says. Either the
-            slot is <code>none</code>, or it’s <code>some</code> of <code>n</code>, where
-            <code>n</code> is between 1 and 64. And the theorem says that if you have a slot that’s
-            okay, and you take one block out of it, then you still have a slot that’s okay. So
-            <code>slotOK</code> is our precondition. Now, if we want to test this, we need slots.
-            A slot here is just an optional number, so we could generate a whole bunch of optional
-            numbers. But most of those are not okay slots, right? A stack of zero blocks is not a
-            stack, and neither is a stack of 90,000. Only a handful of these satisfy the
-            precondition, so almost all of our tests would check nothing at all. What we’d like is
-            a generator that produces all sorts of okay slots, but also no invalid slots.
+            <p>
+              So take this theorem that we might want to test. So this engages with a data structure
+              called a slot. And this is from the Minecraft clone, so the player has a bunch of
+              inventory slots, and those inventory slots can be in one of two states: either there’s
+              nothing in the slot, so the slot is <code>none</code>, or there’s something in the
+              slot and it’s a stack of items between one and 64 values. So this <code>slotOK</code>
+              predicate says what it means for a slot to be well formed. And then we have this
+              theorem, <code>takeOne_ok</code>, which says that if we have a slot that is well
+              formed, then taking one out of that slot still gives us a slot that’s well formed.
+            </p>
+            <p>
+              Now, what we might start doing is just generating slots at random. But if we do this,
+              we’re going to get a lot that aren’t valid. And this is just because the numbers end
+              up falling outside the valid range. So what we’d like to do is produce a generator
+              that can produce valid slots by construction.
+            </p>
           </aside>
         </section>
 
@@ -375,12 +406,11 @@ theorem takeOne_ok (slot : Option Nat) :
 ∃ g : G α, ∀ a, a ∈ g.support ↔ P a
           </code></pre>
           <aside class="notes">
-            So what is it that we want, precisely? Well, the thing we want, really, is a solution
-            to this theorem. So we want to know that there exists some generator <code>g</code>,
-            such that for every value <code>a</code>, <code>a</code> is in the support of that
-            generator, the values that it can produce, if and only if <code>P</code> holds of
-            <code>a</code>. And <code>P</code> in our case is <code>slotOK</code>. So you want a
-            generator that will produce exactly the values that satisfy <code>P</code>.
+            In Palamedes, we do this by proof search. So in particular, we construct the following
+            theorem. This theorem says that there exists some generator, such that the generator’s
+            support, the values that it can produce, is exactly <code>P</code>. And if we can prove
+            this theorem constructively, then we can lift the witness out, and that generator will
+            be exactly the generator we want for testing.
           </aside>
         </section>
 
@@ -463,26 +493,33 @@ apply synth_pick
             </div>
           </div>
           <aside class="notes">
-            Okay, so let’s do that for slots. Here is the body of <code>slotOK</code> again. A slot
-            is okay if it’s <code>none</code>, or if there exists some <code>n</code> between 1 and 64
-            such that the slot is <code>some</code> of <code>n</code>. Can we build a generator
-            just from this? And I think we can. So first we have a disjunction, and that
-            disjunction can just be a random choice. So we can just use this <code>oneOf</code>
-            combinator to make a random choice between two different things. Then in the case where
-            the slot is supposed to be <code>none</code>, we can just generate <code>none</code>.
-            If our slot is constrained to be one value, we can generate exactly that. Now, when we
-            have an existential, what we can do is we can sample from a subgenerator, so we can
-            find some subgenerator that can do the part that generates <code>n</code>. And then we
-            can use that <code>n</code> later. Then for this <code>n</code> between 1 and 64, we
-            can just generate between 1 and 64. And then for this last thing where the slot has to
-            be <code>some</code> of <code>n</code>, we can just use <code>return</code> once again.
-            What this amounts to is actually a proof. So when we put this generator back
-            together, we can see that the thing that produced it is a sequence of tactics. And this
-            is actually literal. So in Lean, this is literally a sequence of tactics. We apply a
-            bunch of tactics over and over again. And we get a generator that looks like this. And
-            because this tactic sequence is well structured and quite straightforward, we can
-            actually use proof automation to do this. So we can use the <code>aesop</code> tactic in
-            Lean, which does proof search, to automatically find this proof.
+            <p>
+              To give you a taste of what this looks like, I’m not going to be able to go into the
+              kind of gory details. But if you have this predicate, our <code>slotOK</code>
+              predicate, and you break it up into pieces, you can see how each of those pieces
+              corresponds to a different piece of a corresponding generator.
+            </p>
+            <p>
+              So, for example, a disjunction corresponds to a random choice. An equality constraint
+              corresponds to returning a particular value. An existential corresponds to a monadic
+              bind, a kind of sample, and then continue. A range predicate corresponds to a random
+              choice in a range. And when you put it all together, you get a generator which, by
+              construction, satisfies the predicate that we started with.
+            </p>
+            <p>
+              Now, what’s especially special about this in Palamedes is that we didn’t have to
+              implement a whole bunch of specialized code to implement this synthesis. Instead, what
+              happened is that this synthesis happens via tactics in Lean. So this is just
+              metaprogramming. Lean’s tactic system is built in Lean, so it’s Lean code that is
+              doing all this under the hood. And this string of tactics corresponds to breaking down
+              the predicate that we saw before, and building up the generator that we see now.
+            </p>
+            <p>
+              Taking this a step farther, we actually don’t have to write all of these tactics
+              manually. We can use proof search. And so the Aesop tactic in Lean uses proof search
+              to assemble a bunch of tactics into a proof. And in fact, we use Aesop under the hood
+              in Palamedes to actually do the core synthesis of the generators.
+            </p>
           </aside>
         </section>
 
@@ -512,13 +549,9 @@ def genSlot : G (Option Nat) :=
             </div>
           </div>
           <aside class="notes">
-            So here is what it looks like to use Palamedes. You write a definition, you give it a
-            type, and for the body you write <code>by</code>. And <code>by</code> is how you start
-            a proof in Lean. Then you write <code>generator_search</code> and the predicate. So
-            <code>generator_search</code> is a tactic, and the body of this generator is a proof
-            script. And when Lean runs that tactic, the thing it fills in is the generator that we
-            just built by hand. If you write <code>generator_search?</code>, it will print that
-            generator out for you.
+            So to see how this happens one more time: basically, the user writes down, I want a
+            generator for slots, and they write down <code>generator_search slotOK</code>. And it
+            just spits out the generator that we saw before.
           </aside>
         </section>
 
@@ -538,14 +571,17 @@ def framesOK (fs : List Frame) : Bool :=
             </code></pre>
           </div>
           <aside class="notes">
-            Okay, so that takes care of predicates like <code>slotOK</code>, that aren’t recursive.
-            But most of the things we want to generate are recursive. So here’s another one from
-            the game. The game runs on a list of frames, and a frame, for us, is just how long it
-            took. And <code>framesOK</code> says that every duration in the list is less than
-            200,000. It’s written one layer of the list at a time. So the empty list,
-            <code>nilF</code>, is okay. And a cons, <code>consF</code>, is okay if its head is less
-            than 200,000, and the rest of the list was okay. Now, let’s look at the thing that
-            makes this more complicated, which is this fold.
+            <p>
+              Okay, so that’s the core idea behind Palamedes, but of course, I just showed you a
+              very simple example. And one other thing that predicates often have, which can be
+              difficult to deal with, is recursion. So now I just want to tell you quickly how we do
+              that.
+            </p>
+            <p>
+              I’m going to introduce a different predicate, <code>framesOK</code>, which just
+              constrains a list of frame durations for the graphics renderer. And the thing to focus
+              on is that it’s written with a fold.
+            </p>
           </aside>
         </section>
 
@@ -593,10 +629,18 @@ def framesOK (fs : List Frame) : Bool :=
             </g>
           </svg>
           <aside class="notes">
-            What we can observe is that if your predicate looks like fold of something, we should be
-            able to say, well, what if we found a compatible unfold? If we found a compatible
-            unfold, then if fold takes some value to true, then the unfold should take true to a
-            nondeterministic set of values that satisfy the fold.
+            <p>
+              And in Palamedes, we make generators from predicates that have folds via unfolds.
+              Basically, we observe that if a fold would take some data structure and give us true,
+              then an unfold could take true and give us a bunch of data structures for which that
+              fold would then have given us true. We can kind of round trip the fold and the unfold.
+            </p>
+            <p>
+              And this makes a lot of sense if you consider the fact that turning a predicate into a
+              generator is a lot like finding the inverse of that predicate. You’re just finding a
+              kind of nondeterministic inverse, because there are lots of values that the predicate
+              might map to true.
+            </p>
           </aside>
         </section>
 
@@ -654,10 +698,9 @@ def framesOK (fs : List Frame) : Bool :=
               </g>
             </svg>
             <aside class="notes">
-              And the nice thing is that we only have to find that unfold one layer at a time. If
-              we have a generator that undoes one step of the fold, so it takes true back to the
-              layers that the step accepts, then unfolding that generator undoes the whole fold.
-              And that’s a theorem, so we only had to prove it once.
+              I don’t have time, again, to get into the really gory details of this process. But at
+              a high level, what we do is we show that if one step of the fold can be inverted by
+              one step of the unfold, then by construction, the unfold can invert the fold.
             </aside>
           </section>
 
@@ -671,11 +714,7 @@ theorem fold_unfold_inverse
     (∀ b, (List.unfold step b).support =
       fun xs => List.fold alg xs = b)
             </code></pre>
-            <aside class="notes">
-              Formally, this looks like this. This is a theorem that says if we have a step
-              generator whose support satisfies the algebra of the fold, then we can have an
-              unfolding that step gives us a thing that satisfies the full fold.
-            </aside>
+            <aside class="notes"></aside>
           </section>
         </section>
 
@@ -719,16 +758,10 @@ def genFrames :=
             </code></pre>
           </div>
           <aside class="notes">
-            So, using this theorem, we can take our <code>framesOK</code> predicate and turn this
-            into a <code>genFrames</code> generator that just unfolds one step. And that step has
-            the same shape as the slot generator that we synthesized a moment ago. Either stop, or
-            pick a number in range and keep going. The same rules find it.
-            And it turns out, actually, we don’t need to write it as a fold at all. If we write just
-            as a normal Lean function, Palamedes can figure this out too. I think the thing that I
-            want to emphasize with this piece of the talk is that the synthesis algorithm that we’ve
-            done is not some, like, entirely bespoke piece of software. Instead, what it’s using is
-            a bunch of metaprogramming in Lean to achieve this goal. And it’s doing it with a whole
-            bunch of derived equivalence principles on the underlying generators and predicates.
+            And this is how Palamedes can do all sorts of really interesting generators. So we can
+            do the <code>framesOK</code> generator. We can also do a version of the
+            <code>framesOK</code> generator that isn’t written using fold, by, under the hood,
+            observing that this recursion actually is a fold and turning it into a fold.
           </aside>
         </section>
 
@@ -783,8 +816,8 @@ def genFrames :=
               </g>
             </svg>
             <aside class="notes">
-              And this scales beyond simple things like <code>genFrames</code>. So we can produce
-              generators for red-black trees, and we can also do well-typed lambda terms.
+              And we can also do fun things like red-black trees and STLC terms. Palamedes is
+              actually quite expressive in the range of generators that it can synthesize.
             </aside>
           </section>
 
@@ -819,10 +852,7 @@ def genWellTyped (Γ : List Ty) :
                 </code></pre>
               </div>
             </div>
-            <aside class="notes">
-              Here is what those two look like. Each one is a predicate, and then a generator that is
-              just a call to <code>generator_search</code> on that predicate.
-            </aside>
+            <aside class="notes"></aside>
           </section>
         </section>
 
@@ -873,10 +903,9 @@ def genWellTyped (Γ : List Ty) :
             </p>
           </div>
           <aside class="notes">
-            The upshot here is that Palamedes lets us synthesize generators from predicates and
-            ensure that they’re correct by construction. It uses Lean’s tactic metaprogramming to
-            automate the synthesis process, and it handles recursive functions by matching folds
-            with unfolds.
+            So, just to sort of recap what happened in this section: Palamedes can synthesize
+            generators that are correct by construction. It automates synthesis using Lean’s tactic
+            metaprogramming, and it handles recursive functions by matching folds with unfolds.
           </aside>
         </section>
 
@@ -889,18 +918,18 @@ def genWellTyped (Γ : List Ty) :
             <use href="#blk-basalt" transform="translate(1050 190) scale(150)"/>
           </svg>
           <aside class="notes">
-            Okay, now I want to tell you about some ongoing work, which is this library called
-            Basalt.
+            Okay, next, I’m gonna talk about Basalt, which is my new foundations for how PBT
+            generators should be expressed.
           </aside>
         </section>
 
         <section class="card">
           <p class="big">What does it mean for <span class="tested">generators</span> to be <span class="proved">correct?</span></p>
           <aside class="notes">
-            And the motivation here is this question of like, well, what about the long tail of
-            generators? Palamedes can do lots of things, lots of common cases of generators. But
-            what if you want like a truly weird generator? You might consider asking your friendly
-            neighborhood LLM for that.
+            And the Basalt project started with this question: what does it mean for generators to
+            be correct? You might think that it’s the thing that I said just a few slides ago, which
+            is what Palamedes enforces, which is that the generator generates exactly the values
+            that satisfy the predicate.
           </aside>
         </section>
 
@@ -917,10 +946,9 @@ def genFrames :=
     ()
           </code></pre>
           <aside class="notes">
-            In addition, there’s other ways generators can go wrong. So for example, the
-            <code>genFrames</code> generator that we got out of Palamedes is actually kind of a bad
-            generator. It produces precisely the right support, but it doesn’t do a very good
-            distribution.
+            But this can’t really be right, because actually, if you take the <code>genFrames</code>
+            generator that we produced with Palamedes, it produces empty lists half the time. That’s
+            not particularly good for testing.
           </aside>
         </section>
 
@@ -939,14 +967,18 @@ def genElapsed : G Nat :=
   ]
           </code></pre>
           <aside class="notes">
-            But actually, when inspecting some of the generators that were built to test the
-            Minecraft implementation that I had, I found this generator, and this generator seems
-            like it’s fine. Unless you look a little bit more closely, and you see that actually
-            Claude left out the range from 451 to 899 when generating durations of frames. And
-            there’s no reason to think that this area of the space is particularly interesting, but
-            there’s also no reason to think that it’s uninteresting. So without me having, like,
-            looked deeper into this, Claude might have tricked me into building an incomplete
-            generator.
+            <p>
+              So then you might think, well, okay, maybe we just need to kind of mess with the
+              probabilities a bit. And maybe we can just have an LLM do that.
+            </p>
+            <p>
+              But then, if you look at this generator, which Claude produced as part of the
+              Minecraft project that I showed you before, it tried to do a bunch of fancy stuff to
+              kind of bias the generator to produce interesting values. But in doing so, it
+              accidentally broke completeness. This generator misses a range of values, which a
+              complete generator wouldn’t have missed. And this makes it so that we may not find
+              certain bugs if the frame duration happens to need a value between 451 and 899.
+            </p>
           </aside>
         </section>
 
@@ -964,11 +996,16 @@ def genElapsed : G Nat :=
             <span class="proved">distributions</span>.
           </p>
           <aside class="notes">
-            Now, prior work denotes a generator as a set: the set of values that the generator can
-            produce, which is its support. And that’s enough to say that a generator is sound and
-            complete. But support alone can’t tell one distribution from another. We just saw that
-            with <code>genFrames</code>, which has exactly the right support and still isn’t a good
-            generator. So we want to talk about generators as distributions.
+            <p>
+              The fundamental problem here is that we have a bunch of competing concerns, right? We
+              need soundness and we need completeness, but we also need to be able to talk about the
+              distribution.
+            </p>
+            <p>
+              Basically, prior work, which includes the QuickChick paper, but also Palamedes, uses
+              sets as their denotation of generators. And what we really need is distributions. We
+              need to be able to prove things about generators at the level of distributions.
+            </p>
           </aside>
         </section>
 
@@ -978,14 +1015,20 @@ def SPMF (α : Type) : Type :=
   {μ : α → ℝ≥0∞ // (∑' a, μ a) ≤ 1}
           </code></pre>
           <aside class="notes">
-            Concretely, we’re going to denote our generators with this type <code>SPMF</code>, a
-            subprobability mass function, where <code>μ</code> is a mass function. It’s
-            a mapping from values to real numbers. And then, we have this stipulation that the total
-            mass has to be at most one. This is what we need in order to be a kind of reasonable
-            probability distribution. Now, you might wonder why at most one. Well, that’s because I
-            want to be able to allow these generators to potentially diverge. So what we can think
-            is that when the total mass sums to less than one, the rest of the mass goes to
-            divergence.
+            <p>
+              In order to do this, we need a new kind of semantic domain in which to interpret
+              generators. And I’m going to choose subprobability mass functions, or SPMFs. And a
+              subprobability mass function is two things. It’s a mass function: it assigns a real
+              number mass to each value of type <code>α</code>. And then we need to promise that the
+              total mass sums to at most one. And this is what makes it able to be interpreted as a
+              probability.
+            </p>
+            <p>
+              Now, for some of you who might be more familiar with probabilistic programming stuff,
+              you might be a little bit worried that I’m not doing some measure theory here. But
+              generators are always going to be generating in countable domains. And so we actually
+              don’t need to worry about measure theory here.
+            </p>
           </aside>
         </section>
 
@@ -1021,12 +1064,11 @@ def genFrames : G (List Frame) :=
             </svg>
           </div>
           <aside class="notes">
-            When you have a generator like <code>genFrames</code>, which actually does terminate.
-            Now, it doesn’t look like it terminates, mind you, right? Like <code>genFrames</code>
-            here doesn’t actually terminate structurally because it makes a recursive call on
-            nothing at all. However, we can still, with the help of subprobability mass functions,
-            show that because the mass in the limit sums to one, there’s no probability of
-            divergence.
+            Okay, once we have this SPMF interpretation of generators, we can interpret a generator
+            like <code>genFrames</code> as a distribution. And we can see that it produces empty
+            lists with probability one half, and one-element lists with probability one fourth, et
+            cetera. This is not a particularly good distribution, but now we can know that for sure.
+            And importantly here, the probability of divergence is actually going to be zero.
           </aside>
         </section>
 
@@ -1062,13 +1104,18 @@ def genCoin : G Bool :=
             </svg>
           </div>
           <aside class="notes">
-            So for example, here’s this very silly generator <code>loop</code>. And what
-            <code>loop</code> does is it loops forever. And then we have <code>genCoin</code>. But
-            <code>genCoin</code>, with some weight produces true, with equal weight produces false,
-            and then with equal weight loops. And what we can see is that the distribution of this
-            ends up looking like as follows. One third probability goes to true, one third goes to
-            false, and then one third is this divergence probability, which we can track in proofs
-            using our subprobability mass functions.
+            <p>
+              And I said we were using subprobability mass functions, not just probability mass
+              functions. So the mass doesn’t actually need to sum all the way to one. It can sum to
+              less than one.
+            </p>
+            <p>
+              And so that’s illustrated in this generator right here, which actually diverges with
+              probability one third. So with probability one third you get true, and with one third
+              you get false, but with one third you just diverge and don’t do anything. You might
+              think this is actually a problem, but I’ll show you later why this actually ends up
+              being really nice.
+            </p>
           </aside>
         </section>
 
@@ -1085,14 +1132,10 @@ unsolved goals
             </code></pre>
           </div>
           <aside class="notes">
-            But now we can ask for new things too. Here’s something I want from
-            <code>genFrames</code>: the empty run should come up at most one time in ten. A set
-            can’t even say that. The empty run is in the support, and it should be. The question is
-            how often. In QuickCheck, you’d check this with <code>cover</code>, by sampling. Here
-            it’s a theorem about the distribution, and we can try to prove it. And the proof gets
-            stuck, and it gets stuck on exactly the thing that’s wrong. Lean wants one half to be
-            at most one tenth. That one half is the bar we saw a minute ago: half of our tests are
-            the empty run.
+            Okay, now that we have SPMFs, we can rule out generators that we didn’t like before. So
+            for example, our <code>genFrames</code> generator: we can show that, yes, it has one
+            half probability on the empty list. So if, for example, we want to require that it
+            generates the empty list with less than one tenth probability, that proof would fail.
           </aside>
         </section>
 
@@ -1115,12 +1158,10 @@ a possible counterexample may satisfy the constraints
             </code></pre>
           </div>
           <aside class="notes">
-            So what can we do with this representation? Well, first, we can prove the same things
-            that we used to be able to prove. Remember <code>genElapsed</code>, where the range
-            isn’t quite right. If you try to write the completeness proof for it, you’ll reach a
-            point where you just can’t prove the goal, because there is literally a counterexample
-            that doesn’t satisfy the constraints. Now, that’s a fact about the support. A set would
-            have been enough to find it.
+            And similarly, for the generator that Claude wrote, which is incomplete, if we try to
+            prove that it is complete, it will tell us, no, you’re missing between 451 and 899,
+            exactly like I said. So now we have the semantic power to be able to rule out both of
+            the bad kinds of generators that I showed you before.
           </aside>
         </section>
 
@@ -1149,30 +1190,33 @@ a possible counterexample may satisfy the constraints
             ?
           </p>
           <aside class="notes">
-            Now, one question before I move on to the last little bit of this talk, is what else do
-            we want to prove about generators? So, we can prove that generators have a certain
-            support. We can prove that they terminate. We can prove that a particular value is
-            likely or that some event has a certain expected value. And we can even talk about
-            costs, so we can talk about how many choices get made while producing a particular
-            value. But I want to open to the room, what else do you care about for generators? The
-            thing I’ve been agonizing over quite a bit. And I think the reason that I’m still
-            undecided is because it seems like these things on the screen right now are the only
-            things that are kind of universal, that like you really want every generator to
-            terminate, and you want every generator to have the proper support. But then when you
-            get into like more individual domains, you might have other needs for your generators.
-            And I’m kind of stuck right now how to demonstrate that the full power that I’ve built
-            here in Basalt is actually useful.
+            <p>
+              It turns out there’s a bunch of things we can prove about generators. So, we can prove
+              that they’re sound and complete, just like before. We can prove the support. We can
+              also prove almost sure termination. This is really nice if we want to be able to write
+              a generator that doesn’t structurally terminate, but instead terminates with just high
+              probability. I’ll show you an example of one of those in a few minutes. We might want
+              to know the probability of a particular value, or some expected value. We might also
+              want to know the cost. We might want to know how many choices are made when generating
+              a particular value.
+            </p>
+            <p>
+              But one thing I’d love feedback on, either now or later, is what else might we want to
+              prove about generators? Now that we have all of this power, what do we want to do with
+              it? I think all these things on the slide right now are things that it’s pretty easy
+              to recommend proving about all kinds of generators. But I think it’s a little bit
+              trickier to be able to say, for a more specific context, what shapes of things might
+              people want to enforce about their generators?
+            </p>
           </aside>
         </section>
 
         <section class="card">
           <p class="big">How do we<br/>run an <span class="proved">SPMF</span>?</p>
           <aside class="notes">
-            Okay. Now I want to jump to the other thing about Basalt that I think is exciting. So,
-            of course, we can write these proofs, but I didn’t just want to build a library in which
-            you can write proofs about generators. I wanted to build a library where you could write
-            proofs about exactly the same generators that you’re going to run. But an SPMF is a
-            function into the real numbers, and you can’t run that. So how do we run an SPMF?
+            Okay, there’s one more thing I want to talk about now that we’ve gotten the proof stuff
+            out of the way, which is, how do you actually run one of these generators? Because an
+            SPMF is actually not runnable. In Lean, it’s a classical object.
           </aside>
         </section>
 
@@ -1196,13 +1240,18 @@ def genFrames [Gen G] : G (List Frame) :=
             Carette et al., <em>Finally Tagless, Partially Evaluated</em>, JFP 2009
           </p>
           <aside class="notes">
-            And the first thing is we change the way generators are represented. So, like I said, in
-            QuickChick, a generator is a function from seeds to values. Here, I wanted generators to
-            be more flexible than that. So a generator here has a tagless final embedding of a
-            generator type class. So the actual type of <code>genFrames</code> is for all
-            <code>G</code>, that’s a type constructor. If <code>G</code> is an instance of the
-            generator type class, then <code>G</code> of <code>List Frame</code>. This allows us to
-            not fix a particular interpretation of generators too early.
+            <p>
+              And so the trick is that you don’t actually represent generators as SPMFs. You
+              represent generators using a tagless final style. So, actually, what generators are in
+              Basalt is universally quantified values, quantified over some generator type.
+            </p>
+            <p>
+              So, the way this <code>genFrames</code> actually ends up being typed is: for all
+              <code>G</code>, which are type constructors, assuming <code>G</code> satisfies a
+              generator type class, then the value is of type <code>G</code> of <code>List
+              Frame</code>. This allows us to interpret a generator at lots of different kinds of
+              types, which satisfy the <code>Gen</code> type class.
+            </p>
           </aside>
         </section>
 
@@ -1225,15 +1274,20 @@ class Gen (G : Type → Type) where
               <em>The Lean Language Reference</em>, “Recursive Definitions”
             </p>
             <aside class="notes">
-              So, what does this <code>Gen</code> type class look like? We have this type class here,
-              which has two big pieces. So the first is sort of classic QuickCheck. A generator is a
-              monad with random choices. That’s all well and good. That’s pretty normal. The other
-              weird thing that we do is that we require that our generators be CCPOs. These are chain
-              complete partial orders. And the reason that this is necessary is because Lean has a
-              fairly recently implemented infrastructure for doing non-terminating programs, provided
-              that they are built in a CCPO. And behind the scenes, what they’re doing is applying a
-              Knaster–Tarski fixpoint to tie the knot and give you a well-formed structure, even
-              though you wrote a potentially non-terminating computation.
+              <p>
+                Here’s the <code>Gen</code> type class for you, just so you can see what it looks
+                like. It has two main parts. The first is that generators have to be monads with
+                random choice. This is classic QuickCheck stuff.
+              </p>
+              <p>
+                But the second part is, I think, what’s a little bit more unique about Basalt.
+                Generators need to be CCPOs. This gives us Knaster–Tarski fixed points, and in some
+                recent code that has been implemented in Lean, and that is now supported by the
+                language, this allows us to write non-terminating definitions, but still prove
+                things about those non-terminating definitions, because the definition is well
+                formed as a Knaster–Tarski fixed point. If you don’t know what that means, don’t
+                worry.
+              </p>
             </aside>
           </section>
 
@@ -1246,11 +1300,7 @@ class Gen (g : Type u → Type v) where
   instCCPO         : ∀ α, CCPO (g α)
   instMonoBind     : MonoBind g
             </code></pre>
-            <aside class="notes">
-              And this is the full definition in Basalt. It has two more pieces. Every generator
-              type has to be inhabited, and bind has to be monotone, which is what lets
-              <code>partial_fixpoint</code> go through a <code>do</code> block.
-            </aside>
+            <aside class="notes"></aside>
           </section>
         </section>
 
@@ -1282,14 +1332,16 @@ def genFrames fuel :=
             </code></pre>
           </div>
           <aside class="notes">
-            And this actually gives us a lot of flexibility when defining our generators, because we
-            can write a generator that looks like this. I’ve been eliding up to this point, but
-            technically you need this <code>partial_fixpoint</code> annotation. And in QuickChick or
-            otherwise, you’d have to write something that looks like this, which threads fuel around
-            to make the generator structurally terminating. This is a shame for a few reasons. First
-            of all, it means that you need to like pick the fuel when generating, when calling the
-            generator. But it also means that when doing proofs about the generator, you need to
-            contend with the fuel. So that’s why CCPOs.
+            <p>
+              The upshot is that we can write generators like I’ve been writing them in this talk,
+              that look like this, using this <code>partial_fixpoint</code> annotation. And we don’t
+              have to give them fuel.
+            </p>
+            <p>
+              And in QuickChick, the other formal representation of generators, you do have to give
+              them fuel like this. And this ends up being a real pain, both when running them and
+              for proofs.
+            </p>
           </aside>
         </section>
 
@@ -1346,22 +1398,29 @@ def genFrames fuel :=
             </g>
           </svg>
           <aside class="notes">
-            And then when thinking about why tagless final in general, well, there’s lots of things
-            you can interpret a generator as now. So you can run it in the <code>IO</code> monad.
-            You can look at its distribution and prove things about it in the <code>SPMF</code>
-            monad. You can look at things like cost. Okay, blah, blah, blah. And there’s plenty
-            more, right? I’m also interested if folks have thoughts on kind of how and why we might
-            want to do more with this kind of interpretability. I’ve been thinking about enumeration
-            as one, but I think there’s probably quite a few interesting things to be done here.
+            <p>
+              Now that we have this tagless final embedding, we can interpret generators in all
+              sorts of ways. So, for example, we can interpret them as SPMFs, or SPMFs that track
+              cost. This way we can prove things about the number of choices that a generator needs
+              to produce a given value.
+            </p>
+            <p>
+              We can run them both in <code>IO</code> for standard PBT and with a fuzzing back end
+              for fuzzing.
+            </p>
+            <p>
+              And maybe we can do other things. I’d love if you have ideas for kinds of things that
+              we might be able to interpret these generators as.
+            </p>
           </aside>
         </section>
 
         <section class="card">
           <p class="big">Can Lean<br/>generators<br/>be <span class="pointed">fast</span>?</p>
           <aside class="notes">
-            Okay, and I have one more neat trick to sort of drive home all of the, like, fundamental
-            programming that I’ve been doing on this system. And it starts with a question: can
-            generators written in Lean actually be fast?
+            The last question I want to answer is, can generators in Lean be fast? Are people
+            actually gonna want to run these things? It’s nice that you can prove things and run the
+            same generator. But do you actually want to run them in Lean?
           </aside>
         </section>
 
@@ -1399,9 +1458,8 @@ def genFrames fuel :=
             <text class="s-value" x="935" y="585">1.5×</text>
           </svg>
           <aside class="notes">
-            And the answer is yes. On a handful of micro-benchmarks, Basalt generates values
-            faster than Haskell QuickCheck on every one, by somewhere between 1.2 and 1.7 times.
-            But it doesn’t get there for free, so let me show you what it takes.
+            And it turns out the answer is yes. And it’s because I implemented some tricks from a
+            paper by some collaborators and I.
           </aside>
         </section>
 
@@ -1457,13 +1515,10 @@ partial_fixpoint
             </svg>
           </div>
           <aside class="notes">
-            So there’s this problem that can happen with generators where, if you have a
-            <code>frequency</code> function, which is gonna take a list of subgenerators, if you’re
-            not careful, every time you, like, go through a recursive loop, it will reallocate that
-            list of subgenerators. So here’s <code>genFrames</code> written with
-            <code>frequency</code>, and every time it calls itself, it builds this list again, just
-            to run one entry of it. And this can, like, really blow up your runtime because you’re
-            just allocating way more memory than you actually should be.
+            So, the main reason one might not want to run these generators is that when you use
+            combinators like <code>frequency</code>, you end up allocating quite a bit of memory.
+            Because every time you evaluate this combinator, you actually have to allocate memory
+            for this list here.
           </aside>
         </section>
 
@@ -1534,21 +1589,18 @@ frequency [
             Richey and Cutler et al., <em>Fail Faster</em>, OOPSLA 2026
           </p>
           <aside class="notes">
-            And so, inspired by a paper by some of my co-authors and myself that appeared at OOPSLA
-            just last week, what I do is I have, instead of having <code>frequency</code> be a
-            function, <code>frequency!</code> is a macro. And that macro takes the list apart while
-            Lean is elaborating the code. So
-            the first entry has weight 2, and it turns into a test against 2. The second has weight
-            5, so its test is against 2 plus 5, which is 7. The third one is tested against 10. And
-            10 is the total weight, so the draw is a number between 0 and 9. And what we’re left
-            with is this if-else chain, with no list in it at all. But the macro doesn’t throw the
-            list away. Basically, it carries two different things: a proof interpretation, which is
-            the real list; a runtime interpretation, which is the kind of if-else chain that that
-            list would expand out to; and then a bridge proof, which guarantees that the two are in
-            sync. This allows us to run things much faster, because the list and the proof are gone
-            by the time the program runs. But it still means that when we’re writing our proofs, we
-            get nice behavior. And this is the same move as Palamedes. It’s a Lean program that
-            writes a Lean program, and writes its proof too.
+            <p>
+              So, what I do in Basalt is this trick from a paper by Richey and Cutler, which I’m on,
+              from OOPSLA just last week. And the idea is to replace these <code>frequency</code>
+              combinators with elaborator macros. And so this <code>frequency</code> will actually
+              elaborate to just an if chain. And then it’ll also elaborate to a proof that that if
+              chain is the same as the original <code>frequency</code>.
+            </p>
+            <p>
+              And so, when running the generator, we get to use this if chain, which is really fast
+              and doesn’t allocate. And when proving things about the generator, we get to use this
+              kind of nicer <code>frequency</code> form.
+            </p>
           </aside>
         </section>
 
@@ -1590,11 +1642,11 @@ frequency [
             <text class="s-value" x="1012" y="573">2.6×</text>
           </svg>
           <aside class="notes">
-            And this turns out to be extremely effective. So when using the macro version on a bunch
-            of different benchmarks, the Basalt library is substantially faster than the unoptimized
-            version. It’s also substantially faster than Haskell QuickCheck. So it turns out that,
-            actually, this is faster than both Haskell QuickCheck and OCaml QuickCheck with a couple
-            of lightweight optimizations.
+            And it turns out that implementing this makes our generators quite a bit faster. So in
+            some examples, the generator gets over three times faster. And it turns out, actually,
+            that the generator is also faster than Haskell QuickCheck, and also OCaml’s Base
+            QuickCheck. So running these generators in Lean is actually faster than in many other
+            programming languages in head-to-head comparisons.
           </aside>
         </section>
 
@@ -1690,13 +1742,14 @@ frequency [
             </p>
           </div>
           <aside class="notes">
-            So in sum, Basalt is a new foundational representation for generators. It represents
-            distributions with sub-probability mass functions. It uses a tagless-final
-            representation to make generators interpretable, so the same generator can be proved
-            about and run. And it gains significant efficiency using elaborator macros. And to put
-            that next to where we started: Palamedes can synthesize generators that are correct by
-            construction. It uses Lean’s tactic metaprogramming to automate the synthesis process,
-            and it handles recursive functions by matching folds with unfolds.
+            <p>
+              Okay, so I hope you had fun. That was Basalt, a new foundational representation for
+              generators. It represents distributions with SPMFs, uses tagless final to make
+              generators interpretable, and gains significant efficiency using elaborator macros.
+            </p>
+            <p>
+              And you also saw Palamedes, and I’m really excited about this stuff.
+            </p>
           </aside>
         </section>
 
@@ -1741,7 +1794,8 @@ frequency [
               </div>
             </div>
             <aside class="notes">
-              Thank you so much for your time.
+              I’d love to talk more about any of this if you’re interested. But for now, thank you
+              very much.
             </aside>
           </section>
 
@@ -1754,9 +1808,7 @@ frequency [
                 lean-mc
               </a>
             </div>
-            <aside class="notes">
-              The code for lean-mc is at this link.
-            </aside>
+            <aside class="notes"></aside>
           </section>
         </section>
       </div>
