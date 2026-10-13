@@ -51,7 +51,9 @@ const MARKS = {
 // the class the slide asks for, and the stretch's exact text.
 const STRETCHES = {
   // The branch of the synthesized generator that stops.
-  'mark-nil': 'return .nilF',
+  'mark-nil': 'return []',
+  // The precondition of `takeOne_ok`: what a generated slot has to satisfy.
+  'mark-precondition': 'slotOK slot',
 }
 
 // A mark picked out by what is around it, in other token spans: the class the
@@ -95,12 +97,7 @@ function wrapMatches(pre, re) {
       if (m.index > last) frag.append(text.slice(last, m.index))
       const span = document.createElement('span')
       span.className = 'code-mark'
-      // `mark-step` beside the mark's class: the marks wait for a press, and
-      // all arrive on the same one.
-      if (pre.classList.contains('mark-step')) {
-        span.classList.add('fragment')
-        span.dataset.fragmentIndex = 0
-      }
+      waitForPress(pre, span)
       span.textContent = m[0]
       frag.append(span)
       last = m.index + m[0].length
@@ -108,6 +105,14 @@ function wrapMatches(pre, re) {
     if (last < text.length) frag.append(text.slice(last))
     node.replaceWith(frag)
   }
+}
+
+// `mark-step` beside the mark's class: the marks wait for a press, and all
+// arrive on the same one.
+function waitForPress(pre, span) {
+  if (!span || !pre.classList.contains('mark-step')) return
+  span.classList.add('fragment')
+  span.dataset.fragmentIndex = 0
 }
 
 // Cuts `text` out of the listing as a DOM range and puts it back inside one
@@ -185,7 +190,9 @@ export function applyCodeMarks(root = document) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) wrapMatches(pre, re)
   }
   for (const [cls, text] of Object.entries(STRETCHES)) {
-    for (const pre of root.querySelectorAll(`pre.${cls}`)) wrapStretch(pre, text, 'code-mark')
+    for (const pre of root.querySelectorAll(`pre.${cls}`)) {
+      waitForPress(pre, wrapStretch(pre, text, 'code-mark'))
+    }
   }
   for (const [cls, re] of Object.entries(CONTEXT_MARKS)) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) {

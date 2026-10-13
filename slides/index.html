@@ -234,6 +234,7 @@
               <path class="link is-tested" d="M1000,256 V388"/>
 
               <g class="fragment" data-fragment-index="0">
+                <text class="t-name" x="615" y="150">Instructions</text>
                 <g class="case">
                   <rect x="520" y="176" width="190" height="236" opacity="0.3"/>
                   <rect x="510" y="188" width="210" height="236" opacity="0.55"/>
@@ -331,13 +332,16 @@
         </section>
 
         <section class="code">
+          <!-- The theorem is there first. One press brings the predicate in
+               above it, where it has kept its room, and marks the theorem's
+               precondition. -->
           <div class="stack">
-            <pre><code class="language-lean" data-trim>
+            <pre class="fragment" data-fragment-index="0"><code class="language-lean" data-trim>
 def slotOK (slot : Option Nat) : Prop :=
   slot = none ∨
   ∃ n, (1 ≤ n ∧ n ≤ 64) ∧ slot = some n
             </code></pre>
-            <pre><code class="language-lean" data-trim>
+            <pre class="mark-precondition mark-step"><code class="language-lean" data-trim>
 theorem takeOne_ok (slot : Option Nat) :
     slotOK slot →
     slotOK (takeOne slot)
@@ -557,7 +561,7 @@ def genSlot : G (Option Nat) :=
 
         <section class="code">
           <div class="stack" style="gap: 42px">
-            <pre><code class="language-lean" data-trim>
+            <pre class="steps-back"><code class="language-lean" data-trim>
 /-- Duration of one frame. -/
 abbrev Frame := Nat
             </code></pre>
@@ -719,10 +723,12 @@ theorem fold_unfold_inverse
         </section>
 
         <!-- The fold and the unfold are marked from the start. A press brings
-             the generator, and one more the function as it is usually
-             written, hung under the fold with an arrow up to it, so nothing
-             already there moves. -->
-        <section class="code code-xs">
+             the generator, one more the function as it is usually written,
+             under the fold with an arrow up to it, and a last one the
+             generator as it is usually written, under the unfold with an
+             arrow down to it. Each keeps its room, so nothing already there
+             moves, and the two written as usual sit level. -->
+        <section class="code code-2xs">
           <div class="pair">
             <div class="hangs">
               <pre class="mark-fold"><code class="language-lean" data-trim>
@@ -734,8 +740,8 @@ def framesOK (fs : List Frame) : Bool :=
     fs
               </code></pre>
               <div class="yields fragment" data-fragment-index="1">
-                <svg viewBox="0 0 28 64" width="28" height="64" aria-hidden="true">
-                  <path class="flow ink" d="M14,64 V18"/>
+                <svg viewBox="0 0 28 44" width="28" height="44" aria-hidden="true">
+                  <path class="flow ink" d="M14,44 V18"/>
                   <path class="flowhead ink" d="M0,22 L14,0 L28,22 Z"/>
                 </svg>
                 <pre><code class="language-lean" data-trim>
@@ -745,7 +751,8 @@ def framesOK : List Frame → Bool
                 </code></pre>
               </div>
             </div>
-            <pre class="mark-fold fragment" data-fragment-index="0"><code class="language-lean" data-trim>
+            <div class="hangs">
+              <pre class="mark-fold fragment" data-fragment-index="0"><code class="language-lean" data-trim>
 def genFrames :=
   List.unfold
     (fun () => oneOf [
@@ -755,7 +762,24 @@ def genFrames :=
         return (.consF n ())
     ])
     ()
-            </code></pre>
+              </code></pre>
+              <div class="yields fragment" data-fragment-index="2">
+                <svg viewBox="0 0 28 44" width="28" height="44" aria-hidden="true">
+                  <path class="flow ink" d="M14,0 V26"/>
+                  <path class="flowhead ink" d="M0,22 L14,44 L28,22 Z"/>
+                </svg>
+                <pre><code class="language-lean" data-trim>
+def genFrames : G (List Frame) :=
+  oneOf [
+    return [],
+    do
+      let n ← chooseNat 0 200000
+      let ns ← genFrames
+      return n :: ns
+  ]
+                </code></pre>
+              </div>
+            </div>
           </div>
           <aside class="notes">
             And this is how Palamedes can do all sorts of really interesting generators. So we can
@@ -935,16 +959,38 @@ def genWellTyped (Γ : List Ty) :
 
         <section class="code">
           <pre class="mark-nil"><code class="language-lean" data-trim>
-def genFrames :=
-  List.unfold
-    (fun () => oneOf [
-      return .nilF,
-      do
-        let n ← chooseNat 0 200000
-        return (.consF n ())
-    ])
-    ()
+def genFrames : G (List Frame) :=
+  oneOf [
+    return [],
+    do
+      let n ← chooseNat 0 200000
+      let ns ← genFrames
+      return n :: ns
+  ]
           </code></pre>
+          <!-- One press draws 16 lists, one after another. Half of them are
+               empty, and each of those is marked as it lands. -->
+          <div class="samples marks fragment" role="img"
+               aria-label="16 generated lists of frame durations. 8 of them are
+                           empty, and marked. The rest have one, two or three
+                           numbers.">
+            <span class="mark">[]</span>
+            <span>[16]</span>
+            <span class="mark">[]</span>
+            <span>[8840, 33]</span>
+            <span class="mark">[]</span>
+            <span class="mark">[]</span>
+            <span>[151907]</span>
+            <span class="mark">[]</span>
+            <span>[17, 60412, 250]</span>
+            <span class="mark">[]</span>
+            <span>[4]</span>
+            <span class="mark">[]</span>
+            <span class="mark">[]</span>
+            <span>[72655, 1001]</span>
+            <span>[33]</span>
+            <span>[2, 119]</span>
+          </div>
           <aside class="notes">
             But this can’t really be right, because actually, if you take the <code>genFrames</code>
             generator that we produced with Palamedes, it produces empty lists half the time. That’s
@@ -1039,7 +1085,7 @@ def genFrames : G (List Frame) :=
   oneOf [
     return [],
     do
-      let n ← genElapsed
+      let n ← chooseNat 0 200000
       let ns ← genFrames
       return n :: ns
   ]
@@ -1230,7 +1276,7 @@ def genFrames [Gen G] : G (List Frame) :=
   oneOf [
     return [],
     do
-      let n ← genElapsed
+      let n ← chooseNat 0 200000
       let ns ← genFrames
       return n :: ns
   ]
@@ -1251,96 +1297,6 @@ def genFrames [Gen G] : G (List Frame) :=
               generator type class, then the value is of type <code>G</code> of <code>List
               Frame</code>. This allows us to interpret a generator at lots of different kinds of
               types, which satisfy the <code>Gen</code> type class.
-            </p>
-          </aside>
-        </section>
-
-        <!-- The class as the talk tells it is the slide. The class as Basalt
-             has it is kept under it, uncounted like the theorem under its
-             picture. -->
-        <section>
-          <section class="code">
-            <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4" data-fragment-index="0">
-class Gen (G : Type → Type) where
-  instMonad        : Monad G
-  instRandomChoice : RandomChoice G
-  instCCPO         : ∀ α, CCPO (G α)
-            </code></pre>
-            <p class="cite fragment current-visible" data-fragment-index="0">
-              Claessen and Hughes, <em>QuickCheck</em>, ICFP 2000
-            </p>
-            <p class="cite fragment" data-fragment-index="1">
-              Knaster–Tarski fixpoint theorem (Knaster 1928, Tarski 1955)<br/>
-              <em>The Lean Language Reference</em>, “Recursive Definitions”
-            </p>
-            <aside class="notes">
-              <p>
-                Here’s the <code>Gen</code> type class for you, just so you can see what it looks
-                like. It has two main parts. The first is that generators have to be monads with
-                random choice. This is classic QuickCheck stuff.
-              </p>
-              <p>
-                But the second part is, I think, what’s a little bit more unique about Basalt.
-                Generators need to be CCPOs. This gives us Knaster–Tarski fixed points, and in some
-                recent code that has been implemented in Lean, and that is now supported by the
-                language, this allows us to write non-terminating definitions, but still prove
-                things about those non-terminating definitions, because the definition is well
-                formed as a Knaster–Tarski fixed point. If you don’t know what that means, don’t
-                worry.
-              </p>
-            </aside>
-          </section>
-
-          <section class="code" data-visibility="uncounted">
-            <pre><code class="language-lean" data-trim>
-class Gen (g : Type u → Type v) where
-  instInhabited    : ∀ α, Inhabited (g α)
-  instMonad        : Monad g
-  instRandomChoice : RandomChoice g
-  instCCPO         : ∀ α, CCPO (g α)
-  instMonoBind     : MonoBind g
-            </code></pre>
-            <aside class="notes"></aside>
-          </section>
-        </section>
-
-        <section class="code code-sm">
-          <div class="pair">
-            <pre class="mark-fixpoint"><code class="language-lean" data-trim>
-def genFrames [Gen G] : G (List Frame) :=
-  oneOf [
-    return [],
-    do
-      let n ← genElapsed
-      let ns ← genFrames
-      return n :: ns
-  ]
-partial_fixpoint
-            </code></pre>
-            <pre class="mark-fuel fragment"><code class="language-lean" data-trim>
-def genFrames fuel :=
-  match fuel with
-  | 0 => return []
-  | fuel + 1 =>
-    oneOf [
-      return [],
-      do
-        let n ← genElapsed
-        let ns ← genFrames fuel
-        return n :: ns
-    ]
-            </code></pre>
-          </div>
-          <aside class="notes">
-            <p>
-              The upshot is that we can write generators like I’ve been writing them in this talk,
-              that look like this, using this <code>partial_fixpoint</code> annotation. And we don’t
-              have to give them fuel.
-            </p>
-            <p>
-              And in QuickChick, the other formal representation of generators, you do have to give
-              them fuel like this. And this ends up being a real pain, both when running them and
-              for proofs.
             </p>
           </aside>
         </section>
@@ -1415,6 +1371,96 @@ def genFrames fuel :=
           </aside>
         </section>
 
+        <!-- The class as the talk tells it is the slide. The class as Basalt
+             has it is kept under it, uncounted like the theorem under its
+             picture. -->
+        <section>
+          <section class="code">
+            <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4" data-fragment-index="0">
+class Gen (G : Type → Type) where
+  instMonad        : Monad G
+  instRandomChoice : RandomChoice G
+  instCCPO         : ∀ α, CCPO (G α)
+            </code></pre>
+            <p class="cite fragment current-visible" data-fragment-index="0">
+              Claessen and Hughes, <em>QuickCheck</em>, ICFP 2000
+            </p>
+            <p class="cite fragment" data-fragment-index="1">
+              Knaster–Tarski fixpoint theorem (Knaster 1928, Tarski 1955)<br/>
+              <em>The Lean Language Reference</em>, “Recursive Definitions”
+            </p>
+            <aside class="notes">
+              <p>
+                Here’s the <code>Gen</code> type class for you, just so you can see what it looks
+                like. It has two main parts. The first is that generators have to be monads with
+                random choice. This is classic QuickCheck stuff.
+              </p>
+              <p>
+                But the second part is, I think, what’s a little bit more unique about Basalt.
+                Generators need to be CCPOs. This gives us Knaster–Tarski fixed points, and in some
+                recent code that has been implemented in Lean, and that is now supported by the
+                language, this allows us to write non-terminating definitions, but still prove
+                things about those non-terminating definitions, because the definition is well
+                formed as a Knaster–Tarski fixed point. If you don’t know what that means, don’t
+                worry.
+              </p>
+            </aside>
+          </section>
+
+          <section class="code" data-visibility="uncounted">
+            <pre><code class="language-lean" data-trim>
+class Gen (g : Type u → Type v) where
+  instInhabited    : ∀ α, Inhabited (g α)
+  instMonad        : Monad g
+  instRandomChoice : RandomChoice g
+  instCCPO         : ∀ α, CCPO (g α)
+  instMonoBind     : MonoBind g
+            </code></pre>
+            <aside class="notes"></aside>
+          </section>
+        </section>
+
+        <section class="code code-xs">
+          <div class="pair">
+            <pre class="mark-fixpoint"><code class="language-lean" data-trim>
+def genFrames [Gen G] : G (List Frame) :=
+  oneOf [
+    return [],
+    do
+      let n ← chooseNat 0 200000
+      let ns ← genFrames
+      return n :: ns
+  ]
+partial_fixpoint
+            </code></pre>
+            <pre class="mark-fuel fragment"><code class="language-lean" data-trim>
+def genFrames fuel :=
+  match fuel with
+  | 0 => return []
+  | fuel + 1 =>
+    oneOf [
+      return [],
+      do
+        let n ← chooseNat 0 200000
+        let ns ← genFrames fuel
+        return n :: ns
+    ]
+            </code></pre>
+          </div>
+          <aside class="notes">
+            <p>
+              The upshot is that we can write generators like I’ve been writing them in this talk,
+              that look like this, using this <code>partial_fixpoint</code> annotation. And we don’t
+              have to give them fuel.
+            </p>
+            <p>
+              And in QuickChick, the other formal representation of generators, you do have to give
+              them fuel like this. And this ends up being a real pain, both when running them and
+              for proofs.
+            </p>
+          </aside>
+        </section>
+
         <section class="card">
           <p class="big">Can Lean<br/>generators<br/>be <span class="pointed">fast</span>?</p>
           <aside class="notes">
@@ -1475,7 +1521,7 @@ def genFrames [Gen G] :
   frequency [
     (1, return []),
     (9, do
-      let n ← genElapsed
+      let n ← chooseNat 0 200000
       let ns ← genFrames
       return n :: ns)
   ]

@@ -12,6 +12,9 @@
 // numbers the values, which is what staggers them, and paints each with the
 // grammar every listing uses. What a value says goes in a span of its own, so
 // that it can dim after the value has arrived.
+//
+// `marks` beside `samples` is a smaller grid that strikes nothing out. There,
+// a value marked `mark` is pointed out as it lands.
 
 function prepare(root, hljs) {
   ;[...root.querySelectorAll(':scope > span')].forEach((el, i) => {

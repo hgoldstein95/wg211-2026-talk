@@ -751,13 +751,14 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 /* --- Listings ------------------------------------------------------------- */
 
 /* Code sits in no box, as in the talk: Fira Mono at one weight, centred as a
-   block and ranged left inside it. Four sizes, set on the slide:
+   block and ranged left inside it. Five sizes, set on the slide:
 
      default   30px   up to 60 characters a line
      .code-xl  48px   one line, 37 characters
      .code-lg  38px   one to four lines, 46 characters
      .code-sm  26px   two listings side by side, 68 characters between them
-     .code-xs  24px   two wide listings side by side, 76 between them */
+     .code-xs  24px   two wide listings side by side, 76 between them
+     .code-2xs 22px   two side by side, each with another under it */
 
 .reveal .slides section.code {
   flex-direction: column;
@@ -797,6 +798,10 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   font-size: 24px;
 }
 
+.reveal section.code-2xs pre {
+  font-size: 22px;
+}
+
 .reveal pre code {
   display: block;
   max-height: none;
@@ -823,10 +828,10 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
 }
 
 /* A generator beside its distribution. The listing keeps one width from slide
-   to slide (31 characters), so the plot, and its slot for no answer, stays
+   to slide (32 characters), so the plot, and its slot for no answer, stays
    where it was. */
 .reveal .pair.drawn > pre {
-  width: 18.6em;
+  width: 19.2em;
 }
 
 /* Two listings one above the other, sharing a left edge. */
@@ -849,23 +854,35 @@ html.reveal-print .pdf-page:has(section.title) .slide-number {
   display: block;
 }
 
-/* What a listing comes from: an arrow up to it, and the listing under that.
-   The two hang from the first listing and take no room, so it stays where it
-   was when they arrive. The arrow is centered on it, and the listing under
-   shares its left edge. */
+/* A listing with another under it, and an arrow between the two, up or down.
+   The second is a fragment, and keeps its room before its press, so the first
+   stays where it was when it arrives. The arrow is centered on the pair, and
+   the two listings share a left edge.
+
+   Two of these side by side share their three rows, so the arrows are level
+   and so are the listings under them, whatever the heights above. */
+.reveal .pair:has(> .hangs) {
+  display: grid;
+  grid-template-columns: auto auto;
+  row-gap: 14px;
+}
+
 .reveal .hangs {
-  position: relative;
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
 }
 
 .reveal .hangs > .yields {
-  position: absolute;
-  top: calc(100% + 18px);
-  left: 0;
-  width: 100%;
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  justify-items: center;
+  align-items: start;
 }
 
 .reveal .hangs > .yields pre {
-  align-self: flex-start;
+  justify-self: start;
 }
 
 /* Where a listing's idea comes from: one quiet line in the footer, on the
@@ -953,6 +970,16 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 
 .reveal pre code:not(:first-child).fragment {
   background: var(--bg);
+}
+
+/* A listing that only sets up the stepped one beside it (`steps-back` on its
+   <pre>) drops back with the lines that step leaves out. */
+.reveal pre.steps-back {
+  transition: opacity var(--t-fade);
+}
+
+.reveal section:has(pre code.fragment.has-highlights.visible) pre.steps-back {
+  opacity: var(--code-dim);
 }
 
 .reveal pre code .hljs-ln-numbers {
@@ -1051,6 +1078,35 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 .reveal .samples.visible > span:not(.ok) > span {
   opacity: var(--code-dim);
   text-decoration-color: var(--fail);
+}
+
+/* A smaller grid that points values out and turns none away (`marks` beside
+   `samples`): nothing is struck out, and a value marked `mark` takes the
+   color of a marked stretch of a listing a beat after it lands. */
+.reveal .samples.marks {
+  grid-template-columns: repeat(4, 16ch);
+}
+
+.reveal .samples.marks > span > span {
+  padding: 0.02em 0.1em;
+  margin: 0 -0.1em;
+  transition:
+    color var(--t-fade) calc(var(--at) + var(--t-fade)),
+    background-color var(--t-fade) calc(var(--at) + var(--t-fade));
+}
+
+.reveal .samples.marks.visible > span:not(.ok) > span {
+  opacity: 1;
+  text-decoration-color: transparent;
+}
+
+.reveal .samples.marks.visible > span.mark > span {
+  color: var(--mark);
+  background-color: rgb(255 215 94 / 0.16);
+}
+
+.reveal .samples.marks > span.mark > span span {
+  color: inherit;
 }
 
 /* One listing comes apart into tiles, each tile turns over, and the tiles
