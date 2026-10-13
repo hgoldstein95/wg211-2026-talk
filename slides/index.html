@@ -1018,10 +1018,6 @@ def genFrames : G (List Frame) :=
                 <text class="m-label" x="310" y="300">[n, n]</text>
                 <text class="m-label" x="400" y="300">…</text>
               </g>
-              <g class="fragment">
-                <text class="m-value" x="520" y="248">0</text>
-                <text class="m-label" x="520" y="300">diverge</text>
-              </g>
             </svg>
           </div>
           <aside class="notes">
@@ -1076,6 +1072,30 @@ def genCoin : G Bool :=
           </aside>
         </section>
 
+        <section class="code">
+          <div class="stack">
+            <pre><code class="language-lean" data-trim>
+example : HasProbability genFrames [] ≤ 1 / 10 := by
+  rw [genFrames, SPMF.prob_oneOf]
+  simp [prob_cons_nil]
+            </code></pre>
+            <pre class="is-error fragment"><code class="language-plaintext" data-trim>
+unsolved goals
+⊢ 1 / 2 ≤ 1 / 10
+            </code></pre>
+          </div>
+          <aside class="notes">
+            But now we can ask for new things too. Here’s something I want from
+            <code>genFrames</code>: the empty run should come up at most one time in ten. A set
+            can’t even say that. The empty run is in the support, and it should be. The question is
+            how often. In QuickCheck, you’d check this with <code>cover</code>, by sampling. Here
+            it’s a theorem about the distribution, and we can try to prove it. And the proof gets
+            stuck, and it gets stuck on exactly the thing that’s wrong. Lean wants one half to be
+            at most one tenth. That one half is the bar we saw a minute ago: half of our tests are
+            the empty run.
+          </aside>
+        </section>
+
         <!-- Two proofs that get stuck, each on what is wrong with its generator.
              The first is about the support, the second about the distribution.
              Both are checked in ../talk-code/Frames.lean. -->
@@ -1101,30 +1121,6 @@ a possible counterexample may satisfy the constraints
             point where you just can’t prove the goal, because there is literally a counterexample
             that doesn’t satisfy the constraints. Now, that’s a fact about the support. A set would
             have been enough to find it.
-          </aside>
-        </section>
-
-        <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-example : HasProbability genFrames [] ≤ 1 / 10 := by
-  rw [genFrames, SPMF.prob_oneOf]
-  simp [prob_cons_nil]
-            </code></pre>
-            <pre class="is-error fragment"><code class="language-plaintext" data-trim>
-unsolved goals
-⊢ 1 / 2 ≤ 1 / 10
-            </code></pre>
-          </div>
-          <aside class="notes">
-            But now we can ask for new things too. Here’s something I want from
-            <code>genFrames</code>: the empty run should come up at most one time in ten. A set
-            can’t even say that. The empty run is in the support, and it should be. The question is
-            how often. In QuickCheck, you’d check this with <code>cover</code>, by sampling. Here
-            it’s a theorem about the distribution, and we can try to prove it. And the proof gets
-            stuck, and it gets stuck on exactly the thing that’s wrong. Lean wants one half to be
-            at most one tenth. That one half is the bar we saw a minute ago: half of our tests are
-            the empty run.
           </aside>
         </section>
 
@@ -1369,6 +1365,46 @@ def genFrames fuel :=
           </aside>
         </section>
 
+        <!-- The answer before the how: Basalt as it ships, with the macros,
+             against QuickCheck. QuickCheck is the baseline here; the chart
+             after the macros puts the plain combinators beside both. -->
+        <section class="stage">
+          <svg class="speed" viewBox="0 0 1280 720" role="img"
+               aria-label="Generation speed of Basalt relative to QuickCheck on four
+                           benchmarks: 1.2 times on bst, 1.7 on heap, 1.6 on sorted,
+                           1.5 on nat.">
+            <rect class="s-qc" x="300" y="78" width="30" height="22"/>
+            <text class="s-key" x="344" y="97">QuickCheck</text>
+            <rect class="s-macro" x="610" y="78" width="30" height="22"/>
+            <text class="s-key" x="654" y="97">Basalt</text>
+
+            <text class="s-row" x="272" y="210">bst</text>
+            <rect class="s-qc" x="300" y="168" width="420" height="28"/>
+            <rect class="s-macro" x="300" y="200" width="490" height="28"/>
+            <text class="s-value" x="806" y="225">1.2×</text>
+
+            <text class="s-row" x="272" y="330">heap</text>
+            <rect class="s-qc" x="300" y="288" width="420" height="28"/>
+            <rect class="s-macro" x="300" y="320" width="714" height="28"/>
+            <text class="s-value" x="1030" y="345">1.7×</text>
+
+            <text class="s-row" x="272" y="450">sorted</text>
+            <rect class="s-qc" x="300" y="408" width="420" height="28"/>
+            <rect class="s-macro" x="300" y="440" width="659" height="28"/>
+            <text class="s-value" x="975" y="465">1.6×</text>
+
+            <text class="s-row" x="272" y="570">nat</text>
+            <rect class="s-qc" x="300" y="528" width="420" height="28"/>
+            <rect class="s-macro" x="300" y="560" width="619" height="28"/>
+            <text class="s-value" x="935" y="585">1.5×</text>
+          </svg>
+          <aside class="notes">
+            And the answer is yes. On a handful of micro-benchmarks, Basalt generates values
+            faster than Haskell QuickCheck on every one, by somewhere between 1.2 and 1.7 times.
+            But it doesn’t get there for free, so let me show you what it takes.
+          </aside>
+        </section>
+
         <!-- Why not, by default: a generator that loops through a
              `frequency` builds the list it hands over again on every turn.
              The brackets of that list are marked, and one press draws the
@@ -1518,40 +1554,40 @@ frequency [
 
         <section class="stage">
           <svg class="speed" viewBox="0 0 1280 720" role="img"
-               aria-label="Generation speed with the macros, relative to the plain
-                           combinators, on four benchmarks: 1.8 times on bst, 2.6 on heap,
+               aria-label="Generation speed on four benchmarks, relative to the plain
+                           combinators. With the macros: 1.8 times on bst, 2.6 on heap,
                            3.0 on sorted, 2.6 on nat. QuickCheck falls between the two on
                            every one.">
             <rect class="s-plain" x="300" y="78" width="30" height="22"/>
             <text class="s-key" x="344" y="97">oneOf, frequency</text>
             <rect class="s-macro" x="610" y="78" width="30" height="22"/>
             <text class="s-key" x="654" y="97">oneOf!, frequency!</text>
-            <path class="s-ref" d="M946,72 V106"/>
-            <text class="s-key" x="962" y="97">QuickCheck</text>
+            <rect class="s-qc" x="946" y="78" width="30" height="22"/>
+            <text class="s-key" x="990" y="97">QuickCheck</text>
 
-            <text class="s-row" x="272" y="210">bst</text>
-            <rect class="s-plain" x="300" y="168" width="270" height="28"/>
-            <rect class="s-macro" x="300" y="200" width="476" height="28"/>
-            <path class="s-ref" d="M708,160 V236"/>
-            <text class="s-value" x="792" y="225">1.8×</text>
+            <text class="s-row" x="272" y="212">bst</text>
+            <rect class="s-plain" x="300" y="156" width="270" height="28"/>
+            <rect class="s-macro" x="300" y="188" width="476" height="28"/>
+            <rect class="s-qc" x="300" y="220" width="408" height="28"/>
+            <text class="s-value" x="792" y="213">1.8×</text>
 
-            <text class="s-row" x="272" y="330">heap</text>
-            <rect class="s-plain" x="300" y="288" width="270" height="28"/>
-            <rect class="s-macro" x="300" y="320" width="712" height="28"/>
-            <path class="s-ref" d="M719,280 V356"/>
-            <text class="s-value" x="1028" y="345">2.6×</text>
+            <text class="s-row" x="272" y="332">heap</text>
+            <rect class="s-plain" x="300" y="276" width="270" height="28"/>
+            <rect class="s-macro" x="300" y="308" width="712" height="28"/>
+            <rect class="s-qc" x="300" y="340" width="419" height="28"/>
+            <text class="s-value" x="1028" y="333">2.6×</text>
 
-            <text class="s-row" x="272" y="450">sorted</text>
-            <rect class="s-plain" x="300" y="408" width="270" height="28"/>
-            <rect class="s-macro" x="300" y="440" width="807" height="28"/>
-            <path class="s-ref" d="M814,400 V476"/>
-            <text class="s-value" x="1123" y="465">3.0×</text>
+            <text class="s-row" x="272" y="452">sorted</text>
+            <rect class="s-plain" x="300" y="396" width="270" height="28"/>
+            <rect class="s-macro" x="300" y="428" width="807" height="28"/>
+            <rect class="s-qc" x="300" y="460" width="514" height="28"/>
+            <text class="s-value" x="1123" y="453">3.0×</text>
 
-            <text class="s-row" x="272" y="570">nat</text>
-            <rect class="s-plain" x="300" y="528" width="270" height="28"/>
-            <rect class="s-macro" x="300" y="560" width="696" height="28"/>
-            <path class="s-ref" d="M772,520 V596"/>
-            <text class="s-value" x="1012" y="585">2.6×</text>
+            <text class="s-row" x="272" y="572">nat</text>
+            <rect class="s-plain" x="300" y="516" width="270" height="28"/>
+            <rect class="s-macro" x="300" y="548" width="696" height="28"/>
+            <rect class="s-qc" x="300" y="580" width="472" height="28"/>
+            <text class="s-value" x="1012" y="573">2.6×</text>
           </svg>
           <aside class="notes">
             And this turns out to be extremely effective. So when using the macro version on a bunch

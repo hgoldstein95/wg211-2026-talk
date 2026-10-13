@@ -1383,10 +1383,10 @@ html.reveal-print .reveal pre:has(.code-annot) code {
 
 /* --- How much faster ------------------------------------------------------- */
 
-/* Two series and a reference mark, so there is a key, and each bar that
-   matters carries its number. The plain combinators are grey on purpose: they
-   are the baseline, not a category. Orange is the reading that runs. Every
-   number and label is ink. */
+/* Two or three series, so there is a key, and each bar that matters carries
+   its number. The plain combinators are grey on purpose: they are the
+   baseline, not a category. Orange is the reading that runs. QuickCheck is
+   ink, as is every number and label. */
 .speed .s-plain {
   fill: var(--dim);
 }
@@ -1395,10 +1395,8 @@ html.reveal-print .reveal pre:has(.code-annot) code {
   fill: var(--tested);
 }
 
-.speed .s-ref {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 5;
+.speed .s-qc {
+  fill: var(--ink);
 }
 
 .stage .speed .s-row {
