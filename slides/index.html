@@ -10,8 +10,9 @@
   </head>
   <body>
     <!-- index.html — the talk: a cold open, an overview, then Palamedes and
-         Basalt. The slides are written straight into this file. `src/deck.css`
-         is the look, `src/voxel.js` draws the blocks.
+         Basalt, and what the two share. The slides are written straight into
+         this file. `src/deck.css` is the look, `src/voxel.js` draws the
+         blocks.
 
          Every slide is a 1280x720 box. A `.card` is a few words set large; a
          `.stage` is one picture composed in slide coordinates; a `.code` slide
@@ -253,8 +254,7 @@
         </section>
 
         <section class="card">
-          <p class="big">How do we make<br/>generators <span class="tested">good</span>?</p>
-          <p class="big quiet fragment">And what should "good" even mean?</p>
+          <p class="big">How do we build <span class="proved">great</span> generators?</p>
           <aside class="notes">
             And that’s going to be the topic of the rest of this talk. Specifically, I’m going to
             ask, how do we make generators good? And also kind of a subquestion is like, what should
@@ -271,12 +271,12 @@
             <use href="#blk-die" transform="translate(360 150) scale(110)"/>
             <text class="t-title" x="360" y="492">Palamedes</text>
             <text class="t-sub" x="360" y="540">Synthesizing Generators</text>
-            <text class="t-sub" x="360" y="588">PLDI 2026</text>
+            <text class="t-sub proved" x="360" y="588">PLDI 2026</text>
             <g class="fragment">
               <use href="#blk-basalt" transform="translate(920 150) scale(110)"/>
               <text class="t-title" x="920" y="492">Basalt</text>
               <text class="t-sub" x="920" y="540">Foundations for Generators</text>
-              <text class="t-sub" x="920" y="588">Still Forming</text>
+              <text class="t-sub tested" x="920" y="588">Feedback wanted!</text>
             </g>
           </svg>
           <aside class="notes">
@@ -486,6 +486,42 @@ apply synth_pick
           </aside>
         </section>
 
+        <!-- How Palamedes is called: a definition whose body is a proof. One
+             press, and the generator the last slide built is what the proof
+             filled in. -->
+        <section class="code">
+          <div class="stack" style="align-items: center">
+            <pre class="mark-by"><code class="language-lean" data-trim>
+def genSlot : G (Option Nat) := by
+  generator_search slotOK
+            </code></pre>
+            <div class="yields fragment">
+              <svg viewBox="0 0 28 64" width="28" height="64" aria-hidden="true">
+                <path class="flow ink" d="M14,0 V46"/>
+                <path class="flowhead ink" d="M0,42 L14,64 L28,42 Z"/>
+              </svg>
+              <pre><code class="language-lean" data-trim>
+def genSlot : G (Option Nat) :=
+  oneOf [
+    pure none,
+    do
+      let n ← chooseNat 1 64
+      pure (some n)
+  ]
+              </code></pre>
+            </div>
+          </div>
+          <aside class="notes">
+            So here is what it looks like to use Palamedes. You write a definition, you give it a
+            type, and for the body you write <code>by</code>. And <code>by</code> is how you start
+            a proof in Lean. Then you write <code>generator_search</code> and the predicate. So
+            <code>generator_search</code> is a tactic, and the body of this generator is a proof
+            script. And when Lean runs that tactic, the thing it fills in is the generator that we
+            just built by hand. If you write <code>generator_search?</code>, it will print that
+            generator out for you.
+          </aside>
+        </section>
+
         <section class="code">
           <div class="stack" style="gap: 42px">
             <pre><code class="language-lean" data-trim>
@@ -643,17 +679,34 @@ theorem fold_unfold_inverse
           </section>
         </section>
 
+        <!-- The fold and the unfold are marked from the start. A press brings
+             the generator, and one more the function as it is usually
+             written, hung under the fold with an arrow up to it, so nothing
+             already there moves. -->
         <section class="code code-xs">
           <div class="pair">
-            <pre><code class="language-lean" data-trim>
+            <div class="hangs">
+              <pre class="mark-fold"><code class="language-lean" data-trim>
 def framesOK (fs : List Frame) : Bool :=
   List.fold
     (fun
       | .nilF => true
       | .consF n ok => n ≤ 200000 &amp;&amp; ok)
     fs
-            </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
+              </code></pre>
+              <div class="yields fragment" data-fragment-index="1">
+                <svg viewBox="0 0 28 64" width="28" height="64" aria-hidden="true">
+                  <path class="flow ink" d="M14,64 V18"/>
+                  <path class="flowhead ink" d="M0,22 L14,0 L28,22 Z"/>
+                </svg>
+                <pre><code class="language-lean" data-trim>
+def framesOK : List Frame → Bool
+  | [] => true
+  | n :: fs => n ≤ 200000 &amp;&amp; framesOK fs
+                </code></pre>
+              </div>
+            </div>
+            <pre class="mark-fold fragment" data-fragment-index="0"><code class="language-lean" data-trim>
 def genFrames :=
   List.unfold
     (fun () => oneOf [
@@ -670,29 +723,6 @@ def genFrames :=
             into a <code>genFrames</code> generator that just unfolds one step. And that step has
             the same shape as the slot generator that we synthesized a moment ago. Either stop, or
             pick a number in range and keep going. The same rules find it.
-          </aside>
-        </section>
-
-        <section class="code code-xs">
-          <div class="pair">
-            <pre><code class="language-lean" data-trim>
-def framesOK : List Frame → Bool
-  | [] => true
-  | n :: fs => n ≤ 200000 &amp;&amp; framesOK fs
-            </code></pre>
-            <pre><code class="language-lean" data-trim>
-def genFrames :=
-  List.unfold
-    (fun () => oneOf [
-      pure .nilF,
-      do
-        let n ← chooseNat 0 200000
-        pure (.consF n ())
-    ])
-    ()
-            </code></pre>
-          </div>
-          <aside class="notes">
             And it turns out, actually, we don’t need to write it as a fold at all. If we write just
             as a normal Lean function, Palamedes can figure this out too. I think the thing that I
             want to emphasize with this piece of the talk is that the synthesis algorithm that we’ve
@@ -796,19 +826,57 @@ def genWellTyped (Γ : List Ty) :
           </section>
         </section>
 
-        <section class="card recap">
-          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
-            <use href="#blk-die" transform="translate(230 222) scale(130)"/>
-          </svg>
-          <p class="big" style="line-height: 1.3">
-            Palamedes lets us synthesize<br>
-            <span class="tested">generators</span> from predicates,<br>
-            ensuring that they are<br>
-            <span class="proved">correct by construction</span>.
-          </p>
+        <!-- Palamedes's takeaway. Each point sits beside a small copy of
+             the figure that made it. It comes back at the end, beside
+             Basalt's. -->
+        <section class="summary alone">
+          <div class="half">
+            <h2>
+              <svg viewBox="0 0 84 90" width="84" height="90" aria-hidden="true">
+                <use href="#blk-die" transform="translate(42 0) scale(42)"/>
+              </svg>
+              Palamedes
+            </h2>
+            <p class="claim">
+              Synthesizes <span class="tested">generators</span> that are
+              <span class="proved">correct by construction</span>.
+            </p>
+            <p class="point">
+              <!-- A piece of the predicate turns into a piece of the generator. -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <rect class="p-from" x="2" y="26" width="28" height="36"/>
+                <text class="p-code" x="16" y="52">∨</text>
+                <path class="p-line" d="M36,44 H46"/>
+                <path class="p-head" d="M45,38 L54,44 L45,50 Z"/>
+                <rect class="p-to" x="60" y="26" width="70" height="36"/>
+                <text class="p-code" x="95" y="52">oneOf</text>
+              </svg>
+              <span>Automates synthesis with Lean’s tactic metaprogramming.</span>
+            </p>
+            <p class="point">
+              <!-- A list folds to true, and true unfolds back to a list. -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <use href="#blk-sand" transform="translate(16 44) scale(15)"/>
+                <use class="p-seam" href="#blk-hull" transform="translate(16 44) scale(15)"/>
+                <use href="#blk-sand" transform="translate(16 27.5) scale(15)"/>
+                <use class="p-seam" href="#blk-hull" transform="translate(16 27.5) scale(15)"/>
+                <use href="#blk-sand" transform="translate(16 11) scale(15)"/>
+                <use class="p-seam" href="#blk-hull" transform="translate(16 11) scale(15)"/>
+                <path class="p-line is-ink" d="M40,35 H64"/>
+                <path class="p-head is-ink" d="M63,29 L72,35 L63,41 Z"/>
+                <path class="p-line is-tested" d="M72,53 H48"/>
+                <path class="p-head is-tested" d="M49,47 L40,53 L49,59 Z"/>
+                <rect class="p-box is-proved" x="78" y="28" width="52" height="32"/>
+                <text class="p-code is-small" x="104" y="50">true</text>
+              </svg>
+              <span>Handles recursive functions by matching folds with unfolds.</span>
+            </p>
+          </div>
           <aside class="notes">
             The upshot here is that Palamedes lets us synthesize generators from predicates and
-            ensure that they’re correct by construction.
+            ensure that they’re correct by construction. It uses Lean’s tactic metaprogramming to
+            automate the synthesis process, and it handles recursive functions by matching folds
+            with unfolds.
           </aside>
         </section>
 
@@ -841,7 +909,7 @@ def genWellTyped (Γ : List Ty) :
 def elapsedOK n := n ≤ 200000
 
 def genElapsed : G Nat :=
-  frequency! [
+  frequency [
     (2, pure 0),
     (5, chooseNat 1 450),
     (3, chooseNat 900 1100),
@@ -899,63 +967,42 @@ def genFrames :=
           </aside>
         </section>
 
-        <section class="card">
-          <p class="big">What should a<br/>generator
-            <span class="pointed">denote</span>?</p>
-          <aside class="notes">
-            Okay, now, let’s look at how are we going to represent generators as distributions?
-          </aside>
-        </section>
-
-        <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-def QC.Gen α := Seed → α
-
-def QC.support (g : QC.Gen α) : Set α :=
-  {x | ∃ s, g s = x}
-            </code></pre>
-            <pre><code class="language-lean" data-trim>
-QC.support genFrames = {fs | framesOK fs}
-            </code></pre>
-          </div>
-          <p class="cite">
-            Paraskevopoulou et al., <em>Foundational Property-Based Testing</em>, ITP 2015
-          </p>
-          <aside class="notes">
-            One answer to this question comes from QuickChick. And in QuickChick, a generator is a
-            mapping from seeds to values, and it defines support as just all the values for which
-            there exists some seed that produces the value. So in this case, the support of our
-            <code>genFrames</code> function would be <code>framesOK</code>, which is all well and
-            good.
-          </aside>
-        </section>
-
-        <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-def genMostlyEmpty : G (List Frame) :=
+        <section class="code code-sm">
+          <div class="pair">
+            <pre class="mark-weights"><code class="language-lean" data-trim>
+def genSlot : G (Option Nat) :=
   frequency [
-    (999999, pure []),
-    (1, genFrames)
+    (1, pure none),
+    (1, do
+      let n ← chooseNat 1 64
+      pure (some n))
   ]
             </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
-genFrames.support      = framesOK
-genMostlyEmpty.support = framesOK
+            <pre class="mark-weights"><code class="language-lean" data-trim>
+def genSlot' : G (Option Nat) :=
+  frequency [
+    (1, pure none),
+    (9, do
+      let n ← chooseNat 1 64
+      pure (some n))
+  ]
             </code></pre>
           </div>
-          <aside class="notes">
-            But when you have really weird generators with weird distributions, like this one, which
-            almost all of the time produces an empty list, and then with, like, weight one produces
-            an actual reasonable list of frames. Both of these have the same support. And so this is
+          <pre class="fragment"><code class="language-lean" data-trim>
+genSlot.support = genSlot'.support
+          </code></pre>
+            <aside class="notes">
+            But support alone can’t tell one distribution from another. Here is
+            <code>genSlot</code> again, written with <code>frequency</code> so that we can see its
+            weights, next to <code>genSlot'</code>, which is the same generator re-tuned so that
+            nine slots in ten are full. Both of these have the same support. And so this is
             clearly not what we want, in terms of being able to prove the things that we need to
             guarantee our generators do what we want.
           </aside>
-        </section>
+          </section>
 
-        <section class="code code-lg">
-          <pre class="annotate-spmf"><code class="language-lean" data-trim>
+          <section class="code code-lg">
+            <pre class="annotate-spmf"><code class="language-lean" data-trim>
 def SPMF (α : Type) : Type :=
   {μ : α → ℝ≥0∞ // (∑' a, μ a) ≤ 1}
           </code></pre>
@@ -978,7 +1025,7 @@ def SPMF (α : Type) : Type :=
 def loop : G Bool := loop
 
 def genCoin : G Bool :=
-  oneOf! [
+  oneOf [
     fun _ => pure true,
     fun _ => pure false,
     fun _ => loop
@@ -1018,7 +1065,7 @@ def genCoin : G Bool :=
           <div class="pair drawn">
             <pre><code class="language-lean" data-trim>
 def genFrames : G (List Nat) :=
-  oneOf! [
+  oneOf [
     fun _ => pure [],
     fun _ => do
       let n ← genElapsed
@@ -1087,7 +1134,7 @@ theorem genFrames.expect_length :
         <section class="code">
           <pre><code class="language-lean" data-trim>
 def genElapsed : G Nat :=
-  frequency! [
+  frequency [
     (2, pure 0),
     (5, chooseNat 1 450),
     (3, chooseNat 900 1100),
@@ -1134,25 +1181,6 @@ a possible counterexample may satisfy the constraints
           <aside class="notes">
             you’ll reach a point where you just can’t prove the goal because there is literally a
             counterexample that doesn’t satisfy the constraints.
-          </aside>
-        </section>
-
-        <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="5">
-/-- How long a frame took. A tick is 1000. -/
-def genElapsed : G Nat :=
-  frequency! [
-    (2, pure 0),
-    (5, chooseNat 1 899),
-    (3, chooseNat 900 1100),
-    (1, pure 1000),
-    (2, chooseNat 1001 16999),
-    (1, chooseNat 14000 200000)
-  ]
-          </code></pre>
-          <aside class="notes">
-            And so you can go back and you can fix that little bit of the generator so that the
-            generator is then complete.
           </aside>
         </section>
 
@@ -1220,7 +1248,7 @@ def genElapsed : G Nat :=
             </code></pre>
             <pre><code class="language-lean" data-trim data-line-numbers="|1" data-fragment-index="0">
 def genFrames [Gen G] : G (List Nat) :=
-  oneOf! [
+  oneOf [
     fun _ => pure [],
     fun _ => do
       let n ← genElapsed
@@ -1243,38 +1271,59 @@ def genFrames [Gen G] : G (List Nat) :=
           </aside>
         </section>
 
-        <section class="code">
-          <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4" data-fragment-index="0">
+        <!-- The class as the talk tells it is the slide. The class as Basalt
+             has it is kept under it, uncounted like the theorem under its
+             picture. -->
+        <section>
+          <section class="code">
+            <pre><code class="language-lean" data-trim data-line-numbers="|2-3|4" data-fragment-index="0">
 class Gen (G : Type → Type) where
   instMonad        : Monad G
   instRandomChoice : RandomChoice G
   instCCPO         : ∀ α, CCPO (G α)
-          </code></pre>
-          <p class="cite fragment current-visible" data-fragment-index="0">
-            Claessen and Hughes, <em>QuickCheck</em>, ICFP 2000
-          </p>
-          <p class="cite fragment" data-fragment-index="1">
-            Knaster–Tarski fixpoint theorem (Knaster 1928, Tarski 1955)<br/>
-            <em>The Lean Language Reference</em>, “Recursive Definitions”
-          </p>
-          <aside class="notes">
-            So, what does this <code>Gen</code> type class look like? We have this type class here,
-            which has two big pieces. So the first is sort of classic QuickCheck. A generator is a
-            monad with random choices. That’s all well and good. That’s pretty normal. The other
-            weird thing that we do is that we require that our generators be CCPOs. These are chain
-            complete partial orders. And the reason that this is necessary is because Lean has a
-            fairly recently implemented infrastructure for doing non-terminating programs, provided
-            that they are built in a CCPO. And behind the scenes, what they’re doing is applying a
-            Knaster–Tarski fixpoint to tie the knot and give you a well-formed structure, even
-            though you wrote a potentially non-terminating computation.
-          </aside>
+            </code></pre>
+            <p class="cite fragment current-visible" data-fragment-index="0">
+              Claessen and Hughes, <em>QuickCheck</em>, ICFP 2000
+            </p>
+            <p class="cite fragment" data-fragment-index="1">
+              Knaster–Tarski fixpoint theorem (Knaster 1928, Tarski 1955)<br/>
+              <em>The Lean Language Reference</em>, “Recursive Definitions”
+            </p>
+            <aside class="notes">
+              So, what does this <code>Gen</code> type class look like? We have this type class here,
+              which has two big pieces. So the first is sort of classic QuickCheck. A generator is a
+              monad with random choices. That’s all well and good. That’s pretty normal. The other
+              weird thing that we do is that we require that our generators be CCPOs. These are chain
+              complete partial orders. And the reason that this is necessary is because Lean has a
+              fairly recently implemented infrastructure for doing non-terminating programs, provided
+              that they are built in a CCPO. And behind the scenes, what they’re doing is applying a
+              Knaster–Tarski fixpoint to tie the knot and give you a well-formed structure, even
+              though you wrote a potentially non-terminating computation.
+            </aside>
+          </section>
+
+          <section class="code" data-visibility="uncounted">
+            <pre><code class="language-lean" data-trim>
+class Gen (g : Type u → Type v) where
+  instInhabited    : ∀ α, Inhabited (g α)
+  instMonad        : Monad g
+  instRandomChoice : RandomChoice g
+  instCCPO         : ∀ α, CCPO (g α)
+  instMonoBind     : MonoBind g
+            </code></pre>
+            <aside class="notes">
+              And this is the full definition in Basalt. It has two more pieces. Every generator
+              type has to be inhabited, and bind has to be monotone, which is what lets
+              <code>partial_fixpoint</code> go through a <code>do</code> block.
+            </aside>
+          </section>
         </section>
 
         <section class="code code-sm">
           <div class="pair">
             <pre class="mark-fixpoint"><code class="language-lean" data-trim>
 def genFrames [Gen G] : G (List Nat) :=
-  oneOf! [
+  oneOf [
     fun _ => pure [],
     fun _ => do
       let n ← genElapsed
@@ -1372,42 +1421,161 @@ def genFrames fuel :=
           </aside>
         </section>
 
-        <section class="code">
-          <div class="stack">
-            <pre><code class="language-lean" data-trim>
-frequency! [(2, a), (5, b), (3, c)]
-            </code></pre>
-            <pre class="fragment"><code class="language-lean" data-trim>
-frequencyWith
-  [(2, a), (5, b), (3, c)]    -- version for proofs
-  (do let n ← chooseNat 0 9   -- version for execution
-      if n &lt; 2 then a
-      else if n &lt; 7 then b
-      else if n &lt; 10 then c
-      else default)
-  ...                         -- bridge proof
-            </code></pre>
-          </div>
-          <p class="cite">
-            Richey, Cutler et al., <em>Fail Faster</em>, OOPSLA 2026
-          </p>
+        <section class="card">
+          <p class="big">Can Lean<br/>generators<br/>be <span class="pointed">fast</span>?</p>
           <aside class="notes">
             Okay, and I have one more neat trick to sort of drive home all of the, like, fundamental
-            programming that I’ve been doing on this system. So I have this macro that does
-            <code>frequency</code>. So I’ve been showing this off previously in the talk, but
-            there’s this problem that can happen with generators where, if you have a
+            programming that I’ve been doing on this system. And it starts with a question: can
+            generators written in Lean actually be fast?
+          </aside>
+        </section>
+
+        <!-- Why not, by default: a generator that loops through a
+             `frequency` builds the list it hands over again on every turn.
+             The brackets of that list are marked, and one press draws the
+             calls as they pile up, each with a list of its own. -->
+        <section class="code code-sm">
+          <div class="pair drawn">
+            <pre class="mark-brackets"><code class="language-lean" data-trim>
+def genFrames : G (List Nat) :=
+  frequency [
+    (1, fun _ => pure []),
+    (9, fun _ => do
+      let n ← genElapsed
+      let ns ← genFrames
+      return n :: ns)
+  ]
+            </code></pre>
+            <svg class="allocs fragment" viewBox="0 0 620 328" width="620" height="328" role="img"
+                 aria-label="Four calls of genFrames, one under another, and more below.
+                             Each call points at a list of two entries of its own: every
+                             turn of the loop builds the list again.">
+              <g style="--i: 0">
+                <g class="a-call"><rect x="65" y="6" width="250" height="48"/><text x="190" y="39">genFrames</text></g>
+                <path class="flow plain" d="M319,30 H381"/>
+                <path class="flowhead plain" d="M377,16 L399,30 L377,44 Z"/>
+                <rect x="411" y="6" width="66" height="48"/><rect x="485" y="6" width="66" height="48"/>
+              </g>
+              <g style="--i: 1">
+                <g class="a-call"><rect x="65" y="78" width="250" height="48"/><text x="190" y="111">genFrames</text></g>
+                <path class="flow plain" d="M319,102 H381"/>
+                <path class="flowhead plain" d="M377,88 L399,102 L377,116 Z"/>
+                <rect x="411" y="78" width="66" height="48"/><rect x="485" y="78" width="66" height="48"/>
+              </g>
+              <g style="--i: 2">
+                <g class="a-call"><rect x="65" y="150" width="250" height="48"/><text x="190" y="183">genFrames</text></g>
+                <path class="flow plain" d="M319,174 H381"/>
+                <path class="flowhead plain" d="M377,160 L399,174 L377,188 Z"/>
+                <rect x="411" y="150" width="66" height="48"/><rect x="485" y="150" width="66" height="48"/>
+              </g>
+              <g style="--i: 3">
+                <g class="a-call"><rect x="65" y="222" width="250" height="48"/><text x="190" y="255">genFrames</text></g>
+                <path class="flow plain" d="M319,246 H381"/>
+                <path class="flowhead plain" d="M377,232 L399,246 L377,260 Z"/>
+                <rect x="411" y="222" width="66" height="48"/><rect x="485" y="222" width="66" height="48"/>
+              </g>
+              <g style="--i: 4">
+                <text class="a-more" x="190" y="316">⋮</text>
+              </g>
+            </svg>
+          </div>
+          <aside class="notes">
+            So there’s this problem that can happen with generators where, if you have a
             <code>frequency</code> function, which is gonna take a list of subgenerators, if you’re
             not careful, every time you, like, go through a recursive loop, it will reallocate that
-            list of subgenerators. And this can, like, really blow up your runtime because you’re
-            just allocating way more memory than you actually should be. And so, inspired by a paper
-            by some of my co-authors and myself that appeared at OOPSLA just last week, what I do is
-            I have, instead of having <code>frequency</code> be a function, <code>frequency</code>
-            is a macro. And that macro expands to this structure. Basically, it carries two
-            different things: a proof interpretation, which is the real list; a runtime
-            interpretation, which is the kind of if-else chain that that list would expand out to;
-            and then a bridge proof, which guarantees that the two are in sync. This allows us to
-            run things much faster at compile time, because the proofs get erased. But it still
-            means that when we’re writing our proofs, we get nice behavior.
+            list of subgenerators. So here’s <code>genFrames</code> written with
+            <code>frequency</code>, and every time it calls itself, it builds this list again, just
+            to run one entry of it. And this can, like, really blow up your runtime because you’re
+            just allocating way more memory than you actually should be.
+          </aside>
+        </section>
+
+        <!-- The listing that comes apart, a second time: what `frequency!`
+             does to its list when the code is elaborated. One press plays
+             the whole of it. -->
+        <section class="code">
+          <div class="exploded" role="img"
+               aria-label="A frequency list of three weighted generators comes apart
+                           into four pieces. Each entry turns into a test of a drawn
+                           number against a running total of the weights: 2, then 7,
+                           then 10. The head turns into the draw, a number from 0 to
+                           9. The pieces close up into a chain of if and else. The
+                           list comes back beside the chain, joined to it by an
+                           equals sign that is proved: the chain is what runs, and
+                           the list is what is proved about.">
+            <span class="piece" data-swap="draw"
+                  data-whole="0 0" data-apart="0 0" data-built="2 1">
+              <span class="from">frequency!</span>
+              <span class="to">let n ← chooseNat 0 9</span>
+            </span>
+            <span class="piece" data-swap="first"
+                  data-whole="2 1" data-apart="4 1.8" data-built="2 2">
+              <span class="from">(2, a)</span>
+              <span class="to">if n &lt; 2 then a</span>
+            </span>
+            <span class="piece" data-swap="second"
+                  data-whole="2 2" data-apart="4 3.6" data-built="2 3">
+              <span class="from">(5, b)</span>
+              <span class="to">else if n &lt; 7 then b</span>
+            </span>
+            <span class="piece" data-swap="third"
+                  data-whole="2 3" data-apart="4 5.4" data-built="2 4">
+              <span class="from">(3, c)</span>
+              <span class="to">else if n &lt; 10 then c</span>
+            </span>
+            <span class="glue" data-in="whole" data-at="11 0">[</span>
+            <span class="glue" data-in="whole" data-at="8 1">,</span>
+            <span class="glue" data-in="whole" data-at="8 2">,</span>
+            <span class="glue" data-in="whole" data-at="0 4">]</span>
+            <span class="glue" data-in="built" data-at="0 0">do</span>
+            <span class="glue" data-in="built" data-at="2 5">else default</span>
+            <!-- One press takes every step: an entry at a time, and last the
+                 draw. The steps carry no names. -->
+            <div class="steps fragment">
+              <p></p>
+              <p data-swap="first"></p>
+              <p data-swap="second"></p>
+              <p data-swap="third"></p>
+              <p data-swap="draw"></p>
+              <p></p>
+            </div>
+            <!-- One more press. The chain moves over and the list comes
+                 back beside it, as the plain `frequency`, with a proved `=`
+                 between the two and a word over each. -->
+            <div class="beside fragment">
+              <pre><code class="language-lean" data-trim>
+frequency [
+  (2, a),
+  (5, b),
+  (3, c)
+]
+              </code></pre>
+              <p class="heads" aria-hidden="true">
+                <span class="tested">Run</span>
+                <span class="proved">Prove</span>
+              </p>
+              <p class="between" aria-hidden="true"><span class="proved">=</span></p>
+            </div>
+          </div>
+          <p class="cite">
+            Richey and Cutler et al., <em>Fail Faster</em>, OOPSLA 2026
+          </p>
+          <aside class="notes">
+            And so, inspired by a paper by some of my co-authors and myself that appeared at OOPSLA
+            just last week, what I do is I have, instead of having <code>frequency</code> be a
+            function, <code>frequency!</code> is a macro. And that macro takes the list apart while
+            Lean is elaborating the code. So
+            the first entry has weight 2, and it turns into a test against 2. The second has weight
+            5, so its test is against 2 plus 5, which is 7. The third one is tested against 10. And
+            10 is the total weight, so the draw is a number between 0 and 9. And what we’re left
+            with is this if-else chain, with no list in it at all. But the macro doesn’t throw the
+            list away. Basically, it carries two different things: a proof interpretation, which is
+            the real list; a runtime interpretation, which is the kind of if-else chain that that
+            list would expand out to; and then a bridge proof, which guarantees that the two are in
+            sync. This allows us to run things much faster, because the list and the proof are gone
+            by the time the program runs. But it still means that when we’re writing our proofs, we
+            get nice behavior. And this is the same move as Palamedes. It’s a Lean program that
+            writes a Lean program, and writes its proof too.
           </aside>
         </section>
 
@@ -1457,59 +1625,166 @@ frequencyWith
           </aside>
         </section>
 
-        <section class="card recap">
-          <svg viewBox="0 0 1280 720" style="position: absolute; inset: 0" aria-hidden="true">
-            <use href="#blk-basalt" transform="translate(230 222) scale(130)"/>
-          </svg>
-          <p class="big" style="line-height: 1.3">
-            Basalt uses a tagless-final<br>
-            embedding to enable <span class="proved">distributional<br>
-            proofs</span> and <span class="tested">efficient execution</span>.
-          </p>
+        <!-- Basalt's takeaway, alone, and then the summing up: one press
+             moves it over and brings Palamedes's back beside it, the two
+             side by side as on the overview. -->
+        <section class="summary">
+          <div class="half fragment">
+            <h2>
+              <svg viewBox="0 0 84 90" width="84" height="90" aria-hidden="true">
+                <use href="#blk-die" transform="translate(42 0) scale(42)"/>
+              </svg>
+              Palamedes
+            </h2>
+            <p class="claim">
+              Synthesizes <span class="tested">generators</span> that are
+              <span class="proved">correct by construction</span>.
+            </p>
+            <p class="point">
+              <!-- A piece of the predicate turns into a piece of the generator. -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <rect class="p-from" x="2" y="26" width="28" height="36"/>
+                <text class="p-code" x="16" y="52">∨</text>
+                <path class="p-line" d="M36,44 H46"/>
+                <path class="p-head" d="M45,38 L54,44 L45,50 Z"/>
+                <rect class="p-to" x="60" y="26" width="70" height="36"/>
+                <text class="p-code" x="95" y="52">oneOf</text>
+              </svg>
+              <span>Automates synthesis with Lean’s tactic metaprogramming.</span>
+            </p>
+            <p class="point">
+              <!-- A list folds to true, and true unfolds back to a list. -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <use href="#blk-sand" transform="translate(16 44) scale(15)"/>
+                <use class="p-seam" href="#blk-hull" transform="translate(16 44) scale(15)"/>
+                <use href="#blk-sand" transform="translate(16 27.5) scale(15)"/>
+                <use class="p-seam" href="#blk-hull" transform="translate(16 27.5) scale(15)"/>
+                <use href="#blk-sand" transform="translate(16 11) scale(15)"/>
+                <use class="p-seam" href="#blk-hull" transform="translate(16 11) scale(15)"/>
+                <path class="p-line is-ink" d="M40,35 H64"/>
+                <path class="p-head is-ink" d="M63,29 L72,35 L63,41 Z"/>
+                <path class="p-line is-tested" d="M72,53 H48"/>
+                <path class="p-head is-tested" d="M49,47 L40,53 L49,59 Z"/>
+                <rect class="p-box is-proved" x="78" y="28" width="52" height="32"/>
+                <text class="p-code is-small" x="104" y="50">true</text>
+              </svg>
+              <span>Handles recursive functions by matching folds with unfolds.</span>
+            </p>
+          </div>
+
+          <div class="half">
+            <h2>
+              <svg viewBox="0 0 84 90" width="84" height="90" aria-hidden="true">
+                <use href="#blk-basalt" transform="translate(42 0) scale(42)"/>
+              </svg>
+              Basalt
+            </h2>
+            <p class="claim">
+              A new foundational representation for
+              <span class="tested">generators</span>.
+            </p>
+            <p class="point">
+              <!-- Mass on two values, and mass lost to no answer. The bars
+                   sit on the texel grid of the textures (src/voxel.js). -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <rect class="p-mass" x="10" y="26" width="30" height="48"/>
+                <rect class="p-mass" x="46" y="26" width="30" height="48"/>
+                <rect class="p-lost" x="94" y="26" width="30" height="48"/>
+                <path class="p-line" d="M2,76 H130"/>
+              </svg>
+              <span>Represents distributions with sub-probability mass functions.</span>
+            </p>
+            <p class="point">
+              <!-- One term, read once to prove and once to run. -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <use href="#blk-basalt" transform="translate(21 22) scale(21)"/>
+                <path class="p-line" d="M46,44 H56 M66,24 H56 V64 H66"/>
+                <path class="p-head" d="M65,18 L74,24 L65,30 Z M65,58 L74,64 L65,70 Z"/>
+                <rect class="p-box is-proved" x="78" y="9" width="52" height="30"/>
+                <text class="p-code is-small" x="104" y="30">SPMF</text>
+                <rect class="p-box is-tested" x="78" y="49" width="52" height="30"/>
+                <text class="p-code is-small" x="104" y="70">IO</text>
+              </svg>
+              <span>Uses tagless-final to make generators interpretable.</span>
+            </p>
+            <p class="point">
+              <!-- The four benchmarks, at the chart's own proportions. -->
+              <svg viewBox="0 0 132 88" width="132" height="88" aria-hidden="true">
+                <path class="p-plain" d="M0,4 h44 v7 h-44 Z M0,26 h44 v7 h-44 Z M0,48 h44 v7 h-44 Z M0,70 h44 v7 h-44 Z"/>
+                <path class="p-macro" d="M0,12 h78 v7 h-78 Z M0,34 h116 v7 h-116 Z M0,56 h132 v7 h-132 Z M0,78 h113 v7 h-113 Z"/>
+              </svg>
+              <span>Gains significant efficiency using elaborator macros.</span>
+            </p>
+          </div>
           <aside class="notes">
-            So in sum, Basalt uses tagless final embedding to enable both distributional proofs and
-            efficient execution.
+            So in sum, Basalt is a new foundational representation for generators. It represents
+            distributions with sub-probability mass functions. It uses a tagless-final
+            representation to make generators interpretable, so the same generator can be proved
+            about and run. And it gains significant efficiency using elaborator macros. And to put
+            that next to where we started: Palamedes can synthesize generators that are correct by
+            construction. It uses Lean’s tactic metaprogramming to automate the synthesis process,
+            and it handles recursive functions by matching folds with unfolds.
           </aside>
         </section>
 
-        <section class="stage thanks">
-          <img class="bleed crop-hud" src="/fox.png" alt=""/>
-          <div class="credits">
-            <div>
+        <!-- ================= Both ================= -->
+
+        <!-- The code for lean-mc is kept under the thanks, alone and large
+             enough to scan from the back of the room. -->
+        <section>
+          <section class="stage thanks">
+            <img class="bleed crop-hud" src="/fox.png" alt=""/>
+            <div class="credits">
+              <div>
+                <p class="big">Thank you!</p>
+                <p class="with">Collaborators</p>
+                <ul class="people">
+                  <li>Cassia Torczon</li>
+                  <li>Daniel Sainati</li>
+                  <li>Thia Richey</li>
+                  <li>Joe Cutler</li>
+                  <li>Hila Peleg</li>
+                  <li>Leo Lampropoulos</li>
+                  <li>Benjamin Pierce</li>
+                </ul>
+              </div>
+              <div class="qrs">
+                <a class="qr" href="https://doi.org/10.1145/3808329">
+                  <span class="qr-code"><img src="/qr/paper.svg" alt=""/></span>
+                  Palamedes Paper
+                </a>
+                <a class="qr" href="https://github.com/hgoldstein95/basalt-palamedes">
+                  <span class="qr-code"><img src="/qr/basalt-palamedes.svg" alt=""/></span>
+                  Palamedes
+                </a>
+                <a class="qr" href="https://github.com/hgoldstein95/basalt">
+                  <span class="qr-code"><img src="/qr/basalt.svg" alt=""/></span>
+                  Basalt
+                </a>
+                <a class="qr" href="https://hgoldstein95.github.io/wg211-talk/">
+                  <span class="qr-code"><img src="/qr/slides.svg" alt=""/></span>
+                  These Slides
+                </a>
+              </div>
+            </div>
+            <aside class="notes">
+              Thank you so much for your time.
+            </aside>
+          </section>
+
+          <section class="stage thanks" data-visibility="uncounted">
+            <img class="bleed crop-hud" src="/fox.png" alt=""/>
+            <div class="credits">
               <p class="big">Thank you!</p>
-              <p class="with">Collaborators</p>
-              <ul class="people">
-                <li>Cassia Torczon</li>
-                <li>Daniel Sainati</li>
-                <li>Thia Richey</li>
-                <li>Joe Cutler</li>
-                <li>Hila Peleg</li>
-                <li>Leo Lampropoulos</li>
-                <li>Benjamin Pierce</li>
-              </ul>
-            </div>
-            <div class="qrs">
-              <a class="qr" href="https://doi.org/10.1145/3808329">
-                <span class="qr-code"><img src="/qr/paper.svg" alt=""/></span>
-                Palamedes Paper
-              </a>
-              <a class="qr" href="https://github.com/hgoldstein95/basalt-palamedes">
-                <span class="qr-code"><img src="/qr/basalt-palamedes.svg" alt=""/></span>
-                Palamedes
-              </a>
-              <a class="qr" href="https://github.com/hgoldstein95/basalt">
-                <span class="qr-code"><img src="/qr/basalt.svg" alt=""/></span>
-                Basalt
-              </a>
-              <a class="qr" href="https://hgoldstein95.github.io/wg211-talk/">
-                <span class="qr-code"><img src="/qr/slides.svg" alt=""/></span>
-                These Slides
+              <a class="qr qr-big" href="https://github.com/hgoldstein95/lean-mc">
+                <span class="qr-code"><img src="/qr/lean-mc.svg" alt=""/></span>
+                lean-mc
               </a>
             </div>
-          </div>
-          <aside class="notes">
-            Thank you so much for your time.
-          </aside>
+            <aside class="notes">
+              The code for lean-mc is at this link.
+            </aside>
+          </section>
         </section>
       </div>
     </div>

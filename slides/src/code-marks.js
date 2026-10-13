@@ -29,18 +29,22 @@
 // node at a time can't reach, so it is cut out as a DOM range instead.
 
 const MARKS = {
-  // A pair of brackets — the list literal, the array, the block delimiter.
-  'mark-brackets': /[[\]]/g,
+  // The brackets of a list that is built. Not `[]`, which is no allocation.
+  'mark-brackets': /\[(?!\])|(?<!\[)\]/g,
   // A standalone integer zero, not the 0 inside 10 or 0x2545F491.
   'mark-zeros': /(?<![\w.])0(?![\w.])/g,
   // The recursive calls of the running example: the predicate's
   // (`framesOK ns`) and the generator's (`← genFrames`, `← genFrames fuel`).
   'mark-rec': /\bframesOK ns\b|(?<=← )genFrames(?: fuel)?\b/g,
+  // The fold a predicate is written as, and the unfold that undoes it.
+  'mark-fold': /\bList\.(?:un)?fold\b/g,
   // What fuel adds to a generator that had none: the counter, and the failure
   // it can now end in.
   'mark-fuel': /\b(?:fuel|failure)\b/g,
   // What lets a generator call itself with nothing decreasing.
   'mark-fixpoint': /\bpartial_fixpoint\b/g,
+  // What makes a generator's body a proof: the keyword that opens one.
+  'mark-by': /\bby\b/g,
   // The edges of the hole in `genElapsed`: 451 to 899 is never made.
   'mark-hole': /\b(?:450|900)\b/g,
 }
@@ -50,6 +54,13 @@ const MARKS = {
 const STRETCHES = {
   // The branch of the synthesized generator that stops.
   'mark-nil': 'pure .nilF',
+}
+
+// A mark picked out by what is around it, in other token spans: the class the
+// slide asks for, and a regex run over the listing's whole text.
+const CONTEXT_MARKS = {
+  // The weight of each branch of a `frequency`: `(9, …)`, not `chooseNat 1 64`.
+  'mark-weights': /(?<=\()\d+(?=,)/g,
 }
 
 const ANNOTATIONS = {
@@ -109,10 +120,15 @@ function wrapStretch(pre, text, cls) {
     console.warn(`code-marks: "${text}" is not in the listing`, pre)
     return null
   }
+  return wrapRange(code, at, text.length, cls)
+}
 
+// Cuts `length` characters at `at` out of the listing and puts them back
+// inside one span of class `cls`, which is returned.
+function wrapRange(code, at, length, cls) {
   const range = document.createRange()
   range.setStart(...textPoint(code, at, false))
-  range.setEnd(...textPoint(code, at + text.length, true))
+  range.setEnd(...textPoint(code, at + length, true))
 
   // extractContents clones any highlight.js span the range cuts through, so
   // the pieces keep their colours; the wrapper goes back where they came from.
@@ -169,6 +185,15 @@ export function applyCodeMarks(root = document) {
   }
   for (const [cls, text] of Object.entries(STRETCHES)) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) wrapStretch(pre, text, 'code-mark')
+  }
+  for (const [cls, re] of Object.entries(CONTEXT_MARKS)) {
+    for (const pre of root.querySelectorAll(`pre.${cls}`)) {
+      const code = pre.querySelector('code') ?? pre
+      // Wrapping leaves the text as it was, so the offsets found here hold.
+      for (const m of [...code.textContent.matchAll(re)]) {
+        wrapRange(code, m.index, m[0].length, 'code-mark')
+      }
+    }
   }
   for (const [cls, notes] of Object.entries(ANNOTATIONS)) {
     for (const pre of root.querySelectorAll(`pre.${cls}`)) {

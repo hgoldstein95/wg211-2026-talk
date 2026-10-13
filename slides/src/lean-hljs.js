@@ -41,6 +41,10 @@ export default function lean(hljs) {
       'section', 'set_option', 'show', 'structure', 'suffices', 'syntax',
       'then', 'theorem', 'universe', 'unsafe', 'variable', 'where', 'with',
       'partial_fixpoint',
+      // The tactics of a proof script written out step by step. They are the
+      // language's own, like `have` and `show`, and not the automation a
+      // slide points at: that is `meta`, below.
+      'apply', 'intros',
     ].join(' '),
     literal: 'true false',
     built_in: [
@@ -51,8 +55,9 @@ export default function lean(hljs) {
     // Metaprogramming a talk points at by name: a macro, a tactic, a deriver.
     // Not keywords, but not ordinary identifiers either — they get the colour
     // OCaml's ppx attributes take, so the two languages name the idea alike.
-    // Add the ones a given talk leans on here.
-    meta: 'derive_generator generator_search generator_search? aesop',
+    // Add the ones a given talk leans on here. `oneOf!` and `frequency!` are
+    // the macros; the plain `oneOf` and `frequency` are ordinary functions.
+    meta: 'derive_generator generator_search generator_search? aesop oneOf! frequency!',
   }
 
   // `#check`, `#eval`, `#visualize`: commands, so they read as keywords.

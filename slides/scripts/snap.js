@@ -74,7 +74,7 @@ await page.evaluate(() => {
 // nothing about, so a 120ms wait would photograph them mid-move. Zeroing the
 // durations lands every one of them on its finished state.
 await page.addStyleTag({
-  content: ':root { --t-fade: 0s !important; --t-open: 0s !important; }',
+  content: ':root { --t-fade: 0s !important; --t-open: 0s !important; --t-step: 0s !important; }',
 })
 
 // Asked of the document, since `Reveal.getSlides()` leaves out a slide that is

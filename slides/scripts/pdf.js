@@ -35,7 +35,7 @@ await page.evaluate(() => document.fonts.ready)
 // otherwise be caught mid-move, since print-pdf shows every fragment at once
 // and nothing here waits for them to settle.
 await page.addStyleTag({
-  content: ':root { --t-fade: 0s !important; --t-open: 0s !important; }',
+  content: ':root { --t-fade: 0s !important; --t-open: 0s !important; --t-step: 0s !important; }',
 })
 
 await page.pdf({
