@@ -205,6 +205,97 @@ theorem genFrames.expect_length :
 
 #eval (genFrames : IO (List Nat))
 
+/-! ## How often the run is empty -/
+
+section distribution
+open scoped ENNReal
+
+/-- A run built with `::` is never empty. -/
+theorem prob_cons_nil (g : SPMF Nat) (h : SPMF (List Nat)) :
+    SPMF.prob (do let n ← g; let ns ← h; return n :: ns) {[]} = 0 := by
+  rw [SPMF.prob_eq_zero_iff]
+  intro ns hns
+  support_simp at hns
+  obtain ⟨n, _, ns, _, rfl⟩ := hns
+  simp
+
+/-- Add up the branches of a choice between `[]` and a `::`. -/
+macro "sum_branches" : tactic =>
+  `(tactic| simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, List.length_cons,
+    List.length_nil, prob_cons_nil, SPMF.prob_pure, Set.mem_singleton_iff, ↓reduceIte, add_zero,
+    mul_zero, mul_one, Nat.reduceAdd, Nat.cast_ofNat, Nat.cast_one])
+
+/-- Half of the runs are empty. -/
+theorem genFrames.prob_nil : SPMF.prob (genFrames : SPMF (List Nat)) {[]} = 1 / 2 := by
+  rw [genFrames, oneOfWith_eq, SPMF.prob_oneOf]
+  sum_branches
+
+/--
+error: unsolved goals
+G : Type → Type
+inst✝ : Gen G
+⊢ 1 / 2 ≤ 1 / 10
+-/
+#guard_msgs in
+example : SPMF.prob (genFrames : SPMF (List Nat)) {[]} ≤ 1 / 10 := by
+  rw [genFrames, oneOfWith_eq, SPMF.prob_oneOf]
+  sum_branches
+
+/-- The stuck goal is false, so no proof gets further. -/
+theorem genFrames.not_prob_nil_le : ¬ SPMF.prob (genFrames : SPMF (List Nat)) {[]} ≤ 1 / 10 := by
+  rw [genFrames.prob_nil]
+  norm_num
+
+end distribution
+
+/-! ## The weights changed: stop one time in ten -/
+
+def genFramesWeighted : G (List Nat) :=
+  frequency! [
+    (1, fun _ => pure []),
+    (9, fun _ => do
+      let n ← genElapsed
+      let ns ← genFramesWeighted
+      return n :: ns)
+  ] (by simp)
+partial_fixpoint
+
+/-- The weights do not change the support. -/
+theorem genFramesWeighted.sound_complete : IsSoundAndComplete genFramesWeighted FramesOK := by
+  refine .intro ?sound ?complete
+  case sound =>
+    rw [IsSoundFor.iff_obs]
+    walk fixpoint [genElapsed.sound_complete.sound.obs]
+    all_goals simp_all [FramesOK]
+  case complete =>
+    intro ns
+    induction ns with
+    | nil => intro _; rw [genFramesWeighted, SPMF.mem_support_iff_may]; walk
+    | cons n ns ih =>
+      intro h
+      rw [genFramesWeighted, SPMF.mem_support_iff_may]
+      walk [genElapsed.sound_complete.complete.obs]
+      exact ⟨n, h n (by simp), ns, ih fun m hm => h m (by simp [hm]), rfl⟩
+
+open scoped ENNReal in
+theorem genFramesWeighted.prob_nil_le :
+    SPMF.prob (genFramesWeighted : SPMF (List Nat)) {[]} ≤ 1 / 10 := by
+  rw [genFramesWeighted, frequencyWith_eq, SPMF.prob_frequency]
+  sum_branches
+  norm_num
+
+open scoped ENNReal in
+/-- A run is at most nine frames long on average. -/
+theorem genFramesWeighted.expect_length :
+    SPMF.expect (genFramesWeighted : SPMF (List Nat)) (fun ns => (ns.length : ℝ≥0∞)) ≤ 9 := by
+  rw [SPMF.expect_eq_obs]
+  walk fixpoint
+  norm_num
+  ennreal_to_real
+  norm_num
+
+#eval (genFramesWeighted : IO (List Nat))
+
 end Frames
 
 /-! ## A generator that may not answer -/
