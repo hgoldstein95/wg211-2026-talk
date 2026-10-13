@@ -29,8 +29,6 @@
 // node at a time can't reach, so it is cut out as a DOM range instead.
 
 const MARKS = {
-  // The brackets of a list that is built. Not `[]`, which is no allocation.
-  'mark-brackets': /\[(?!\])|(?<!\[)\]/g,
   // A standalone integer zero, not the 0 inside 10 or 0x2545F491.
   'mark-zeros': /(?<![\w.])0(?![\w.])/g,
   // The recursive calls of the running example: the predicate's
@@ -53,7 +51,7 @@ const MARKS = {
 // the class the slide asks for, and the stretch's exact text.
 const STRETCHES = {
   // The branch of the synthesized generator that stops.
-  'mark-nil': 'pure .nilF',
+  'mark-nil': 'return .nilF',
 }
 
 // A mark picked out by what is around it, in other token spans: the class the
@@ -61,6 +59,9 @@ const STRETCHES = {
 const CONTEXT_MARKS = {
   // The weight of each branch of a `frequency`: `(9, …)`, not `chooseNat 1 64`.
   'mark-weights': /(?<=\()\d+(?=,)/g,
+  // The brackets of a list that is built. Not `[]`, which is no allocation,
+  // and not `[Gen G]`, which is no list.
+  'mark-brackets': /\[(?!\]|Gen\b)|(?<!\[|\bGen G)\]/g,
 }
 
 const ANNOTATIONS = {

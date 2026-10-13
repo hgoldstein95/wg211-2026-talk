@@ -95,7 +95,7 @@
             </p>
             <p class="tag" style="left: 580px; top: 70px">
               <code>Session.play_dig_iff</code>
-              Clicks don't get lost
+              Clicks don’t get lost
             </p>
             <p class="tag" style="right: 56px; top: 490px">
               <code>mem_chunkFaces</code>
@@ -388,7 +388,7 @@ theorem takeOne_ok (slot : Option Nat) :
           <div class="exploded" role="img"
                aria-label="The slot predicate comes apart into six pieces. Each piece
                            turns into a piece of a program: or into oneOf, an equation
-                           into pure, exists into a draw, a bound into chooseNat, and
+                           into return, exists into a draw, a bound into chooseNat, and
                            into a semicolon. The pieces close up into the slot
                            generator, a do block on lines of its own. Beside it are
                            the five rules as a tactic script, and an arrow from the
@@ -401,7 +401,7 @@ theorem takeOne_ok (slot : Option Nat) :
             <span class="piece" data-swap="none"
                   data-whole="0 0" data-apart="4 1.8" data-built="2 1">
               <span class="from">slot = none</span>
-              <span class="to">pure none</span>
+              <span class="to">return none</span>
             </span>
             <span class="piece" data-swap="bind"
                   data-whole="0 1" data-apart="4 3.6" data-built="4 3">
@@ -421,10 +421,10 @@ theorem takeOne_ok (slot : Option Nat) :
             <span class="piece" data-swap="some"
                   data-whole="24 1" data-apart="35.8 3.6" data-built="4 4">
               <span class="from">slot = some n</span>
-              <span class="to">pure (some n)</span>
+              <span class="to">return (some n)</span>
             </span>
             <span class="glue" data-in="built" data-at="6 0">[</span>
-            <span class="glue" data-in="built" data-at="11 1">,</span>
+            <span class="glue" data-in="built" data-at="13 1">,</span>
             <span class="glue" data-in="built" data-at="2 2">do</span>
             <span class="glue" data-in="built" data-at="0 5">]</span>
             <!-- One step a press, each naming the rule it applies. The first
@@ -475,7 +475,7 @@ apply synth_pick
             find some subgenerator that can do the part that generates <code>n</code>. And then we
             can use that <code>n</code> later. Then for this <code>n</code> between 1 and 64, we
             can just generate between 1 and 64. And then for this last thing where the slot has to
-            be <code>some</code> of <code>n</code>, we can just use <code>pure</code> once again.
+            be <code>some</code> of <code>n</code>, we can just use <code>return</code> once again.
             What this amounts to is actually a proof. So when we put this generator back
             together, we can see that the thing that produced it is a sequence of tactics. And this
             is actually literal. So in Lean, this is literally a sequence of tactics. We apply a
@@ -503,10 +503,10 @@ def genSlot : G (Option Nat) := by
               <pre><code class="language-lean" data-trim>
 def genSlot : G (Option Nat) :=
   oneOf [
-    pure none,
+    return none,
     do
       let n ← chooseNat 1 64
-      pure (some n)
+      return (some n)
   ]
               </code></pre>
             </div>
@@ -526,7 +526,7 @@ def genSlot : G (Option Nat) :=
           <div class="stack" style="gap: 42px">
             <pre><code class="language-lean" data-trim>
 /-- Duration of one frame. -/
-def Frame := Nat
+abbrev Frame := Nat
             </code></pre>
             <pre><code class="language-lean" data-trim data-line-numbers="|2">
 def framesOK (fs : List Frame) : Bool :=
@@ -710,10 +710,10 @@ def framesOK : List Frame → Bool
 def genFrames :=
   List.unfold
     (fun () => oneOf [
-      pure .nilF,
+      return .nilF,
       do
         let n ← chooseNat 0 200000
-        pure (.consF n ())
+        return (.consF n ())
     ])
     ()
             </code></pre>
@@ -910,10 +910,10 @@ def elapsedOK n := n ≤ 200000
 
 def genElapsed : G Nat :=
   frequency [
-    (2, pure 0),
+    (2, return 0),
     (5, chooseNat 1 450),
     (3, chooseNat 900 1100),
-    (1, pure 1000),
+    (1, return 1000),
     (2, chooseNat 1001 16999),
     (1, chooseNat 14000 200000)
   ]
@@ -935,10 +935,10 @@ def genElapsed : G Nat :=
 def genFrames :=
   List.unfold
     (fun () => oneOf [
-      pure .nilF,
+      return .nilF,
       do
         let n ← chooseNat 0 200000
-        pure (.consF n ())
+        return (.consF n ())
     ])
     ()
           </code></pre>
@@ -972,19 +972,19 @@ def genFrames :=
             <pre class="mark-weights"><code class="language-lean" data-trim>
 def genSlot : G (Option Nat) :=
   frequency [
-    (1, pure none),
+    (1, return none),
     (1, do
       let n ← chooseNat 1 64
-      pure (some n))
+      return (some n))
   ]
             </code></pre>
             <pre class="mark-weights"><code class="language-lean" data-trim>
 def genSlot' : G (Option Nat) :=
   frequency [
-    (1, pure none),
+    (1, return none),
     (9, do
       let n ← chooseNat 1 64
-      pure (some n))
+      return (some n))
   ]
             </code></pre>
           </div>
@@ -1026,9 +1026,9 @@ def loop : G Bool := loop
 
 def genCoin : G Bool :=
   oneOf [
-    fun _ => pure true,
-    fun _ => pure false,
-    fun _ => loop
+    return true,
+    return false,
+    loop
   ]
             </code></pre>
             <svg class="masses" viewBox="0 0 620 328" width="620" height="328" role="img"
@@ -1064,10 +1064,10 @@ def genCoin : G Bool :=
         <section class="code code-sm">
           <div class="pair drawn">
             <pre><code class="language-lean" data-trim>
-def genFrames : G (List Nat) :=
+def genFrames : G (List Frame) :=
   oneOf [
-    fun _ => pure [],
-    fun _ => do
+    return [],
+    do
       let n ← genElapsed
       let ns ← genFrames
       return n :: ns
@@ -1108,26 +1108,24 @@ def genFrames : G (List Nat) :=
 
         <section class="code">
           <pre><code class="language-lean" data-trim data-line-numbers="1-2|4-5|7-8">
-theorem genFrames.sound_complete :
-    IsSoundAndComplete genFrames framesOK
+theorem genSlot.sound_complete :
+    IsSoundAndComplete genSlot slotOK
 
-theorem genFrames.terminates :
-    IsAlmostSurelyTerminating genFrames
+theorem genSlot.terminates :
+    IsAlmostSurelyTerminating genSlot
 
-theorem genFrames.expect_length :
-    HasExpectedValue genFrames (·.length) ≤ 1
+theorem genSlot.expect_cost :
+    IsExpectedCostBounded genSlot (3 / 2)
           </code></pre>
           <aside class="notes">
             What can we do with this representation? Well, we can prove the same things that we used
             to be able to prove. We can prove that our generator is sound and complete with respect
-            to a particular predicate. So, in particular, that its support is exactly
-            <code>framesOK</code>. But now we can prove new things too. We can prove almost sure
-            termination, for example, which says that <code>genFrames</code> actually does put zero
-            mass on divergence, and we can also prove things about expected length. So, for example,
-            we can show here that <code>genFrames</code>, because it is not very well distributed,
-            produces an expected length of a list that’s actually less than one. This is pretty bad.
-            And so it would tell us that we need to go back and retune the generator to make it have
-            a better distribution.
+            to a particular predicate. So, in particular, that the support of <code>genSlot</code>
+            is exactly <code>slotOK</code>. But now we can prove new things too. We can prove almost
+            sure termination, for example, which says that <code>genSlot</code> puts zero mass on
+            divergence, and we can also prove things about expected cost. So, for example, we can
+            show here that <code>genSlot</code> makes at most one and a half random choices on
+            average: one to pick a branch, and half the time one more to pick the number.
           </aside>
         </section>
 
@@ -1135,10 +1133,10 @@ theorem genFrames.expect_length :
           <pre><code class="language-lean" data-trim>
 def genElapsed : G Nat :=
   frequency [
-    (2, pure 0),
+    (2, return 0),
     (5, chooseNat 1 450),
     (3, chooseNat 900 1100),
-    (1, pure 1000),
+    (1, return 1000),
     (2, chooseNat 1001 16999),
     (1, chooseNat 14000 200000)
   ]
@@ -1175,7 +1173,7 @@ hn : n ≤ 200000
             <pre class="is-error fragment"><code class="language-plaintext" data-trim>
 omega could not prove the goal:
 a possible counterexample may satisfy the constraints
-  451 ≤ a ≤ 899
+  451 ≤ n ≤ 899
             </code></pre>
           </div>
           <aside class="notes">
@@ -1194,12 +1192,12 @@ a possible counterexample may satisfy the constraints
             Does it terminate?
           </p>
           <p class="tag" style="left: 96px; top: 300px; width: 520px">
-            <code>SPMF.prob</code>
+            <code>HasProbability</code>
             How likely is a value?
           </p>
           <p class="tag" style="left: 664px; top: 300px; width: 520px">
-            <code>SPMF.expect</code>
-            How frequent is some event?
+            <code>HasExpectedValue</code>
+            How big is a value on average?
           </p>
           <p class="tag" style="left: 96px; top: 470px; width: 520px">
             <code>IsCostBounded</code>
@@ -1244,13 +1242,13 @@ a possible counterexample may satisfy the constraints
         <section class="code">
           <div class="stack">
             <pre class="fragment" data-fragment-index="1"><code class="language-lean" data-trim>
--- genFrames : ∀ {G : Type → Type}, [Gen G] → G (List Nat)
+-- genFrames : ∀ {G : Type → Type}, [Gen G] → G (List Frame)
             </code></pre>
             <pre><code class="language-lean" data-trim data-line-numbers="|1" data-fragment-index="0">
-def genFrames [Gen G] : G (List Nat) :=
+def genFrames [Gen G] : G (List Frame) :=
   oneOf [
-    fun _ => pure [],
-    fun _ => do
+    return [],
+    do
       let n ← genElapsed
       let ns ← genFrames
       return n :: ns
@@ -1266,7 +1264,7 @@ def genFrames [Gen G] : G (List Nat) :=
             be more flexible than that. So a generator here has a tagless final embedding of a
             generator type class. So the actual type of <code>genFrames</code> is for all
             <code>G</code>, that’s a type constructor. If <code>G</code> is an instance of the
-            generator type class, then <code>G</code> of <code>List Nat</code>. This allows us to
+            generator type class, then <code>G</code> of <code>List Frame</code>. This allows us to
             not fix a particular interpretation of generators too early.
           </aside>
         </section>
@@ -1322,10 +1320,10 @@ class Gen (g : Type u → Type v) where
         <section class="code code-sm">
           <div class="pair">
             <pre class="mark-fixpoint"><code class="language-lean" data-trim>
-def genFrames [Gen G] : G (List Nat) :=
+def genFrames [Gen G] : G (List Frame) :=
   oneOf [
-    fun _ => pure [],
-    fun _ => do
+    return [],
+    do
       let n ← genElapsed
       let ns ← genFrames
       return n :: ns
@@ -1365,7 +1363,7 @@ def genFrames fuel :=
                            fuzzer drive it, and one more is left open.">
             <use href="#blk-basalt" transform="translate(230 216) scale(110)"/>
             <text class="t-name" x="230" y="512">genFrames</text>
-            <text class="t-sub" x="230" y="552">[Gen G] : G (List Nat)</text>
+            <text class="t-sub" x="230" y="552">[Gen G] : G (List Frame)</text>
 
             <g class="fragment" data-fragment-index="0">
               <path class="flow plain" d="M356,332 H470 V132 H566"/>
@@ -1437,14 +1435,16 @@ def genFrames fuel :=
         <section class="code code-sm">
           <div class="pair drawn">
             <pre class="mark-brackets"><code class="language-lean" data-trim>
-def genFrames : G (List Nat) :=
+def genFrames [Gen G] :
+    G (List Frame) :=
   frequency [
-    (1, fun _ => pure []),
-    (9, fun _ => do
+    (1, return []),
+    (9, do
       let n ← genElapsed
       let ns ← genFrames
       return n :: ns)
   ]
+partial_fixpoint
             </code></pre>
             <svg class="allocs fragment" viewBox="0 0 620 328" width="620" height="328" role="img"
                  aria-label="Four calls of genFrames, one under another, and more below.
@@ -1550,10 +1550,6 @@ frequency [
   (3, c)
 ]
               </code></pre>
-              <p class="heads" aria-hidden="true">
-                <span class="tested">Run</span>
-                <span class="proved">Prove</span>
-              </p>
               <p class="between" aria-hidden="true"><span class="proved">=</span></p>
             </div>
           </div>
@@ -1761,7 +1757,7 @@ frequency [
                   <span class="qr-code"><img src="/qr/basalt.svg" alt=""/></span>
                   Basalt
                 </a>
-                <a class="qr" href="https://hgoldstein95.github.io/wg211-talk/">
+                <a class="qr" href="https://hgoldstein95.github.io/wg211-2026-talk/">
                   <span class="qr-code"><img src="/qr/slides.svg" alt=""/></span>
                   These Slides
                 </a>

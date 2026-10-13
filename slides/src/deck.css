@@ -51,7 +51,7 @@
   --t-fade: 0.25s;
   --t-open: 0.5s;
   /* One step of a listing that takes its steps by itself, on one press. */
-  --t-step: 0.6s;
+  --t-step: 0.35s;
 }
 
 html,
